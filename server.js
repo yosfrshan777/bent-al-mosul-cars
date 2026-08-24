@@ -12,11 +12,13 @@ const fs = require("fs");
 const { z } = require("zod");
 
 const app = express();
+
 const PORT = Number(process.env.PORT || 3000);
 const JWT_SECRET = process.env.JWT_SECRET || "DEV_ONLY_CHANGE_ME";
 
 const DATA_DIR = path.join(__dirname, "data");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
+const PUBLIC_DIR = path.join(__dirname, "public");
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -119,7 +121,10 @@ app.use(cors());
 app.use(compression());
 
 app.use(express.json({ limit: "100kb" }));
-app.use(express.urlencoded({ extended: false, limit: "100kb" }));
+app.use(express.urlencoded({
+  extended: false,
+  limit: "100kb"
+}));
 
 app.use(
   "/uploads",
@@ -233,93 +238,4 @@ const registerSchema = z.object({
 
   email: z
     .string()
-    .trim()
-    .email()
-    .max(120)
-    .optional()
-    .or(z.literal("")),
-
-  password: z
-    .string()
-    .min(8)
-    .max(100)
-});
-
-const carSchema = z.object({
-  brand: z.string().trim().min(2).max(40),
-
-  model: z.string().trim().min(1).max(60),
-
-  year: z.coerce
-    .number()
-    .int()
-    .min(1980)
-    .max(new Date().getFullYear() + 1),
-
-  price: z.coerce
-    .number()
-    .int()
-    .min(100000)
-    .max(1000000000),
-
-  km: z.coerce
-    .number()
-    .int()
-    .min(0)
-    .max(2000000),
-
-  city: z.string().trim().min(2).max(40),
-
-  fuel: z.string().trim().max(30).optional(),
-
-  transmission: z.string().trim().max(30).optional(),
-
-  description: z.string().trim().max(1000).optional(),
-
-  plan: z.coerce
-    .number()
-    .refine((v) =>
-      [10000, 20000, 30000].includes(v)
-    )
-});
-
-app.post(
-  "/api/register",
-  authLimiter,
-  async (req, res) => {
-    const result =
-      registerSchema.safeParse(req.body);
-
-    if (!result.success) {
-      return res.status(400).json({
-        error: "بيانات التسجيل غير صحيحة"
-      });
-    }
-
-    const {
-      name,
-      phone,
-      email,
-      password
-    } = result.data;
-
-    try {
-      const hash = await bcrypt.hash(
-        password,
-        12
-      );
-
-      const r = db
-        .prepare(`
-          INSERT INTO users
-          (name, phone, email, password_hash)
-          VALUES (?, ?, ?, ?)
-        `)
-        .run(
-          name,
-          phone,
-          email || null,
-          hash
-        );
-
-     
+   
