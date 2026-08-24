@@ -239,3 +239,460 @@ const registerSchema = z.object({
   email: z
     .string()
    
+    .string()
+    .trim()
+    .email()
+    .max(120)
+    .optional()
+    .or(z.literal("")),
+
+  password: z
+    .string()
+    .min(8)
+    .max(100)
+});
+
+const carSchema = z.object({
+  brand: z.string().trim().min(2).max(40),
+
+  model: z.string().trim().min(1).max(60),
+
+  year: z.coerce
+    .number()
+    .int()
+    .min(1980)
+    .max(new Date().getFullYear() + 1),
+
+  price: z.coerce
+    .number()
+    .int()
+    .min(100000)
+    .max(1000000000),
+
+  km: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(2000000),
+
+  city: z.string().trim().min(2).max(40),
+
+  fuel: z.string().trim().max(30).optional(),
+
+  transmission: z.string().trim().max(30).optional(),
+
+  description: z.string().trim().max(1000).optional(),
+
+  plan: z.coerce
+    .number()
+    .refine((v) =>
+      [10000, 20000, 30000].includes(v)
+    )
+});
+
+app.post(
+  "/api/register",
+  authLimiter,
+  async (req, res) => {
+    const result = registerSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        error: "بيانات التسجيل غير صحيحة"
+      });
+    }
+
+    const {
+      name,
+      phone,
+      email,
+      password
+    } = result.data;
+
+    try {
+      const hash = await bcrypt.hash(password, 12);
+
+      const r = db
+        .prepare(`
+          INSERT INTO users
+          (name, phone, email, password_hash)
+          VALUES (?, ?, ?, ?)
+        `)
+        .run(
+          name,
+          phone,
+          email || null,
+          hash
+        );
+
+      const user = {
+        id: Number(r.lastInsertRowid),
+        name,
+        phone,
+        email: email || null,
+        role: "user"
+      };
+
+      res.json({
+        token: sign(user),
+        user
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      res.status(409).json({
+        error: "رقم الهاتف أو البريد مستخدم مسبقاً"
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/login",
+  authLimiter,
+  async (req, res) => {
+    const phone =
+      String(req.body.phone || "").trim();
+
+    const password =
+      String(req.body.password || "");
+
+    const user = db
+      .prepare(
+        "SELECT * FROM users WHERE phone = ?"
+      )
+      .get(phone);
+
+    if (
+      !user ||
+      !(await bcrypt.compare(
+        password,
+        user.password_hash
+      ))
+    ) {
+      return res.status(401).json({
+        error: "بيانات الدخول غير صحيحة"
+      });
+    }
+
+    res.json({
+      token: sign(user),
+
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role
+      }
+    });
+  }
+);
+
+app.get("/api/cars", (req, res) => {
+  const cars = db
+    .prepare(`
+      SELECT
+        c.id,
+        c.brand,
+        c.model,
+        c.year,
+        c.price,
+        c.km,
+        c.city,
+        c.fuel,
+        c.transmission,
+        c.description,
+        c.plan,
+        c.image,
+        c.created_at,
+        u.name AS seller_name,
+        u.phone AS seller_phone
+      FROM cars c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.status = 'approved'
+      ORDER BY c.plan DESC, c.created_at DESC
+    `)
+    .all();
+
+  res.json(cars);
+});
+
+app.post(
+  "/api/cars",
+  auth,
+  upload.fields([
+    {
+      name: "image",
+      maxCount: 1
+    },
+    {
+      name: "receipt",
+      maxCount: 1
+    }
+  ]),
+  (req, res) => {
+    const result =
+      carSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        error: "بيانات السيارة غير صحيحة"
+      });
+    }
+
+    const data = result.data;
+
+    const imageFile =
+      req.files?.image?.[0] || null;
+
+    const receiptFile =
+      req.files?.receipt?.[0] || null;
+
+    const image = imageFile
+      ? `/uploads/${imageFile.filename}`
+      : null;
+
+    const receipt = receiptFile
+      ? `/uploads/${receiptFile.filename}`
+      : null;
+
+    try {
+      const transaction = db.transaction(() => {
+        const car = db
+          .prepare(`
+            INSERT INTO cars
+            (
+              user_id,
+              brand,
+              model,
+              year,
+              price,
+              km,
+              city,
+              fuel,
+              transmission,
+              description,
+              plan,
+              status,
+              image
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `)
+          .run(
+            req.user.sub,
+            data.brand,
+            data.model,
+            data.year,
+            data.price,
+            data.km,
+            data.city,
+            data.fuel || "",
+            data.transmission || "",
+            data.description || "",
+            data.plan,
+            "pending",
+            image
+          );
+
+        const carId =
+          Number(car.lastInsertRowid);
+
+        db.prepare(`
+          INSERT INTO payments
+          (
+            car_id,
+            user_id,
+            amount,
+            status,
+            receipt
+          )
+          VALUES (?, ?, ?, 'pending', ?)
+        `).run(
+          carId,
+          req.user.sub,
+          data.plan,
+          receipt
+        );
+
+        return carId;
+      });
+
+      const carId = transaction();
+
+      res.json({
+        ok: true,
+        message: "تم إرسال الإعلان للمراجعة",
+        carId
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "تعذر حفظ الإعلان"
+      });
+    }
+  }
+);
+
+app.get(
+  "/api/my-cars",
+  auth,
+  (req, res) => {
+    const cars = db
+      .prepare(`
+        SELECT *
+        FROM cars
+        WHERE user_id = ?
+        ORDER BY id DESC
+      `)
+      .all(req.user.sub);
+
+    res.json(cars);
+  }
+);
+
+app.get(
+  "/api/admin/cars",
+  auth,
+  admin,
+  (req, res) => {
+    const cars = db
+      .prepare(`
+        SELECT
+          c.*,
+          u.name AS seller_name,
+          u.phone AS seller_phone,
+          p.amount AS payment_amount,
+          p.status AS payment_status,
+          p.receipt AS receipt
+        FROM cars c
+        JOIN users u
+          ON u.id = c.user_id
+        LEFT JOIN payments p
+          ON p.car_id = c.id
+        ORDER BY c.id DESC
+      `)
+      .all();
+
+    res.json(cars);
+  }
+);
+
+app.post(
+  "/api/admin/cars/:id/approve",
+  auth,
+  admin,
+  (req, res) => {
+    const id = Number(req.params.id);
+
+    db.prepare(`
+      UPDATE cars
+      SET status = 'approved'
+      WHERE id = ?
+    `).run(id);
+
+    db.prepare(`
+      UPDATE payments
+      SET status = 'paid'
+      WHERE car_id = ?
+    `).run(id);
+
+    res.json({
+      ok: true,
+      message: "تم اعتماد الإعلان"
+    });
+  }
+);
+
+app.delete(
+  "/api/admin/cars/:id",
+  auth,
+  admin,
+  (req, res) => {
+    const id = Number(req.params.id);
+
+    const car = db
+      .prepare(
+        "SELECT image FROM cars WHERE id = ?"
+      )
+      .get(id);
+
+    if (car?.image) {
+      const imagePath = path.join(
+        __dirname,
+        car.image.replace(/^\/+/, "")
+      );
+
+      if (fs.existsSync(imagePath)) {
+        try {
+          fs.unlinkSync(imagePath);
+        } catch {}
+      }
+    }
+
+    db.prepare(
+      "DELETE FROM cars WHERE id = ?"
+    ).run(id);
+
+    res.json({
+      ok: true,
+      message: "تم حذف الإعلان"
+    });
+  }
+);
+
+app.get(
+  "/api/health",
+  (req, res) => {
+    res.json({
+      ok: true,
+      service: "bent-al-mosul-cars",
+      time: new Date().toISOString()
+    });
+  }
+);
+
+app.use(
+  express.static(PUBLIC_DIR)
+);
+
+app.get(
+  "*",
+  (req, res) => {
+    res.sendFile(
+      path.join(
+        PUBLIC_DIR,
+        "index.html"
+      )
+    );
+  }
+);
+
+app.use(
+  (err, req, res, next) => {
+    console.error(err);
+
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        error: "حجم أو عدد الصور غير مسموح"
+      });
+    }
+
+    res.status(500).json({
+      error: "حدث خطأ في الخادم"
+    });
+  }
+);
+
+app.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
+    console.log(
+      `بنت الموصل للسيارات تعمل على المنفذ ${PORT}`
+    );
+  }
+);
