@@ -35,6 +35,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #ff176f55;border-color
 .hidden{display:none}
 .notice{padding:13px;border-radius:13px;background:#0d1711;border:1px solid #294533;color:#bce8c9;margin:14px 0}
 a{color:#ff4d92}
+.small{font-size:13px}
 @media(max-width:650px){
 h1{font-size:28px}
 .row{flex-direction:column}
@@ -49,7 +50,10 @@ h1{font-size:28px}
 
 <div class="top">
 <div class="logo">بنت الموصل للسيارات</div>
-<button class="pink" onclick="openPage('add')">+ بيع سيارتك</button>
+
+<button class="pink" onclick="openPage('add')">
++ بيع سيارتك
+</button>
 </div>
 
 <nav>
@@ -57,6 +61,8 @@ h1{font-size:28px}
 <button onclick="openPage('cars')">تصفح السيارات</button>
 <button onclick="openPage('login')">دخول</button>
 <button onclick="openPage('register')">حساب جديد</button>
+<button onclick="openPage('add')">بيع سيارة</button>
+<button id="adminBtn" class="hidden" onclick="openPage('admin')">الإدارة</button>
 <button onclick="logout()">خروج</button>
 </nav>
 
@@ -68,6 +74,7 @@ h1{font-size:28px}
 <section id="home">
 
 <div class="hero">
+
 <h1>سيارتك تلقاها هنا 🚗</h1>
 
 <p class="muted">
@@ -81,9 +88,11 @@ h1{font-size:28px}
 <button class="pink" onclick="openPage('cars')">
 شوف السيارات
 </button>
+
 </div>
 
 <h2>🔥 أحدث السيارات</h2>
+
 <div id="homeCars" class="grid"></div>
 
 </section>
@@ -91,16 +100,34 @@ h1{font-size:28px}
 
 <section id="cars" class="hidden">
 
-<h2>🚘 السيارات</h2>
+<h2>🚘 السيارات المعروضة</h2>
 
 <div class="row">
-<input id="search" placeholder="ابحث عن شركة أو موديل..." oninput="render()">
+
+<input
+id="search"
+placeholder="ابحث عن شركة أو موديل..."
+oninput="render()"
+>
 
 <select id="filter" onchange="render()">
+
 <option value="">كل الأسعار</option>
-<option value="20000000">أقل من 20 مليون</option>
-<option value="30000000">أقل من 30 مليون</option>
+
+<option value="20000000">
+أقل من 20 مليون
+</option>
+
+<option value="30000000">
+أقل من 30 مليون
+</option>
+
+<option value="50000000">
+أقل من 50 مليون
+</option>
+
 </select>
+
 </div>
 
 <div id="carsList" class="grid"></div>
@@ -115,12 +142,30 @@ h1{font-size:28px}
 <div class="form">
 
 <label>رقم الهاتف</label>
-<input id="lphone" placeholder="07xxxxxxxxx">
+
+<input
+id="lphone"
+placeholder="07xxxxxxxxx"
+inputmode="numeric"
+>
 
 <label>كلمة المرور</label>
-<input id="lpass" type="password">
 
-<button class="pink" onclick="login()">دخول</button>
+<input
+id="lpass"
+type="password"
+placeholder="كلمة المرور"
+>
+
+<br><br>
+
+<button class="pink" onclick="login()">
+دخول
+</button>
+
+<p class="muted small">
+ما عندك حساب؟ اضغط «حساب جديد».
+</p>
 
 </div>
 
@@ -129,23 +174,46 @@ h1{font-size:28px}
 
 <section id="register" class="hidden">
 
-<h2>👤 إنشاء حساب</h2>
+<h2>👤 إنشاء حساب جديد</h2>
 
 <div class="form">
 
 <label>الاسم</label>
-<input id="rname">
+
+<input
+id="rname"
+placeholder="اسمك الكامل"
+>
 
 <label>رقم الهاتف</label>
-<input id="rphone" placeholder="07xxxxxxxxx">
+
+<input
+id="rphone"
+placeholder="07xxxxxxxxx"
+inputmode="numeric"
+>
 
 <label>البريد الإلكتروني (اختياري)</label>
-<input id="remail" type="email">
+
+<input
+id="remail"
+type="email"
+placeholder="example@email.com"
+>
 
 <label>كلمة المرور</label>
-<input id="rpass" type="password">
 
-<button class="pink" onclick="register()">إنشاء الحساب</button>
+<input
+id="rpass"
+type="password"
+placeholder="8 أحرف أو أكثر"
+>
+
+<br><br>
+
+<button class="pink" onclick="register()">
+إنشاء الحساب
+</button>
 
 </div>
 
@@ -157,77 +225,156 @@ h1{font-size:28px}
 <h2>➕ بيع سيارتك</h2>
 
 <div id="needLogin" class="notice">
+
 سجّل دخولك أولاً حتى ترفع السيارة.
+
 </div>
 
-<div id="adminFree" class="notice" style="display:none;background:#101a12;border-color:#315c3a;color:#c7f1d0">
-🛡️ حساب الإدارة: نشر السيارات مجاناً وبدون دفع.
+<div
+id="adminFree"
+class="notice"
+style="display:none;background:#101a12;border-color:#315c3a;color:#c7f1d0"
+>
+
+🛡️ حساب الإدارة:
+نشر السيارات مجاناً وبدون دفع.
+
 </div>
 
 <div class="form">
 
 <label>الشركة</label>
-<input id="brand" placeholder="تويوتا">
+
+<input
+id="brand"
+placeholder="تويوتا"
+>
 
 <label>الموديل</label>
-<input id="model" placeholder="كامري">
+
+<input
+id="model"
+placeholder="كامري"
+>
 
 <div class="row">
 
 <div>
+
 <label>السنة</label>
-<input id="year" type="number" value="2022">
+
+<input
+id="year"
+type="number"
+value="2022"
+>
+
 </div>
 
 <div>
-<label>السعر</label>
-<input id="price" type="number" placeholder="29000000">
+
+<label>السعر بالدينار العراقي</label>
+
+<input
+id="price"
+type="number"
+placeholder="29000000"
+>
+
 </div>
 
 </div>
+
 
 <div class="row">
 
 <div>
+
 <label>الكيلومترات</label>
-<input id="km" type="number" value="0">
+
+<input
+id="km"
+type="number"
+value="0"
+>
+
 </div>
 
 <div>
+
 <label>المحافظة</label>
-<input id="city" value="الموصل">
+
+<input
+id="city"
+value="الموصل"
+>
+
 </div>
 
 </div>
+
 
 <div class="row">
 
 <div>
+
 <label>الوقود</label>
-<input id="fuel" placeholder="بنزين">
+
+<input
+id="fuel"
+placeholder="بنزين"
+>
+
 </div>
 
 <div>
+
 <label>القير</label>
-<input id="trans" placeholder="أوتوماتيك">
+
+<input
+id="trans"
+placeholder="أوتوماتيك"
+>
+
 </div>
 
 </div>
+
 
 <label>الوصف</label>
-<textarea id="desc" rows="4" placeholder="المواصفات وحالة السيارة..."></textarea>
+
+<textarea
+id="desc"
+rows="4"
+placeholder="اكتب مواصفات السيارة وحالتها..."
+></textarea>
+
 
 <label>صورة السيارة</label>
-<input id="image" type="file" accept="image/jpeg,image/png,image/webp">
+
+<input
+id="image"
+type="file"
+accept="image/jpeg,image/png,image/webp"
+>
 
 
-<div id="payNotice" class="notice" style="background:#17120a;border-color:#5a4210;color:#ffe7a1">
+<div
+id="payNotice"
+class="notice"
+style="background:#17120a;border-color:#5a4210;color:#ffe7a1"
+>
 
-💳 <b>الدفع اليدوي</b><br>
+💳 <b>الدفع اليدوي</b>
 
-حوّل <b>10,000 د.ع</b> للإعلان العادي إلى الرقم:
+<br>
 
-<div style="font-size:22px;font-weight:900;letter-spacing:2px;margin:8px 0">
+حوّل <b>10,000 د.ع</b>
+للإعلان العادي إلى الرقم:
+
+<div
+style="font-size:22px;font-weight:900;letter-spacing:2px;margin:8px 0"
+>
 7152429770
 </div>
 
@@ -261,7 +408,11 @@ VIP — 30,000 د.ع
 
 <label>إيصال التحويل</label>
 
-<input id="receipt" type="file" accept="image/jpeg,image/png,image/webp">
+<input
+id="receipt"
+type="file"
+accept="image/jpeg,image/png,image/webp"
+>
 
 
 <br><br>
@@ -281,10 +432,12 @@ VIP — 30,000 د.ع
 
 <section id="admin" class="hidden">
 
-<h2>🛠️ الإدارة</h2>
+<h2>🛠️ لوحة الإدارة</h2>
 
 <div class="notice">
+
 🔒 لوحة الإدارة لا تُفتح إلا بحساب يحمل صلاحية admin.
+
 </div>
 
 <div id="adminList" class="grid"></div>
@@ -294,16 +447,23 @@ VIP — 30,000 د.ع
 </main>
 
 
-<footer class="muted" style="text-align:center;padding:35px">
+<footer
+class="muted"
+style="text-align:center;padding:35px"
+>
+
 بنت الموصل للسيارات © 2026
+
 </footer>
 
 
 <script>
 
-let token = localStorage.getItem("token") || "";
+let token =
+localStorage.getItem("token") || "";
 
-let me = JSON.parse(
+let me =
+JSON.parse(
 localStorage.getItem("me") || "null"
 );
 
@@ -314,9 +474,14 @@ const $ = id =>
 document.getElementById(id);
 
 
+/* =========================
+   API
+========================= */
+
 async function api(url,opt={}){
 
-opt.headers = opt.headers || {};
+opt.headers =
+opt.headers || {};
 
 if(token){
 
@@ -329,7 +494,9 @@ const response =
 await fetch(url,opt);
 
 const data =
-await response.json().catch(() => ({}));
+await response
+.json()
+.catch(() => ({}));
 
 if(!response.ok){
 
@@ -344,6 +511,10 @@ return data;
 }
 
 
+/* =========================
+   الصفحات
+========================= */
+
 function openPage(id){
 
 document
@@ -352,7 +523,15 @@ document
 section.classList.add("hidden")
 );
 
-$(id).classList.remove("hidden");
+const page = $(id);
+
+if(!page){
+
+return;
+
+}
+
+page.classList.remove("hidden");
 
 
 if(id === "cars" || id === "home"){
@@ -362,17 +541,20 @@ loadCars();
 }
 
 
-updateAdminPaymentUI();
+updateUserUI();
 
 
 if(id === "add"){
 
 $("needLogin")
 .classList
-.toggle("hidden",!!token);
+.toggle(
+"hidden",
+!!token
+);
 
 $("adminFree").style.display =
-(me?.role === "admin")
+me?.role === "admin"
 ? "block"
 : "none";
 
@@ -380,6 +562,16 @@ $("adminFree").style.display =
 
 
 if(id === "admin"){
+
+if(me?.role !== "admin"){
+
+alert("هذه الصفحة للإدارة فقط");
+
+openPage("home");
+
+return;
+
+}
 
 loadAdmin();
 
@@ -390,6 +582,31 @@ window.scrollTo(0,0);
 
 }
 
+
+/* =========================
+   تحديث الواجهة
+========================= */
+
+function updateUserUI(){
+
+const adminBtn =
+$("adminBtn");
+
+if(adminBtn){
+
+adminBtn.classList.toggle(
+"hidden",
+me?.role !== "admin"
+);
+
+}
+
+}
+
+
+/* =========================
+   السيارات
+========================= */
 
 async function loadCars(){
 
@@ -411,6 +628,14 @@ console.error(error);
 
 function card(c){
 
+const planName =
+c.plan == 30000
+? "VIP"
+: c.plan == 20000
+? "مميز"
+: "عادي";
+
+
 return `
 
 <div class="card">
@@ -423,9 +648,11 @@ c.image
 ?
 
 `<img
-src="${c.image}"
+src="${escapeAttr(c.image)}"
 style="width:100%;height:100%;object-fit:cover"
-alt="صورة السيارة">`
+alt="صورة السيارة"
+loading="lazy"
+>`
 
 :
 
@@ -438,30 +665,26 @@ alt="صورة السيارة">`
 <div class="body">
 
 <span class="tag">
-
-${
-c.plan == 30000
-? "VIP"
-: c.plan == 20000
-? "مميز"
-: "عادي"
-}
-
+${planName}
 </span>
 
 <h3>
 ${escapeHtml(c.brand)}
 ${escapeHtml(c.model)}
-${c.year}
+${escapeHtml(c.year)}
 </h3>
 
 <div class="price">
-${Number(c.price).toLocaleString()} د.ع
+
+${Number(c.price).toLocaleString()}
+د.ع
+
 </div>
 
 <p class="muted">
 
-${Number(c.km).toLocaleString()} كم
+${Number(c.km).toLocaleString()}
+كم
 
 · ${escapeHtml(c.city)}
 
@@ -477,10 +700,9 @@ ${escapeHtml(c.description || "")}
 
 <button
 class="pink"
-onclick="callSeller('${escapeJs(c.seller_phone)}')">
-
+onclick="callSeller('${escapeJs(c.seller_phone)}')"
+>
 📞 اتصال بالبائع
-
 </button>
 
 </div>
@@ -491,6 +713,10 @@ onclick="callSeller('${escapeJs(c.seller_phone)}')">
 
 }
 
+
+/* =========================
+   حماية النصوص
+========================= */
 
 function escapeHtml(value){
 
@@ -504,21 +730,36 @@ return String(value)
 }
 
 
+function escapeAttr(value){
+
+return escapeHtml(value);
+
+}
+
+
 function escapeJs(value){
 
 return String(value)
 .replace(/\\/g,"\\\\")
-.replace(/'/g,"\\'");
+.replace(/'/g,"\\'")
+.replace(/\r/g,"")
+.replace(/\n/g,"\\n");
 
 }
 
 
 function callSeller(phone){
 
-alert("رقم البائع: " + phone);
+alert(
+"رقم البائع: " + phone
+);
 
 }
 
+
+/* =========================
+   البحث
+========================= */
 
 function render(){
 
@@ -530,7 +771,8 @@ $("filter");
 
 const q =
 (search?.value || "")
-.toLowerCase();
+.toLowerCase()
+.trim();
 
 const maxPrice =
 Number(filter?.value || 0);
@@ -540,17 +782,25 @@ const list =
 cars.filter(c => {
 
 const text =
-(c.brand + " " + c.model)
+(
+String(c.brand) +
+" " +
+String(c.model)
+)
 .toLowerCase();
 
 const matchesSearch =
-!q || text.includes(q);
+!q ||
+text.includes(q);
 
 const matchesPrice =
-!maxPrice || c.price <= maxPrice;
+!maxPrice ||
+Number(c.price) <= maxPrice;
 
-return matchesSearch &&
-matchesPrice;
+return (
+matchesSearch &&
+matchesPrice
+);
 
 });
 
@@ -567,7 +817,9 @@ list.map(card).join("") ||
 if($("homeCars")){
 
 $("homeCars").innerHTML =
-cars.slice(0,6).map(card).join("") ||
+cars.slice(0,6)
+.map(card)
+.join("") ||
 "<p class='muted'>لا توجد سيارات منشورة حالياً.</p>";
 
 }
@@ -575,28 +827,39 @@ cars.slice(0,6).map(card).join("") ||
 }
 
 
+/* =========================
+   تسجيل الدخول
+========================= */
+
 async function login(){
 
 try{
 
 const data =
-await api("/api/login",{
+await api(
+"/api/login",
+{
 
 method:"POST",
 
 headers:{
-"Content-Type":"application/json"
+"Content-Type":
+"application/json"
 },
 
-body:JSON.stringify({
+body:
+JSON.stringify({
 
-phone:$("lphone").value,
+phone:
+$("lphone").value.trim(),
 
-password:$("lpass").value
+password:
+$("lpass").value
 
 })
 
-});
+}
+);
 
 
 token =
@@ -617,7 +880,9 @@ JSON.stringify(me)
 );
 
 
-alert("تم تسجيل الدخول بنجاح");
+alert(
+"تم تسجيل الدخول بنجاح"
+);
 
 openPage("home");
 
@@ -631,21 +896,600 @@ alert(error.message);
 }
 
 
+/* =========================
+   إنشاء حساب
+========================= */
+
 async function register(){
 
 try{
 
 const data =
-await api("/api/register",{
+await api(
+"/api/register",
+{
 
 method:"POST",
 
 headers:{
-"Content-Type":"application/json"
+"Content-Type":
+"application/json"
 },
 
-body:JSON.stringify({
+body:
+JSON.stringify({
 
-name:$("rname").value,
+name:
+$("rname").value.trim(),
 
-phone
+phone:
+$("rphone").value.trim(),
+
+email:
+$("remail").value.trim(),
+
+password:
+$("rpass").value
+
+})
+
+}
+);
+
+
+token =
+data.token;
+
+me =
+data.user;
+
+
+localStorage.setItem(
+"token",
+token
+);
+
+localStorage.setItem(
+"me",
+JSON.stringify(me)
+);
+
+
+alert(
+"تم إنشاء الحساب بنجاح"
+);
+
+openPage("add");
+
+
+}catch(error){
+
+alert(error.message);
+
+}
+
+}
+
+
+/* =========================
+   تسجيل الخروج
+========================= */
+
+function logout(){
+
+token = "";
+
+me = null;
+
+localStorage.removeItem("token");
+localStorage.removeItem("me");
+
+alert(
+"تم تسجيل الخروج"
+);
+
+updateUserUI();
+
+openPage("home");
+
+}
+
+
+/* =========================
+   الدفع
+========================= */
+
+function updateAdminPaymentUI(){
+
+const notice =
+$("payNotice");
+
+if(!notice){
+
+return;
+
+}
+
+
+if(me?.role === "admin"){
+
+notice.innerHTML = `
+
+🛡️ <b>حساب الإدارة:</b>
+
+<br>
+
+نشر الإعلانات مجاناً،
+ولا يحتاج تحويل أو إيصال.
+
+`;
+
+notice.style.display =
+"block";
+
+}else{
+
+notice.innerHTML = `
+
+💳 <b>الدفع اليدوي</b>
+
+<br>
+
+حوّل <b>10,000 د.ع</b>
+للإعلان العادي إلى الرقم:
+
+<div
+style="
+font-size:22px;
+font-weight:900;
+letter-spacing:2px;
+margin:8px 0
+"
+>
+7152429770
+</div>
+
+ثم ارفع صورة الإيصال.
+
+<br>
+
+لا ترسل PIN أو CVV أو أي رمز سري.
+
+`;
+
+notice.style.display =
+"block";
+
+}
+
+}
+
+
+/* =========================
+   إضافة سيارة
+========================= */
+
+async function addCar(){
+
+if(!token){
+
+alert(
+"يجب تسجيل الدخول أولاً"
+);
+
+openPage("login");
+
+return;
+
+}
+
+
+const fd =
+new FormData();
+
+
+fd.append(
+"brand",
+$("brand").value.trim()
+);
+
+fd.append(
+"model",
+$("model").value.trim()
+);
+
+fd.append(
+"year",
+$("year").value
+);
+
+fd.append(
+"price",
+$("price").value
+);
+
+fd.append(
+"km",
+$("km").value
+);
+
+fd.append(
+"city",
+$("city").value.trim()
+);
+
+fd.append(
+"fuel",
+$("fuel").value.trim()
+);
+
+fd.append(
+"transmission",
+$("trans").value.trim()
+);
+
+fd.append(
+"description",
+$("desc").value.trim()
+);
+
+
+/*
+  الإدارة تنشر مجاناً.
+  المستخدم العادي يختار الخطة.
+*/
+
+let selectedPlan =
+Number($("plan").value);
+
+
+if(me?.role === "admin"){
+
+selectedPlan = 30000;
+
+}
+
+fd.append(
+"plan",
+selectedPlan
+);
+
+
+const image =
+$("image").files[0];
+
+if(image){
+
+fd.append(
+"image",
+image
+);
+
+}
+
+
+const receipt =
+$("receipt").files[0];
+
+if(receipt){
+
+fd.append(
+"receipt",
+receipt
+);
+
+}
+
+
+try{
+
+const result =
+await api(
+"/api/cars",
+{
+
+method:"POST",
+
+body:fd
+
+}
+);
+
+
+alert(
+result.message ||
+"تم إرسال الإعلان للمراجعة"
+);
+
+
+/* تنظيف النموذج */
+
+$("brand").value = "";
+$("model").value = "";
+$("price").value = "";
+$("km").value = "0";
+$("fuel").value = "";
+$("trans").value = "";
+$("desc").value = "";
+$("image").value = "";
+$("receipt").value = "";
+
+
+openPage("home");
+
+
+}catch(error){
+
+alert(
+error.message
+);
+
+}
+
+}
+
+
+/* =========================
+   الإدارة
+========================= */
+
+async function loadAdmin(){
+
+try{
+
+const list =
+await api(
+"/api/admin/cars"
+);
+
+
+if(!Array.isArray(list)){
+
+$("adminList").innerHTML =
+"<p>لا توجد بيانات.</p>";
+
+return;
+
+}
+
+
+$("adminList").innerHTML =
+list.map(adminCard).join("") ||
+"<p class='muted'>لا توجد إعلانات.</p>";
+
+
+}catch(error){
+
+alert(
+error.message
+);
+
+}
+
+}
+
+
+function adminCard(c){
+
+const statusText =
+c.status === "approved"
+? "منشور"
+: "قيد المراجعة";
+
+
+return `
+
+<div class="card">
+
+<div class="pic">
+
+${
+c.image
+
+?
+
+`<img
+src="${escapeAttr(c.image)}"
+style="width:100%;height:100%;object-fit:cover"
+alt="صورة السيارة"
+>`
+
+:
+
+"🚗"
+
+}
+
+</div>
+
+<div class="body">
+
+<span class="tag">
+${escapeHtml(statusText)}
+</span>
+
+<h3>
+
+${escapeHtml(c.brand)}
+${escapeHtml(c.model)}
+${escapeHtml(c.year)}
+
+</h3>
+
+<p>
+البائع:
+${escapeHtml(c.seller_name || "")}
+</p>
+
+<p>
+الهاتف:
+${escapeHtml(c.seller_phone || "")}
+</p>
+
+<p>
+السعر:
+<b>
+${Number(c.price).toLocaleString()}
+د.ع
+</b>
+</p>
+
+<p>
+حالة الدفع:
+${escapeHtml(c.payment_status || "غير مسجل")}
+</p>
+
+${
+c.receipt
+
+?
+
+`<p>
+<a
+href="${escapeAttr(c.receipt)}"
+target="_blank"
+rel="noopener"
+>
+📄 فتح إيصال التحويل
+</a>
+</p>`
+
+:
+
+"<p class='muted'>لا يوجد إيصال مرفوع.</p>"
+
+}
+
+
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+
+<button
+class="pink"
+onclick="approve(${Number(c.id)})"
+>
+✅ اعتماد
+</button>
+
+<button
+onclick="delCar(${Number(c.id)})"
+>
+🗑️ حذف
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+
+/* =========================
+   اعتماد الإعلان
+========================= */
+
+async function approve(id){
+
+try{
+
+const result =
+await api(
+"/api/admin/cars/" +
+id +
+"/approve",
+{
+
+method:"POST"
+
+}
+);
+
+
+alert(
+result.message ||
+"تم اعتماد الإعلان"
+);
+
+loadAdmin();
+
+
+}catch(error){
+
+alert(
+error.message
+);
+
+}
+
+}
+
+
+/* =========================
+   حذف الإعلان
+========================= */
+
+async function delCar(id){
+
+if(
+!confirm(
+"هل تريد حذف هذا الإعلان؟"
+)
+){
+
+return;
+
+}
+
+
+try{
+
+const result =
+await api(
+"/api/admin/cars/" +
+id,
+{
+
+method:"DELETE"
+
+}
+);
+
+
+alert(
+result.message ||
+"تم حذف الإعلان"
+);
+
+loadAdmin();
+
+
+}catch(error){
+
+alert(
+error.message
+);
+
+}
+
+}
+
+
+/* =========================
+   البداية
+========================= */
+
+updateUserUI();
+
+updateAdminPaymentUI();
+
+loadCars();
+
+openPage("home");
+
+</script>
+
+</body>
+  </html>
