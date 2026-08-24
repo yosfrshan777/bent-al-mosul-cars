@@ -121,10 +121,13 @@ app.use(cors());
 app.use(compression());
 
 app.use(express.json({ limit: "100kb" }));
-app.use(express.urlencoded({
-  extended: false,
-  limit: "100kb"
-}));
+
+app.use(
+  express.urlencoded({
+    extended: false,
+    limit: "100kb"
+  })
+);
 
 app.use(
   "/uploads",
@@ -229,7 +232,11 @@ function admin(req, res, next) {
 }
 
 const registerSchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80),
 
   phone: z
     .string()
@@ -237,9 +244,7 @@ const registerSchema = z.object({
     .regex(/^07\d{9}$/),
 
   email: z
-    z.string()
-   
-    
+    .string()
     .trim()
     .email()
     .max(120)
@@ -253,9 +258,17 @@ const registerSchema = z.object({
 });
 
 const carSchema = z.object({
-  brand: z.string().trim().min(2).max(40),
+  brand: z
+    .string()
+    .trim()
+    .min(2)
+    .max(40),
 
-  model: z.string().trim().min(1).max(60),
+  model: z
+    .string()
+    .trim()
+    .min(1)
+    .max(60),
 
   year: z.coerce
     .number()
@@ -275,13 +288,29 @@ const carSchema = z.object({
     .min(0)
     .max(2000000),
 
-  city: z.string().trim().min(2).max(40),
+  city: z
+    .string()
+    .trim()
+    .min(2)
+    .max(40),
 
-  fuel: z.string().trim().max(30).optional(),
+  fuel: z
+    .string()
+    .trim()
+    .max(30)
+    .optional(),
 
-  transmission: z.string().trim().max(30).optional(),
+  transmission: z
+    .string()
+    .trim()
+    .max(30)
+    .optional(),
 
-  description: z.string().trim().max(1000).optional(),
+  description: z
+    .string()
+    .trim()
+    .max(1000)
+    .optional(),
 
   plan: z.coerce
     .number()
@@ -294,7 +323,8 @@ app.post(
   "/api/register",
   authLimiter,
   async (req, res) => {
-    const result = registerSchema.safeParse(req.body);
+    const result =
+      registerSchema.safeParse(req.body);
 
     if (!result.success) {
       return res.status(400).json({
@@ -310,7 +340,8 @@ app.post(
     } = result.data;
 
     try {
-      const hash = await bcrypt.hash(password, 12);
+      const hash =
+        await bcrypt.hash(password, 12);
 
       const r = db
         .prepare(`
@@ -342,7 +373,8 @@ app.post(
       console.error(error);
 
       res.status(409).json({
-        error: "رقم الهاتف أو البريد مستخدم مسبقاً"
+        error:
+          "رقم الهاتف أو البريد مستخدم مسبقاً"
       });
     }
   }
@@ -459,71 +491,73 @@ app.post(
       : null;
 
     try {
-      const transaction = db.transaction(() => {
-        const car = db
-          .prepare(`
-            INSERT INTO cars
-            (
-              user_id,
-              brand,
-              model,
-              year,
-              price,
-              km,
-              city,
-              fuel,
-              transmission,
-              description,
-              plan,
-              status,
+      const transaction =
+        db.transaction(() => {
+          const car = db
+            .prepare(`
+              INSERT INTO cars
+              (
+                user_id,
+                brand,
+                model,
+                year,
+                price,
+                km,
+                city,
+                fuel,
+                transmission,
+                description,
+                plan,
+                status,
+                image
+              )
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `)
+            .run(
+              req.user.sub,
+              data.brand,
+              data.model,
+              data.year,
+              data.price,
+              data.km,
+              data.city,
+              data.fuel || "",
+              data.transmission || "",
+              data.description || "",
+              data.plan,
+              "pending",
               image
+            );
+
+          const carId =
+            Number(car.lastInsertRowid);
+
+          db.prepare(`
+            INSERT INTO payments
+            (
+              car_id,
+              user_id,
+              amount,
+              status,
+              receipt
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `)
-          .run(
+            VALUES (?, ?, ?, 'pending', ?)
+          `).run(
+            carId,
             req.user.sub,
-            data.brand,
-            data.model,
-            data.year,
-            data.price,
-            data.km,
-            data.city,
-            data.fuel || "",
-            data.transmission || "",
-            data.description || "",
             data.plan,
-            "pending",
-            image
+            receipt
           );
 
-        const carId =
-          Number(car.lastInsertRowid);
-
-        db.prepare(`
-          INSERT INTO payments
-          (
-            car_id,
-            user_id,
-            amount,
-            status,
-            receipt
-          )
-          VALUES (?, ?, ?, 'pending', ?)
-        `).run(
-          carId,
-          req.user.sub,
-          data.plan,
-          receipt
-        );
-
-        return carId;
-      });
+          return carId;
+        });
 
       const carId = transaction();
 
       res.json({
         ok: true,
-        message: "تم إرسال الإعلان للمراجعة",
+        message:
+          "تم إرسال الإعلان للمراجعة",
         carId
       });
 
@@ -550,149 +584,4 @@ app.get(
       `)
       .all(req.user.sub);
 
-    res.json(cars);
-  }
-);
-
-app.get(
-  "/api/admin/cars",
-  auth,
-  admin,
-  (req, res) => {
-    const cars = db
-      .prepare(`
-        SELECT
-          c.*,
-          u.name AS seller_name,
-          u.phone AS seller_phone,
-          p.amount AS payment_amount,
-          p.status AS payment_status,
-          p.receipt AS receipt
-        FROM cars c
-        JOIN users u
-          ON u.id = c.user_id
-        LEFT JOIN payments p
-          ON p.car_id = c.id
-        ORDER BY c.id DESC
-      `)
-      .all();
-
-    res.json(cars);
-  }
-);
-
-app.post(
-  "/api/admin/cars/:id/approve",
-  auth,
-  admin,
-  (req, res) => {
-    const id = Number(req.params.id);
-
-    db.prepare(`
-      UPDATE cars
-      SET status = 'approved'
-      WHERE id = ?
-    `).run(id);
-
-    db.prepare(`
-      UPDATE payments
-      SET status = 'paid'
-      WHERE car_id = ?
-    `).run(id);
-
-    res.json({
-      ok: true,
-      message: "تم اعتماد الإعلان"
-    });
-  }
-);
-
-app.delete(
-  "/api/admin/cars/:id",
-  auth,
-  admin,
-  (req, res) => {
-    const id = Number(req.params.id);
-
-    const car = db
-      .prepare(
-        "SELECT image FROM cars WHERE id = ?"
-      )
-      .get(id);
-
-    if (car?.image) {
-      const imagePath = path.join(
-        __dirname,
-        car.image.replace(/^\/+/, "")
-      );
-
-      if (fs.existsSync(imagePath)) {
-        try {
-          fs.unlinkSync(imagePath);
-        } catch {}
-      }
-    }
-
-    db.prepare(
-      "DELETE FROM cars WHERE id = ?"
-    ).run(id);
-
-    res.json({
-      ok: true,
-      message: "تم حذف الإعلان"
-    });
-  }
-);
-
-app.get(
-  "/api/health",
-  (req, res) => {
-    res.json({
-      ok: true,
-      service: "bent-al-mosul-cars",
-      time: new Date().toISOString()
-    });
-  }
-);
-
-app.use(
-  express.static(PUBLIC_DIR)
-);
-
-app.get(
-  "*",
-  (req, res) => {
-    res.sendFile(
-      path.join(
-        PUBLIC_DIR,
-        "index.html"
-      )
-    );
-  }
-);
-
-app.use(
-  (err, req, res, next) => {
-    console.error(err);
-
-    if (err instanceof multer.MulterError) {
-      return res.status(400).json({
-        error: "حجم أو عدد الصور غير مسموح"
-      });
-    }
-
-    res.status(500).json({
-      error: "حدث خطأ في الخادم"
-    });
-  }
-);
-
-app.listen(
-  PORT,
-  "0.0.0.0",
-  () => {
-    console.log(
-      `بنت الموصل للسيارات تعمل على المنفذ ${PORT}`
-    );
-  }
-);
+    res.json(c
