@@ -237,9 +237,9 @@ const registerSchema = z.object({
     .regex(/^07\d{9}$/),
 
   email: z
-    .string()
+    z.string()
    
-    .string()
+    
     .trim()
     .email()
     .max(120)
