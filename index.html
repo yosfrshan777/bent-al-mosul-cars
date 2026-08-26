@@ -2,101 +2,272 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#ff176f">
-<meta name="description" content="بنت الموصل للسيارات - منصة بيع وشراء السيارات في العراق">
 <title>بنت الموصل للسيارات</title>
 
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
-body{margin:0;background:#08080b;color:#fff;font-family:Tahoma,Arial,sans-serif}
+*{
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent
+}
+
+body{
+margin:0;
+background:#08080b;
+color:#fff;
+font-family:Tahoma,Arial,sans-serif
+}
+
 button{
-border:0;outline:0;cursor:pointer;touch-action:manipulation;
-user-select:none;-webkit-user-select:none;border-radius:10px;
-padding:12px 17px;background:#ff176f;color:#fff;
-font-size:15px;font-family:inherit;min-height:46px
+border:0;
+outline:0;
+cursor:pointer;
+touch-action:manipulation;
+border-radius:10px;
+padding:12px 17px;
+background:#ff176f;
+color:#fff;
+font-size:15px;
+font-family:inherit;
+min-height:46px
 }
-button:active{transform:scale(.97)}
-button:disabled{opacity:.6;cursor:not-allowed}
-.secondary{background:#27272f}
+
+button:active{
+transform:scale(.97)
+}
+
+button:disabled{
+opacity:.6
+}
+
+.secondary{
+background:#27272f
+}
+
 header{
-background:#111116;border-bottom:1px solid #292932;padding:15px;
-position:sticky;top:0;z-index:1000
+background:#111116;
+border-bottom:1px solid #292932;
+padding:15px;
+position:sticky;
+top:0;
+z-index:1000
 }
-.header-inner{max-width:1100px;margin:auto}
+
+.header-inner{
+max-width:1100px;
+margin:auto
+}
+
 .logo{
-text-align:center;color:#ff176f;font-size:25px;font-weight:bold;
+text-align:center;
+color:#ff176f;
+font-size:25px;
+font-weight:bold;
 margin-bottom:14px
 }
-nav{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
-nav button{flex:0 0 auto}
-main{max-width:1100px;margin:auto;padding:20px}
-section{width:100%}
-.hidden{display:none!important}
-.hero{text-align:center;padding:40px 10px}
-.hero h1{font-size:32px;margin:10px 0}
-.hero p{color:#aaa;font-size:17px}
+
+nav{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:8px
+}
+
+nav button{
+flex:1 1 140px
+}
+
+main{
+max-width:1100px;
+margin:auto;
+padding:20px
+}
+
+.hidden{
+display:none!important
+}
+
+.hero{
+text-align:center;
+padding:40px 10px
+}
+
+.hero h1{
+font-size:32px;
+margin:10px 0
+}
+
+.hero p{
+color:#aaa;
+font-size:17px
+}
+
 .hero-buttons{
-display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px
+display:flex;
+justify-content:center;
+gap:10px;
+flex-wrap:wrap;
+margin-top:20px
 }
+
 .box{
-background:#111116;border:1px solid #292932;border-radius:16px;
-padding:20px;margin-bottom:20px
+background:#111116;
+border:1px solid #292932;
+border-radius:16px;
+padding:20px;
+margin-bottom:20px
 }
-.box h2{margin-top:0;color:#ff176f}
+
+.box h2{
+margin-top:0;
+color:#ff176f
+}
+
 .cars{
-display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
 gap:15px
 }
+
 .car{
-background:#17171d;border:1px solid #292932;border-radius:15px;
+background:#17171d;
+border:1px solid #292932;
+border-radius:15px;
 overflow:hidden
 }
+
 .car-image{
-width:100%;height:180px;background:#222;display:flex;
-align-items:center;justify-content:center;font-size:60px;overflow:hidden
+width:100%;
+height:180px;
+background:#222;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:60px;
+overflow:hidden
 }
-.car-image img{width:100%;height:100%;object-fit:cover;display:block}
-.car-content{padding:15px}
-.car-content h3{margin:0 0 10px;font-size:20px}
-.car-content p{color:#bbb;line-height:1.6;margin:7px 0}
-.price{color:#ff176f!important;font-size:19px;font-weight:bold}
-input,select,textarea{
-display:block;width:100%;padding:13px;margin:9px 0;
-border:1px solid #35353f;border-radius:10px;background:#08080b;
-color:#fff;font-size:15px;font-family:inherit;outline:none
+
+.car-image img{
+width:100%;
+height:100%;
+object-fit:cover
 }
-input:focus,select:focus,textarea:focus{border-color:#ff176f}
-input[type="file"]{padding:10px}
-textarea{min-height:120px;resize:vertical}
+
+.car-content{
+padding:15px
+}
+
+.car-content h3{
+margin:0 0 10px
+}
+
+.car-content p{
+color:#bbb;
+line-height:1.6
+}
+
+.price{
+color:#ff176f!important;
+font-size:19px;
+font-weight:bold
+}
+
+input,
+select,
+textarea{
+display:block;
+width:100%;
+padding:13px;
+margin:9px 0;
+border:1px solid #35353f;
+border-radius:10px;
+background:#08080b;
+color:#fff;
+font-size:15px;
+font-family:inherit;
+outline:none
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+border-color:#ff176f
+}
+
+textarea{
+min-height:120px;
+resize:vertical
+}
+
 .message{
-margin-top:12px;padding:12px;border-radius:10px;
-background:#202027;line-height:1.7
+margin-top:12px;
+padding:12px;
+border-radius:10px;
+background:#202027;
+line-height:1.7
 }
+
 .payment{
-background:#1b1519;border:1px solid #ff176f;border-radius:12px;
-padding:15px;margin:15px 0
+background:#1b1519;
+border:1px solid #ff176f;
+border-radius:12px;
+padding:15px;
+margin:15px 0
 }
-.payment h3{color:#ff176f;margin-top:0}
-.payment p{line-height:1.7}
-.loading{color:#aaa;text-align:center;padding:20px}
+
+.payment h3{
+color:#ff176f;
+margin-top:0
+}
+
+.loading{
+color:#aaa;
+text-align:center;
+padding:20px
+}
+
 .empty{
-grid-column:1/-1;text-align:center;color:#aaa;padding:30px
+grid-column:1/-1;
+text-align:center;
+color:#aaa;
+padding:30px
 }
+
 footer{
-border-top:1px solid #292932;text-align:center;padding:30px 15px;
-color:#888;margin-top:30px
+border-top:1px solid #292932;
+text-align:center;
+padding:30px 15px;
+color:#888;
+margin-top:30px
 }
+
 @media(max-width:600px){
-main{padding:12px}
-.hero{padding:30px 5px}
-.hero h1{font-size:27px}
-nav{gap:6px}
-nav button{flex:1 1 40%;font-size:14px;padding:11px 8px}
-.hero-buttons button{width:100%}
-.box{padding:15px}
-.cars{grid-template-columns:1fr}
+
+main{
+padding:12px
+}
+
+.hero h1{
+font-size:27px
+}
+
+nav button{
+flex:1 1 40%
+}
+
+.hero-buttons button{
+width:100%
+}
+
+.box{
+padding:15px
+}
+
+.cars{
+grid-template-columns:1fr
+}
+
 }
 </style>
 </head>
@@ -104,24 +275,39 @@ nav button{flex:1 1 40%;font-size:14px;padding:11px 8px}
 <body>
 
 <header>
+
 <div class="header-inner">
 
-<div class="logo">🚗 بنت الموصل للسيارات</div>
+<div class="logo">
+🚗 بنت الموصل للسيارات
+</div>
 
-<nav id="mainNav">
+<nav>
 
-<button type="button" data-section="home">🏠 الرئيسية</button>
+<button type="button" data-section="home">
+🏠 الرئيسية
+</button>
 
-<button type="button" data-section="cars">🚗 السيارات</button>
+<button type="button" data-section="cars">
+🚗 السيارات
+</button>
 
-<button type="button" data-section="login">🔐 تسجيل الدخول</button>
+<button type="button" data-section="login">
+🔐 تسجيل الدخول
+</button>
 
-<button type="button" data-section="register">👤 إنشاء حساب</button>
+<button type="button" data-section="register">
+👤 إنشاء حساب
+</button>
 
-<button type="button" data-section="add">➕ أضف سيارة</button>
+<button type="button" data-section="add">
+➕ أضف سيارة
+</button>
 
 </nav>
+
 </div>
+
 </header>
 
 <main>
@@ -130,149 +316,196 @@ nav button{flex:1 1 40%;font-size:14px;padding:11px 8px}
 
 <div class="hero">
 
-<h1>بنت الموصل للسيارات 🚘</h1>
+<h1>
+بنت الموصل للسيارات 🚘
+</h1>
 
-<p>منصة بيع وشراء السيارات في العراق</p>
+<p>
+منصة بيع وشراء السيارات في العراق
+</p>
 
 <div class="hero-buttons">
 
-<button type="button" data-section="cars">
+<button
+type="button"
+data-section="cars"
+>
 🔍 تصفح السيارات
 </button>
 
-<button type="button" class="secondary" data-section="add">
+<button
+type="button"
+class="secondary"
+data-section="add"
+>
 ➕ أضف سيارتك
 </button>
 
 </div>
+
 </div>
 
 <div class="box">
 
-<h2>🚘 أحدث السيارات</h2>
+<h2>
+🚘 أحدث السيارات
+</h2>
 
-<div id="latestCars" class="cars">
-<div class="loading">جاري تحميل السيارات...</div>
+<div
+id="latestCars"
+class="cars"
+>
+
+<div class="loading">
+جاري تحميل السيارات...
 </div>
 
 </div>
+
+</div>
+
 </section>
 
 
-<section id="cars" class="hidden">
+<section
+id="cars"
+class="hidden"
+>
 
 <div class="box">
 
-<h2>🚗 السيارات المعروضة</h2>
+<h2>
+🚗 السيارات المعروضة
+</h2>
 
 <input
 id="search"
 type="search"
 placeholder="🔍 ابحث عن ماركة أو موديل..."
-autocomplete="off"
 >
 
-<div id="carsList" class="cars">
-<div class="loading">جاري تحميل السيارات...</div>
+<div
+id="carsList"
+class="cars"
+>
+
+<div class="loading">
+جاري تحميل السيارات...
 </div>
 
 </div>
+
+</div>
+
 </section>
 
 
-<section id="login" class="hidden">
+<section
+id="login"
+class="hidden"
+>
 
 <div class="box">
 
-<h2>🔐 تسجيل الدخول</h2>
+<h2>
+🔐 تسجيل الدخول
+</h2>
 
-<form id="loginForm" autocomplete="on">
+<form id="loginForm">
 
 <input
 id="loginEmail"
-name="email"
 type="email"
 placeholder="البريد الإلكتروني"
-autocomplete="email"
 required
 >
 
 <input
 id="loginPassword"
-name="password"
 type="password"
 placeholder="كلمة المرور"
-autocomplete="current-password"
 required
 >
 
-<button type="submit">🔐 دخول</button>
+<button type="submit">
+🔐 دخول
+</button>
 
 </form>
 
 <div id="loginMessage"></div>
 
 </div>
+
 </section>
 
 
-<section id="register" class="hidden">
+<section
+id="register"
+class="hidden"
+>
 
 <div class="box">
 
-<h2>👤 إنشاء حساب</h2>
+<h2>
+👤 إنشاء حساب
+</h2>
 
-<form id="registerForm" autocomplete="on">
+<form id="registerForm">
 
 <input
 id="registerName"
-name="name"
 type="text"
 placeholder="الاسم"
-autocomplete="name"
 required
 >
 
 <input
 id="registerEmail"
-name="email"
 type="email"
 placeholder="البريد الإلكتروني"
-autocomplete="email"
 required
 >
 
 <input
 id="registerPassword"
-name="password"
 type="password"
-placeholder="كلمة المرور"
+placeholder="كلمة المرور - 6 أحرف على الأقل"
 minlength="6"
-autocomplete="new-password"
 required
 >
 
-<button type="submit">👤 إنشاء الحساب</button>
+<button type="submit">
+👤 إنشاء الحساب
+</button>
 
 </form>
 
 <div id="registerMessage"></div>
 
 </div>
+
 </section>
 
 
-<section id="add" class="hidden">
+<section
+id="add"
+class="hidden"
+>
 
 <div class="box">
 
-<h2>➕ إضافة سيارة للبيع</h2>
+<h2>
+➕ إضافة سيارة للبيع
+</h2>
 
-<form id="carForm" enctype="multipart/form-data">
+<form
+id="carForm"
+enctype="multipart/form-data"
+>
 
 <input
 id="brand"
-name="brand"
 type="text"
 placeholder="ماركة السيارة - مثال: Toyota"
 required
@@ -280,7 +513,6 @@ required
 
 <input
 id="model"
-name="model"
 type="text"
 placeholder="الموديل - مثال: Camry"
 required
@@ -288,17 +520,15 @@ required
 
 <input
 id="year"
-name="year"
 type="number"
 placeholder="سنة الصنع"
-min="1900"
+min="1950"
 max="2100"
 required
 >
 
 <input
 id="price"
-name="price"
 type="number"
 placeholder="السعر بالدينار العراقي"
 min="0"
@@ -307,53 +537,83 @@ required
 
 <input
 id="km"
-name="km"
 type="number"
 placeholder="عدد الكيلومترات"
 min="0"
+value="0"
 >
 
 <input
 id="city"
-name="city"
 type="text"
 placeholder="المدينة"
 value="الموصل"
 required
 >
 
-<select id="fuel" name="fuel">
-<option value="بنزين">بنزين</option>
-<option value="ديزل">ديزل</option>
-<option value="هايبرد">هايبرد</option>
-<option value="كهرباء">كهرباء</option>
+<select id="fuel">
+
+<option value="بنزين">
+بنزين
+</option>
+
+<option value="ديزل">
+ديزل
+</option>
+
+<option value="هايبرد">
+هايبرد
+</option>
+
+<option value="كهرباء">
+كهرباء
+</option>
+
 </select>
 
-<select id="transmission" name="transmission">
-<option value="أوتوماتيك">أوتوماتيك</option>
-<option value="عادي">عادي</option>
+<select id="transmission">
+
+<option value="أوتوماتيك">
+أوتوماتيك
+</option>
+
+<option value="عادي">
+عادي
+</option>
+
 </select>
 
 <textarea
 id="description"
-name="description"
 placeholder="اكتب تفاصيل السيارة..."
 ></textarea>
 
 <input
 id="image"
-name="image"
 type="file"
-accept="image/jpeg,image/png,image/webp,image/*"
+accept="image/jpeg,image/png,image/webp"
 >
 
 <div class="payment">
 
-<h3>💰 أسعار الإعلانات</h3>
+<h3>
+💰 أسعار الإعلانات
+</h3>
 
-<p>الإعلان العادي: <b>10,000 دينار</b></p>
-<p>الإعلان المميز: <b>20,000 دينار</b></p>
-<p>VIP: <b>30,000 دينار</b></p>
+<p>
+الإعلان العادي:
+<b>10,000 دينار</b>
+</p>
+
+<p>
+الإعلان المميز:
+<b>20,000 دينار</b>
+</p>
+
+<p>
+VIP:
+<b>30,000 دينار</b>
+</p>
 
 <p>
 بعد التحويل، ارفع صورة الوصل حتى تتم مراجعة الإعلان.
@@ -361,7 +621,10 @@ accept="image/jpeg,image/png,image/webp,image/*"
 
 </div>
 
-<button id="submitCarButton" type="submit">
+<button
+id="submitCarButton"
+type="submit"
+>
 🚀 نشر السيارة
 </button>
 
@@ -370,6 +633,7 @@ accept="image/jpeg,image/png,image/webp,image/*"
 <div id="carMessage"></div>
 
 </div>
+
 </section>
 
 </main>
@@ -380,46 +644,40 @@ accept="image/jpeg,image/png,image/webp,image/*"
 
 
 <script>
+
 "use strict";
 
-let token=localStorage.getItem("token")||"";
+let token =
+localStorage.getItem("token") || "";
+
 
 function $(id){
 return document.getElementById(id);
 }
 
+
 function escapeHtml(value){
-return String(value??"")
+
+return String(value ?? "")
 .replace(/&/g,"&amp;")
 .replace(/</g,"&lt;")
 .replace(/>/g,"&gt;")
 .replace(/"/g,"&quot;")
 .replace(/'/g,"&#039;");
+
 }
 
-function getCarsArray(data){
 
-if(Array.isArray(data)){
-return data;
-}
-
-if(data&&Array.isArray(data.cars)){
-return data.cars;
-}
-
-if(data&&Array.isArray(data.data)){
-return data.data;
-}
-
-return [];
-}
-
-async function readJson(response){
+async function json(response){
 
 try{
+
 return await response.json();
+
 }catch(error){
+
 return {};
+
 }
 
 }
@@ -427,31 +685,33 @@ return {};
 
 function showSection(id){
 
-const sections=document.querySelectorAll("main > section");
+document
+.querySelectorAll("main > section")
+.forEach(function(section){
 
-sections.forEach(function(section){
 section.classList.add("hidden");
+
 });
 
-const selected=$(id);
+const section =
+$(id);
 
-if(!selected){
-console.error("Section not found:",id);
+if(!section){
 return;
 }
 
-selected.classList.remove("hidden");
+section.classList.remove("hidden");
 
 window.scrollTo({
 top:0,
 behavior:"smooth"
 });
 
-if(id==="cars"){
+if(id === "cars"){
 loadCars();
 }
 
-if(id==="home"){
+if(id === "home"){
 loadLatestCars();
 }
 
@@ -460,58 +720,36 @@ loadLatestCars();
 
 function setupNavigation(){
 
-const buttons=document.querySelectorAll("[data-section]");
+document
+.querySelectorAll("[data-section]")
+.forEach(function(button){
 
-buttons.forEach(function(button){
+button.addEventListener(
+"click",
+function(){
 
-button.addEventListener("click",function(event){
+showSection(
+button.getAttribute(
+"data-section"
+)
+);
 
-event.preventDefault();
-
-const section=button.getAttribute("data-section");
-
-if(section){
-showSection(section);
 }
+);
 
 });
 
-});
-
 }
 
 
-function carCard(car){
+function card(car){
 
-const image=
-car.image||
-car.image_url||
-car.photo||
-"";
-
-const brand=car.brand||"سيارة";
-const model=car.model||"";
-const year=car.year||"غير محدد";
-const city=car.city||"غير محدد";
-
-const km=
-car.km??
-car.mileage??
-"غير محدد";
-
-const fuel=car.fuel||"غير محدد";
-const transmission=car.transmission||"غير محدد";
-
-const price=
-car.price??
-"غير محدد";
-
-const description=
-car.description||
-"لا توجد تفاصيل إضافية.";
+const image =
+car.image || "";
 
 return `
-<article class="car">
+
+<div class="car">
 
 <div class="car-image">
 
@@ -521,13 +759,12 @@ image
 `
 <img
 src="${escapeHtml(image)}"
-alt="${escapeHtml(brand+" "+model)}"
+alt="سيارة"
 loading="lazy"
-onerror="this.style.display='none';this.parentElement.innerHTML='🚗';"
 >
 `
 :
-`🚗`
+"🚗"
 }
 
 </div>
@@ -535,45 +772,50 @@ onerror="this.style.display='none';this.parentElement.innerHTML='🚗';"
 <div class="car-content">
 
 <h3>
-${escapeHtml(brand)}
-${escapeHtml(model)}
+${escapeHtml(car.brand || "")}
+${escapeHtml(car.model || "")}
 </h3>
 
 <p>
 📅 السنة:
-${escapeHtml(year)}
+${escapeHtml(car.year || "غير محدد")}
 </p>
 
 <p>
 📍 المدينة:
-${escapeHtml(city)}
+${escapeHtml(car.city || "غير محدد")}
 </p>
 
 <p>
 🛣️ الكيلومترات:
-${escapeHtml(km)}
+${escapeHtml(car.km ?? "غير محدد")}
 </p>
 
 <p>
 ⛽ الوقود:
-${escapeHtml(fuel)}
+${escapeHtml(car.fuel || "غير محدد")}
 </p>
 
 <p>
 ⚙️ القير:
-${escapeHtml(transmission)}
+${escapeHtml(car.transmission || "غير محدد")}
 </p>
 
 <p class="price">
-💰 ${escapeHtml(price)} دينار
+💰 ${escapeHtml(car.price ?? "غير محدد")} دينار
 </p>
 
 <p>
-${escapeHtml(description)}
+${escapeHtml(
+car.description ||
+"لا توجد تفاصيل إضافية."
+)}
 </p>
 
 </div>
-</article>
+
+</div>
+
 `;
 
 }
@@ -581,61 +823,67 @@ ${escapeHtml(description)}
 
 async function loadCars(){
 
-const box=$("carsList");
+const box =
+$("carsList");
 
 if(!box){
 return;
 }
 
-const searchElement=$("search");
-
-const search=
-searchElement?
-searchElement.value.trim():
-"";
-
-box.innerHTML=`
+box.innerHTML =
+`
 <div class="loading">
-⏳ جاري تحميل السيارات...
+⏳ جاري التحميل...
 </div>
 `;
 
 try{
 
-let url="/api/cars";
+const search =
+$("search").value.trim();
+
+let url =
+"/api/cars";
 
 if(search){
 
-url+="?search="+encodeURIComponent(search);
+url +=
+"?search=" +
+encodeURIComponent(search);
 
 }
 
-const response=
-await fetch(url,{
-method:"GET",
-cache:"no-store",
-headers:{
-"Accept":"application/json"
+const response =
+await fetch(
+url,
+{
+cache:"no-store"
 }
-});
+);
 
-const data=await readJson(response);
+const data =
+await json(response);
 
 if(!response.ok){
 
 throw new Error(
-data.message||
-data.error||
+data.error ||
 "تعذر تحميل السيارات"
 );
 
 }
 
-const cars=getCarsArray(data);
+const cars =
+Array.isArray(data)
+?
+data
+:
+(data.cars || []);
 
 if(!cars.length){
 
-box.innerHTML=`
+box.innerHTML =
+`
 <div class="empty">
 🚗 لا توجد سيارات حالياً.
 </div>
@@ -644,18 +892,17 @@ box.innerHTML=`
 return;
 }
 
-box.innerHTML=
-cars.map(carCard).join("");
+box.innerHTML =
+cars.map(card).join("");
 
 }catch(error){
 
-console.error("loadCars:",error);
+console.error(error);
 
-box.innerHTML=`
+box.innerHTML =
+`
 <div class="message">
 ❌ تعذر تحميل السيارات حالياً.
-<br>
-حاول تحديث الصفحة.
 </div>
 `;
 
@@ -666,46 +913,37 @@ box.innerHTML=`
 
 async function loadLatestCars(){
 
-const box=$("latestCars");
+const box =
+$("latestCars");
 
 if(!box){
 return;
 }
 
-box.innerHTML=`
-<div class="loading">
-⏳ جاري تحميل السيارات...
-</div>
-`;
-
 try{
 
-const response=
-await fetch("/api/cars",{
-method:"GET",
-cache:"no-store",
-headers:{
-"Accept":"application/json"
+const response =
+await fetch(
+"/api/cars",
+{
+cache:"no-store"
 }
-});
-
-const data=await readJson(response);
-
-if(!response.ok){
-
-throw new Error(
-data.message||
-data.error||
-"تعذر تحميل السيارات"
 );
 
-}
+const data =
+await json(response);
 
-const cars=getCarsArray(data);
+const cars =
+Array.isArray(data)
+?
+data
+:
+(data.cars || []);
 
 if(!cars.length){
 
-box.innerHTML=`
+box.innerHTML =
+`
 <div class="empty">
 🚗 لا توجد سيارات مضافة حالياً.
 </div>
@@ -714,14 +952,18 @@ box.innerHTML=`
 return;
 }
 
-box.innerHTML=
-cars.slice(0,6).map(carCard).join("");
+box.innerHTML =
+cars
+.slice(0,6)
+.map(card)
+.join("");
 
 }catch(error){
 
-console.error("loadLatestCars:",error);
+console.error(error);
 
-box.innerHTML=`
+box.innerHTML =
+`
 <div class="empty">
 🚗 لا توجد سيارات لعرضها حالياً.
 </div>
@@ -734,42 +976,49 @@ box.innerHTML=`
 
 function setupSearch(){
 
-const searchInput=$("search");
+const input =
+$("search");
 
-if(!searchInput){
+if(!input){
 return;
 }
 
-let timer=null;
+let timer;
 
-searchInput.addEventListener("input",function(){
+input.addEventListener(
+"input",
+function(){
 
 clearTimeout(timer);
 
-timer=setTimeout(function(){
-loadCars();
-},300);
+timer =
+setTimeout(
+loadCars,
+300
+);
 
-});
+}
+);
 
 }
 
 
 function setupRegister(){
 
-const form=$("registerForm");
+const form =
+$("registerForm");
 
-if(!form){
-return;
-}
-
-form.addEventListener("submit",async function(e){
+form.addEventListener(
+"submit",
+async function(e){
 
 e.preventDefault();
 
-const message=$("registerMessage");
+const message =
+$("registerMessage");
 
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ⏳ جاري إنشاء الحساب...
 </div>
@@ -777,51 +1026,81 @@ message.innerHTML=`
 
 try{
 
-const response=
-await fetch("/api/auth/register",{
+const response =
+await fetch(
+"/api/auth/register",
+{
 method:"POST",
+
 headers:{
-"Content-Type":"application/json",
-"Accept":"application/json"
+"Content-Type":
+"application/json"
 },
+
 body:JSON.stringify({
 
-name:$("registerName").value.trim(),
+name:
+$("registerName")
+.value
+.trim(),
 
-email:$("registerEmail").value.trim(),
+email:
+$("registerEmail")
+.value
+.trim(),
 
-password:$("registerPassword").value
+password:
+$("registerPassword")
+.value
 
 })
-});
+}
+);
 
-const data=await readJson(response);
+const data =
+await json(response);
 
 if(!response.ok){
 
 throw new Error(
-data.message||
-data.error||
+data.error ||
 "فشل إنشاء الحساب"
 );
 
 }
 
-message.innerHTML=`
+token =
+data.token || "";
+
+if(token){
+
+localStorage.setItem(
+"token",
+token
+);
+
+}
+
+message.innerHTML =
+`
 <div class="message">
-✅ تم إنشاء الحساب بنجاح.
-<br>
-يمكنك تسجيل الدخول الآن.
+✅ تم إنشاء الحساب وتسجيل الدخول بنجاح.
 </div>
 `;
 
 form.reset();
 
+setTimeout(
+function(){
+showSection("home");
+},
+700
+);
+
 }catch(error){
 
-console.error("register:",error);
-
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ❌ ${escapeHtml(error.message)}
 </div>
@@ -829,33 +1108,28 @@ message.innerHTML=`
 
 }
 
-});
+}
+);
 
 }
 
 
 function setupLogin(){
 
-const form=$("loginForm");
+const form =
+$("loginForm");
 
-if(!form){
-return;
-}
-
-form.addEventListener("submit",async function(e){
+form.addEventListener(
+"submit",
+async function(e){
 
 e.preventDefault();
 
-const message=$("loginMessage");
+const message =
+$("loginMessage");
 
-const submitButton=
-form.querySelector("button[type='submit']");
-
-if(submitButton){
-submitButton.disabled=true;
-}
-
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ⏳ جاري تسجيل الدخول...
 </div>
@@ -863,51 +1137,62 @@ message.innerHTML=`
 
 try{
 
-const response=
-await fetch("/api/auth/login",{
+const response =
+await fetch(
+"/api/auth/login",
+{
 method:"POST",
+
 headers:{
-"Content-Type":"application/json",
-"Accept":"application/json"
+"Content-Type":
+"application/json"
 },
+
 body:JSON.stringify({
 
-email:$("loginEmail").value.trim(),
+email:
+$("loginEmail")
+.value
+.trim(),
 
-password:$("loginPassword").value
+password:
+$("loginPassword")
+.value
 
 })
-});
+}
+);
 
-const data=await readJson(response);
+const data =
+await json(response);
 
 if(!response.ok){
 
 throw new Error(
-data.message||
-data.error||
+data.error ||
 "بيانات الدخول غير صحيحة"
 );
 
 }
 
-token=
-data.token||
-data.accessToken||
-data.jwt||
-"";
+token =
+data.token || "";
 
 if(!token){
 
 throw new Error(
-"تم الدخول لكن لم يتم استلام رمز الدخول من الخادم."
+"لم يتم استلام رمز الدخول."
 );
 
 }
 
-localStorage.setItem("token",token);
+localStorage.setItem(
+"token",
+token
+);
 
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ✅ تم تسجيل الدخول بنجاح.
 </div>
@@ -915,65 +1200,60 @@ message.innerHTML=`
 
 form.reset();
 
-setTimeout(function(){
+setTimeout(
+function(){
 showSection("home");
-},800);
+},
+700
+);
 
 }catch(error){
 
-console.error("login:",error);
-
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ❌ ${escapeHtml(error.message)}
 </div>
 `;
 
-}finally{
-
-if(submitButton){
-submitButton.disabled=false;
 }
 
 }
-
-});
+);
 
 }
 
 
 function setupCarForm(){
 
-const form=$("carForm");
+const form =
+$("carForm");
 
-if(!form){
-return;
-}
-
-form.addEventListener("submit",async function(e){
+form.addEventListener(
+"submit",
+async function(e){
 
 e.preventDefault();
 
-const message=$("carMessage");
-
-const submitButton=$("submitCarButton");
+const message =
+$("carMessage");
 
 if(!token){
 
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ❌ لازم تسجل دخول أولاً.
 </div>
 `;
 
+showSection("login");
+
 return;
 }
 
-if(submitButton){
-submitButton.disabled=true;
-}
-
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ⏳ جاري إرسال السيارة...
 </div>
@@ -981,7 +1261,8 @@ message.innerHTML=`
 
 try{
 
-const formData=new FormData();
+const formData =
+new FormData();
 
 formData.append(
 "brand",
@@ -1005,7 +1286,7 @@ $("price").value
 
 formData.append(
 "km",
-$("km").value
+$("km").value || "0"
 );
 
 formData.append(
@@ -1028,106 +1309,111 @@ formData.append(
 $("description").value.trim()
 );
 
-const imageInput=$("image");
+formData.append(
+"plan",
+"10000"
+);
 
-if(
-imageInput&&
-imageInput.files&&
-imageInput.files.length>0
-){
+const file =
+$("image").files[0];
+
+if(file){
 
 formData.append(
 "image",
-imageInput.files[0]
+file
 );
 
 }
 
-const response=
-await fetch("/api/cars",{
+const response =
+await fetch(
+"/api/cars",
+{
 method:"POST",
-headers:{
-"Authorization":"Bearer "+token,
-"Accept":"application/json"
-},
-body:formData
-});
 
-const data=await readJson(response);
+headers:{
+"Authorization":
+"Bearer " + token
+},
+
+body:formData
+}
+);
+
+const data =
+await json(response);
 
 if(!response.ok){
 
-if(response.status===401){
+if(response.status === 401){
 
-localStorage.removeItem("token");
+localStorage.removeItem(
+"token"
+);
 
 token="";
 
+}
+
 throw new Error(
-"انتهت جلسة تسجيل الدخول. سجل دخول مرة ثانية."
+data.error ||
+"تعذر نشر السيارة"
 );
 
 }
 
-throw new Error(
-data.message||
-data.error||
-"فشل نشر السيارة"
-);
-
-}
-
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ✅ تم إرسال السيارة للمراجعة بنجاح.
 <br>
-بعد موافقة الإدارة ستظهر السيارة في الموقع.
+ستظهر بعد موافقة الإدارة.
 </div>
 `;
 
 form.reset();
 
-$("city").value="الموصل";
-
-setTimeout(function(){
-loadLatestCars();
-},500);
+$("city").value =
+"الموصل";
 
 }catch(error){
 
-console.error("car submit:",error);
-
-message.innerHTML=`
+message.innerHTML =
+`
 <div class="message">
 ❌ ${escapeHtml(error.message)}
 </div>
 `;
 
-}finally{
-
-if(submitButton){
-submitButton.disabled=false;
 }
 
 }
-
-});
+);
 
 }
 
 
-document.addEventListener("DOMContentLoaded",function(){
+document.addEventListener(
+"DOMContentLoaded",
+function(){
 
 setupNavigation();
+
 setupSearch();
+
 setupRegister();
+
 setupLogin();
+
 setupCarForm();
+
 loadLatestCars();
 
-});
+}
+);
 
 </script>
 
 </body>
-  </html>
+</html>
