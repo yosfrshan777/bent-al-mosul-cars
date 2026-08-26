@@ -16,25 +16,19 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 
 const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  "CHANGE_THIS_SECRET_IN_RENDER";
+  process.env.JWT_SECRET || "CHANGE_THIS_SECRET_IN_RENDER";
 
-const DATA_DIR =
-  path.join(__dirname, "data");
-
-const UPLOAD_DIR =
-  path.join(__dirname, "uploads");
-
-const PUBLIC_DIR =
-  path.join(__dirname, "public");
+const DATA_DIR = path.join(__dirname, "data");
+const UPLOAD_DIR = path.join(__dirname, "uploads");
+const PUBLIC_DIR = path.join(__dirname, "public");
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 
-/* =====================================================
+/* =========================
    DATABASE
-===================================================== */
+========================= */
 
 const db = new Database(
   path.join(DATA_DIR, "cars.db")
@@ -70,10 +64,7 @@ CREATE TABLE IF NOT EXISTS cars (
   status TEXT NOT NULL DEFAULT 'pending',
   image TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  FOREIGN KEY(user_id)
-  REFERENCES users(id)
-  ON DELETE CASCADE
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS payments (
@@ -85,48 +76,27 @@ CREATE TABLE IF NOT EXISTS payments (
   reference TEXT,
   receipt TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  FOREIGN KEY(car_id)
-  REFERENCES cars(id)
-  ON DELETE CASCADE,
-
-  FOREIGN KEY(user_id)
-  REFERENCES users(id)
-  ON DELETE CASCADE
+  FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 `);
 
-/* =====================================================
+/* =========================
    ADMIN
-===================================================== */
+========================= */
 
 function seedAdmin() {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
 
-  const email =
-    process.env.ADMIN_EMAIL;
+  if (!email || !password) return;
 
-  const password =
-    process.env.ADMIN_PASSWORD;
-
-  if (!email || !password) {
-    console.log(
-      "ADMIN_EMAIL / ADMIN_PASSWORD غير موجودة"
-    );
-    return;
-  }
-
-  const existing =
-    db.prepare(
-      "SELECT id FROM users WHERE email = ?"
-    ).get(email);
+  const existing = db
+    .prepare("SELECT id FROM users WHERE email = ?")
+    .get(email);
 
   if (!existing) {
-
-    const hash =
-      bcrypt.hashSync(
-        password,
-        12
-      );
+    const hash = bcrypt.hashSync(password, 12);
 
     db.prepare(`
       INSERT INTO users
@@ -138,19 +108,14 @@ function seedAdmin() {
       email,
       hash
     );
-
-    console.log(
-      "Admin account created:",
-      email
-    );
   }
 }
 
 seedAdmin();
 
-/* =====================================================
+/* =========================
    SECURITY
-===================================================== */
+========================= */
 
 app.disable("x-powered-by");
 
@@ -159,26 +124,40 @@ app.use(
     contentSecurityPolicy: false
   })
 );
+
 app.use(cors());
 
 app.use(compression());
 
-app.use(
-  express.json({
-    limit: "200kb"
-  })
-);
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({
+  extended: false,
+  limit: "1mb"
+}));
 
-app.use(
-  express.urlencoded({
-    extended: false,
-    limit: "200kb"
-  })
-);
+/* =========================
+   RATE LIMIT
+========================= */
 
-/* =====================================================
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use("/api/", apiLimiter);
+
+/* =========================
    STATIC
-===================================================== */
+========================= */
 
 app.use(
   "/uploads",
@@ -189,632 +168,487 @@ app.use(
   express.static(PUBLIC_DIR)
 );
 
-/* =====================================================
-   RATE LIMIT
-===================================================== */
+/*
+  دعم index.html إذا كان موجودًا
+  في مجلد المشروع الرئيسي أيضًا.
+*/
+app.get("/", (req, res) => {
+  const publicIndex = path.join(
+    PUBLIC_DIR,
+    "index.html"
+  );
 
-const apiLimiter =
-  rateLimit({
-    windowMs:
-      15 * 60 * 1000,
+  const rootIndex = path.join(
+    __dirname,
+    "index.html"
+  );
 
-    limit: 300,
+  if (fs.existsSync(publicIndex)) {
+    return res.sendFile(publicIndex);
+  }
 
-    standardHeaders: true,
+  if (fs.existsSync(rootIndex)) {
+    return res.sendFile(rootIndex);
+  }
 
-    legacyHeaders: false
-  });
+  res.status(404).send("index.html غير موجود");
+});
 
-const authLimiter =
-  rateLimit({
-    windowMs:
-      15 * 60 * 1000,
-
-    limit: 30,
-
-    standardHeaders: true,
-
-    legacyHeaders: false
-  });
-
-app.use(
-  "/api/",
-  apiLimiter
-);
-
-/* =====================================================
+/* =========================
    UPLOAD
-===================================================== */
+========================= */
 
-const storage =
-  multer.diskStorage({
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOAD_DIR);
+  },
 
-    destination:
-      (req, file, cb) => {
-        cb(
-          null,
-          UPLOAD_DIR
-        );
-      },
+  filename: (req, file, cb) => {
+    const ext =
+      path.extname(file.originalname).toLowerCase();
 
-    filename:
-      (req, file, cb) => {
+    const allowed = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".webp"
+    ];
 
-        const ext =
-          path.extname(
-            file.originalname
-          ).toLowerCase();
+    const safeExt =
+      allowed.includes(ext)
+        ? ext
+        : ".jpg";
 
-        const allowed = [
-          ".jpg",
-          ".jpeg",
-          ".png",
-          ".webp"
-        ];
+    const filename =
+      Date.now() +
+      "-" +
+      Math.random()
+        .toString(36)
+        .slice(2) +
+      safeExt;
 
-        const safeExt =
-          allowed.includes(ext)
-            ? ext
-            : ".jpg";
+    cb(null, filename);
+  }
+});
 
-        const filename =
-          Date.now() +
-          "-" +
-          Math.random()
-            .toString(36)
-            .slice(2) +
-          safeExt;
+const upload = multer({
+  storage,
 
-        cb(
-          null,
-          filename
-        );
-      }
-  });
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
 
-const upload =
-  multer({
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ];
 
-    storage,
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          "يسمح فقط بصور JPG و PNG و WEBP"
+        )
+      );
+    }
+  }
+});
 
-    limits: {
-      fileSize:
-        5 * 1024 * 1024,
-
-      files: 5
-    },
-
-    fileFilter:
-      (req, file, cb) => {
-
-        const allowed = [
-          "image/jpeg",
-          "image/png",
-          "image/webp"
-        ];
-
-        if (
-          allowed.includes(
-            file.mimetype
-          )
-        ) {
-
-          cb(
-            null,
-            true
-          );
-
-        } else {
-
-          cb(
-            new Error(
-              "يسمح فقط بصور JPG و PNG و WEBP"
-            )
-          );
-
-        }
-      }
-  });
-
-/* =====================================================
+/* =========================
    JWT
-===================================================== */
+========================= */
 
 function sign(user) {
-
   return jwt.sign(
     {
-      sub:
-        Number(user.id),
-
-      role:
-        user.role
+      sub: Number(user.id),
+      role: user.role
     },
-
     JWT_SECRET,
-
     {
       expiresIn: "7d"
     }
   );
 }
 
-/* =====================================================
-   AUTH
-===================================================== */
-
-function auth(
-  req,
-  res,
-  next
-) {
-
+function auth(req, res, next) {
   const header =
-    req.headers.authorization ||
-    "";
+    req.headers.authorization || "";
 
-  if (
-    !header.startsWith(
-      "Bearer "
-    )
-  ) {
-
+  if (!header.startsWith("Bearer ")) {
     return res.status(401).json({
-      error:
-        "تسجيل الدخول مطلوب"
+      error: "تسجيل الدخول مطلوب"
     });
-
   }
 
   const token =
-    header
-      .slice(7)
-      .trim();
+    header.slice(7).trim();
 
   try {
-
-    const decoded =
-      jwt.verify(
-        token,
-        JWT_SECRET
-      );
-
-    req.user =
-      decoded;
+    req.user = jwt.verify(
+      token,
+      JWT_SECRET
+    );
 
     next();
-
   } catch (error) {
-
     return res.status(401).json({
-      error:
-        "جلسة غير صالحة أو منتهية"
+      error: "جلسة غير صالحة أو منتهية"
     });
-
   }
 }
 
-function admin(
-  req,
-  res,
-  next
-) {
-
+function admin(req, res, next) {
   if (
     !req.user ||
     req.user.role !== "admin"
   ) {
-
     return res.status(403).json({
-      error:
-        "صلاحية الإدارة مطلوبة"
+      error: "صلاحية الإدارة مطلوبة"
     });
-
   }
 
   next();
 }
 
-/* =====================================================
+/* =========================
+   HELPERS
+========================= */
+
+function removeImage(image) {
+  if (!image) return;
+
+  const filename =
+    path.basename(image);
+
+  const file =
+    path.join(
+      UPLOAD_DIR,
+      filename
+    );
+
+  if (fs.existsSync(file)) {
+    try {
+      fs.unlinkSync(file);
+    } catch (_) {}
+  }
+}
+
+function uniquePhone() {
+  let phone;
+
+  do {
+    phone =
+      "AUTO" +
+      Date.now() +
+      Math.floor(
+        Math.random() * 10000
+      );
+  } while (
+    db.prepare(
+      "SELECT id FROM users WHERE phone = ?"
+    ).get(phone)
+  );
+
+  return phone;
+}
+
+/* =========================
    VALIDATION
-===================================================== */
+========================= */
 
-const registerSchema =
-  z.object({
+const registerSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2)
+    .max(100),
 
-    name:
-      z.string()
-      .trim()
-      .min(2)
-      .max(100),
+  email: z.string()
+    .trim()
+    .email(),
 
-    phone:
-      z.string()
-      .trim()
-      .min(6)
-      .max(30),
+  password: z.string()
+    .min(6)
+    .max(100)
+});
 
-    email:
-      z.string()
-      .trim()
-      .email()
-      .optional()
-      .or(
-        z.literal("")
-      ),
+const loginSchema = z.object({
+  email: z.string()
+    .trim()
+    .email(),
 
-    password:
-      z.string()
-      .min(6)
-      .max(100)
-  });
+  password: z.string()
+    .min(1)
+});
 
-const loginSchema =
-  z.object({
+const carSchema = z.object({
+  brand: z.string()
+    .trim()
+    .min(1)
+    .max(50),
 
-    phone:
-      z.string()
-      .trim()
-      .min(6),
+  model: z.string()
+    .trim()
+    .min(1)
+    .max(100),
 
-    password:
-      z.string()
-      .min(1)
-  });
+  year: z.coerce.number()
+    .int()
+    .min(1950)
+    .max(2100),
 
-const carSchema =
-  z.object({
+  price: z.coerce.number()
+    .int()
+    .min(0),
 
-    brand:
-      z.string()
-      .trim()
-      .min(1)
-      .max(50),
+  km: z.coerce.number()
+    .int()
+    .min(0)
+    .max(10000000)
+    .default(0),
 
-    model:
-      z.string()
-      .trim()
-      .min(1)
-      .max(100),
+  city: z.string()
+    .trim()
+    .min(1)
+    .max(100),
 
-    year:
-      z.coerce
-      .number()
-      .int()
-      .min(1950)
-      .max(2100),
+  fuel: z.string()
+    .trim()
+    .max(50)
+    .optional()
+    .default(""),
 
-    price:
-      z.coerce
-      .number()
-      .int()
-      .min(0),
+  transmission: z.string()
+    .trim()
+    .max(50)
+    .optional()
+    .default(""),
 
-    km:
-      z.coerce
-      .number()
-      .int()
-      .min(0)
-      .max(10000000),
+  description: z.string()
+    .trim()
+    .max(5000)
+    .optional()
+    .default(""),
 
-    city:
-      z.string()
-      .trim()
-      .min(1)
-      .max(100),
+  plan: z.coerce.number()
+    .int()
+    .refine(
+      value =>
+        [10000, 20000, 30000]
+          .includes(value)
+    )
+    .default(10000)
+});
 
-    fuel:
-      z.string()
-      .trim()
-      .max(50)
-      .optional()
-      .default(""),
-
-    transmission:
-      z.string()
-      .trim()
-      .max(50)
-      .optional()
-      .default(""),
-
-    description:
-      z.string()
-      .trim()
-      .max(5000)
-      .optional()
-      .default(""),
-
-    plan:
-      z.coerce
-      .number()
-      .int()
-      .refine(
-        value =>
-          [
-            10000,
-            20000,
-            30000
-          ].includes(value),
-
-        {
-          message:
-            "الخطة غير صحيحة"
-        }
-      )
-  });
-
-/* =====================================================
+/* =========================
    HEALTH
-===================================================== */
+========================= */
 
-app.get(
-  "/api/health",
-  (req, res) => {
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    message: "Bent Al-Mosul Cars API تعمل بنجاح",
+    time: new Date().toISOString()
+  });
+});
 
-    res.json({
-      ok: true,
+/* =========================
+   REGISTER
+========================= */
 
-      message:
-        "Bent Al-Mosul Cars API تعمل بنجاح",
+async function registerHandler(req, res) {
+  try {
+    const data =
+      registerSchema.parse(req.body);
 
-      time:
-        new Date().toISOString()
+    const existing =
+      db.prepare(
+        "SELECT id FROM users WHERE email = ?"
+      ).get(data.email);
+
+    if (existing) {
+      return res.status(409).json({
+        error:
+          "البريد الإلكتروني مستخدم مسبقاً"
+      });
+    }
+
+    const hash =
+      await bcrypt.hash(
+        data.password,
+        12
+      );
+
+    const phone =
+      uniquePhone();
+
+    const result =
+      db.prepare(`
+        INSERT INTO users
+        (name, phone, email, password_hash)
+        VALUES (?, ?, ?, ?)
+      `).run(
+        data.name,
+        phone,
+        data.email,
+        hash
+      );
+
+    const user =
+      db.prepare(`
+        SELECT
+          id,
+          name,
+          phone,
+          email,
+          role,
+          created_at
+        FROM users
+        WHERE id = ?
+      `).get(
+        result.lastInsertRowid
+      );
+
+    const token =
+      sign(user);
+
+    res.status(201).json({
+      success: true,
+      token,
+      user
     });
 
-  }
-);
+  } catch (error) {
+    console.error(
+      "REGISTER ERROR:",
+      error
+    );
 
-/* =====================================================
-   REGISTER
-===================================================== */
+    if (
+      error instanceof z.ZodError
+    ) {
+      return res.status(400).json({
+        error:
+          "بيانات التسجيل غير صحيحة"
+      });
+    }
+
+    res.status(500).json({
+      error:
+        "حدث خطأ أثناء إنشاء الحساب"
+    });
+  }
+}
 
 app.post(
   "/api/register",
   authLimiter,
-
-  async (
-    req,
-    res
-  ) => {
-
-    try {
-
-      const data =
-        registerSchema.parse(
-          req.body
-        );
-
-      const email =
-        data.email ||
-        null;
-
-      const existingPhone =
-        db.prepare(
-          "SELECT id FROM users WHERE phone = ?"
-        ).get(
-          data.phone
-        );
-
-      if (existingPhone) {
-
-        return res.status(409).json({
-          error:
-            "رقم الهاتف مستخدم مسبقاً"
-        });
-
-      }
-
-      if (email) {
-
-        const existingEmail =
-          db.prepare(
-            "SELECT id FROM users WHERE email = ?"
-          ).get(
-            email
-          );
-
-        if (existingEmail) {
-
-          return res.status(409).json({
-            error:
-              "البريد الإلكتروني مستخدم مسبقاً"
-          });
-
-        }
-      }
-
-      const hash =
-        await bcrypt.hash(
-          data.password,
-          12
-        );
-
-      const result =
-        db.prepare(`
-          INSERT INTO users
-          (
-            name,
-            phone,
-            email,
-            password_hash
-          )
-          VALUES (?, ?, ?, ?)
-        `).run(
-          data.name,
-          data.phone,
-          email,
-          hash
-        );
-
-      const user =
-        db.prepare(`
-          SELECT
-            id,
-            name,
-            phone,
-            email,
-            role,
-            created_at
-          FROM users
-          WHERE id = ?
-        `).get(
-          result.lastInsertRowid
-        );
-
-      const token =
-        sign(user);
-
-      res.status(201).json({
-        success: true,
-        token,
-        user
-      });
-
-    } catch (error) {
-
-      if (
-        error instanceof
-        z.ZodError
-      ) {
-
-        return res.status(400).json({
-          error:
-            "بيانات التسجيل غير صحيحة"
-        });
-
-      }
-
-      console.error(
-        "REGISTER ERROR:",
-        error
-      );
-
-      res.status(500).json({
-        error:
-          "حدث خطأ أثناء إنشاء الحساب"
-      });
-
-    }
-  }
+  registerHandler
 );
 
-/* =====================================================
+app.post(
+  "/api/auth/register",
+  authLimiter,
+  registerHandler
+);
+
+/* =========================
    LOGIN
-===================================================== */
+========================= */
+
+async function loginHandler(req, res) {
+  try {
+    const data =
+      loginSchema.parse(req.body);
+
+    const user =
+      db.prepare(`
+        SELECT *
+        FROM users
+        WHERE email = ?
+      `).get(data.email);
+
+    if (!user) {
+      return res.status(401).json({
+        error:
+          "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+      });
+    }
+
+    const valid =
+      await bcrypt.compare(
+        data.password,
+        user.password_hash
+      );
+
+    if (!valid) {
+      return res.status(401).json({
+        error:
+          "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+      });
+    }
+
+    const token =
+      sign(user);
+
+    res.json({
+      success: true,
+      token,
+
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    console.error(
+      "LOGIN ERROR:",
+      error
+    );
+
+    if (
+      error instanceof z.ZodError
+    ) {
+      return res.status(400).json({
+        error:
+          "بيانات الدخول غير صحيحة"
+      });
+    }
+
+    res.status(500).json({
+      error:
+        "حدث خطأ أثناء تسجيل الدخول"
+    });
+  }
+}
 
 app.post(
   "/api/login",
   authLimiter,
-
-  async (
-    req,
-    res
-  ) => {
-
-    try {
-
-      const data =
-        loginSchema.parse(
-          req.body
-        );
-
-      const user =
-        db.prepare(`
-          SELECT *
-          FROM users
-          WHERE phone = ?
-        `).get(
-          data.phone
-        );
-
-      if (!user) {
-
-        return res.status(401).json({
-          error:
-            "رقم الهاتف أو كلمة المرور غير صحيحة"
-        });
-
-      }
-
-      const valid =
-        await bcrypt.compare(
-          data.password,
-          user.password_hash
-        );
-
-      if (!valid) {
-
-        return res.status(401).json({
-          error:
-            "رقم الهاتف أو كلمة المرور غير صحيحة"
-        });
-
-      }
-
-      const token =
-        sign(user);
-
-      res.json({
-        success: true,
-
-        token,
-
-        user: {
-          id:
-            user.id,
-
-          name:
-            user.name,
-
-          phone:
-            user.phone,
-
-          email:
-            user.email,
-
-          role:
-            user.role
-        }
-      });
-
-    } catch (error) {
-
-      if (
-        error instanceof
-        z.ZodError
-      ) {
-
-        return res.status(400).json({
-          error:
-            "بيانات الدخول غير صحيحة"
-        });
-
-      }
-
-      console.error(
-        "LOGIN ERROR:",
-        error
-      );
-
-      res.status(500).json({
-        error:
-          "حدث خطأ أثناء تسجيل الدخول"
-      });
-
-    }
-  }
+  loginHandler
 );
 
-/* =====================================================
+app.post(
+  "/api/auth/login",
+  authLimiter,
+  loginHandler
+);
+
+/* =========================
    ME
-===================================================== */
+========================= */
 
 app.get(
   "/api/me",
   auth,
-
   (req, res) => {
-
     const user =
       db.prepare(`
         SELECT
@@ -831,39 +665,29 @@ app.get(
       );
 
     if (!user) {
-
       return res.status(404).json({
-        error:
-          "المستخدم غير موجود"
+        error: "المستخدم غير موجود"
       });
-
     }
 
     res.json({
       user
     });
-
   }
 );
 
-/* =====================================================
+/* =========================
    PUBLIC CARS
-===================================================== */
+========================= */
 
 app.get(
   "/api/cars",
-
   (req, res) => {
-
     try {
-
-      const {
-        search = "",
-        city = "",
-        minPrice,
-        maxPrice,
-        brand = ""
-      } = req.query;
+      const search =
+        String(
+          req.query.search || ""
+        ).trim();
 
       let sql = `
         SELECT
@@ -881,8 +705,7 @@ app.get(
           cars.image,
           cars.status,
           cars.created_at,
-          users.name AS seller_name,
-          users.phone AS seller_phone
+          users.name AS seller_name
         FROM cars
         JOIN users
           ON users.id = cars.user_id
@@ -892,7 +715,6 @@ app.get(
       const params = [];
 
       if (search) {
-
         sql += `
           AND (
             cars.brand LIKE ?
@@ -911,56 +733,6 @@ app.get(
         );
       }
 
-      if (city) {
-
-        sql += `
-          AND cars.city LIKE ?
-        `;
-
-        params.push(
-          `%${city}%`
-        );
-      }
-
-      if (brand) {
-
-        sql += `
-          AND cars.brand LIKE ?
-        `;
-
-        params.push(
-          `%${brand}%`
-        );
-      }
-
-      if (
-        minPrice !== undefined &&
-        minPrice !== ""
-      ) {
-
-        sql += `
-          AND cars.price >= ?
-        `;
-
-        params.push(
-          Number(minPrice)
-        );
-      }
-
-      if (
-        maxPrice !== undefined &&
-        maxPrice !== ""
-      ) {
-
-        sql += `
-          AND cars.price <= ?
-        `;
-
-        params.push(
-          Number(maxPrice)
-        );
-      }
-
       sql += `
         ORDER BY
           cars.plan DESC,
@@ -968,9 +740,7 @@ app.get(
       `;
 
       const cars =
-        db.prepare(
-          sql
-        ).all(
+        db.prepare(sql).all(
           ...params
         );
 
@@ -980,7 +750,6 @@ app.get(
       });
 
     } catch (error) {
-
       console.error(
         "GET CARS ERROR:",
         error
@@ -990,35 +759,25 @@ app.get(
         error:
           "تعذر جلب السيارات"
       });
-
     }
-
   }
 );
 
-/* =====================================================
+/* =========================
    SINGLE CAR
-===================================================== */
+========================= */
 
 app.get(
   "/api/cars/:id",
-
   (req, res) => {
-
     const id =
-      Number(
-        req.params.id
-      );
+      Number(req.params.id);
 
-    if (
-      !Number.isInteger(id)
-    ) {
-
+    if (!Number.isInteger(id)) {
       return res.status(400).json({
         error:
           "رقم السيارة غير صحيح"
       });
-
     }
 
     const car =
@@ -1035,103 +794,42 @@ app.get(
       `).get(id);
 
     if (!car) {
-
       return res.status(404).json({
         error:
           "السيارة غير موجودة"
       });
-
     }
 
     res.json({
       success: true,
       car
     });
-
   }
 );
 
-/* =====================================================
-   MY CARS
-===================================================== */
-
-app.get(
-  "/api/my-cars",
-  auth,
-
-  (req, res) => {
-
-    const cars =
-      db.prepare(`
-        SELECT *
-        FROM cars
-        WHERE user_id = ?
-        ORDER BY id DESC
-      `).all(
-        req.user.sub
-      );
-
-    res.json({
-      success: true,
-      cars
-    });
-
-  }
-);
-
-/* Alias */
-app.get(
-  "/api/my/cars",
-  auth,
-
-  (req, res) => {
-
-    const cars =
-      db.prepare(`
-        SELECT *
-        FROM cars
-        WHERE user_id = ?
-        ORDER BY id DESC
-      `).all(
-        req.user.sub
-      );
-
-    res.json({
-      success: true,
-      cars
-    });
-
-  }
-);
-
-/* =====================================================
+/* =========================
    ADD CAR
-===================================================== */
+========================= */
 
 app.post(
   "/api/cars",
   auth,
-
-  upload.array(
-    "images",
-    5
-  ),
-
+  upload.single("image"),
   (req, res) => {
-
     try {
+      const body = {
+        ...req.body,
+        plan:
+          req.body.plan ||
+          10000
+      };
 
       const data =
-        carSchema.parse(
-          req.body
-        );
-
-      const files =
-        req.files || [];
+        carSchema.parse(body);
 
       const image =
-        files.length
-          ? `/uploads/${files[0].filename}`
+        req.file
+          ? `/uploads/${req.file.filename}`
           : null;
 
       const result =
@@ -1162,120 +860,118 @@ app.post(
           data.price,
           data.km,
           data.city,
-          data.fuel || "",
-          data.transmission || "",
-          data.description || "",
+          data.fuel,
+          data.transmission,
+          data.description,
           data.plan,
           image
         );
 
       const car =
-        db.prepare(`
-          SELECT *
-          FROM cars
-          WHERE id = ?
-        `).get(
+        db.prepare(
+          "SELECT * FROM cars WHERE id = ?"
+        ).get(
           result.lastInsertRowid
         );
 
       res.status(201).json({
         success: true,
-
         message:
           "تم إرسال السيارة للمراجعة",
-
         car
       });
 
     } catch (error) {
-
-      if (
-        error instanceof
-        z.ZodError
-      ) {
-
-        return res.status(400).json({
-          error:
-            "بيانات السيارة غير صحيحة",
-
-          details:
-            error.issues
-        });
-
-      }
-
       console.error(
         "ADD CAR ERROR:",
         error
       );
 
+      if (
+        req.file &&
+        error instanceof z.ZodError
+      ) {
+        removeImage(
+          `/uploads/${req.file.filename}`
+        );
+      }
+
+      if (
+        error instanceof z.ZodError
+      ) {
+        return res.status(400).json({
+          error:
+            "بيانات السيارة غير صحيحة"
+        });
+      }
+
       res.status(500).json({
         error:
           "تعذر إضافة السيارة"
       });
-
     }
-
   }
 );
 
-/* =====================================================
+/* =========================
+   MY CARS
+========================= */
+
+app.get(
+  "/api/my-cars",
+  auth,
+  (req, res) => {
+    const cars =
+      db.prepare(`
+        SELECT *
+        FROM cars
+        WHERE user_id = ?
+        ORDER BY id DESC
+      `).all(
+        req.user.sub
+      );
+
+    res.json({
+      success: true,
+      cars
+    });
+  }
+);
+
+/* =========================
    PAYMENTS
-===================================================== */
+========================= */
 
 app.post(
   "/api/payments",
   auth,
-
-  upload.single(
-    "receipt"
-  ),
-
+  upload.single("receipt"),
   (req, res) => {
-
     try {
-
       const carId =
-        Number(
-          req.body.car_id ||
-          req.body.carId
-        );
+        Number(req.body.car_id);
 
       const amount =
-        Number(
-          req.body.amount
-        );
-
-      const reference =
-        String(
-          req.body.reference || ""
-        ).trim();
+        Number(req.body.amount);
 
       if (
         !Number.isInteger(carId) ||
         carId <= 0
       ) {
-
         return res.status(400).json({
           error:
             "رقم السيارة غير صحيح"
         });
-
       }
 
       if (
-        ![
-          10000,
-          20000,
-          30000
-        ].includes(amount)
+        ![10000,20000,30000]
+          .includes(amount)
       ) {
-
         return res.status(400).json({
           error:
             "مبلغ الدفع غير صحيح"
         });
-
       }
 
       const car =
@@ -1290,12 +986,10 @@ app.post(
         );
 
       if (!car) {
-
         return res.status(404).json({
           error:
             "السيارة غير موجودة أو ليست ملكك"
         });
-
       }
 
       const receipt =
@@ -1320,22 +1014,21 @@ app.post(
           carId,
           req.user.sub,
           amount,
-          reference,
+          String(
+            req.body.reference || ""
+          ).trim(),
           receipt
         );
 
       res.status(201).json({
         success: true,
-
         message:
           "تم إرسال إثبات الدفع للمراجعة",
-
         payment_id:
           result.lastInsertRowid
       });
 
     } catch (error) {
-
       console.error(
         "PAYMENT ERROR:",
         error
@@ -1345,86 +1038,19 @@ app.post(
         error:
           "تعذر إرسال الدفع"
       });
-
     }
-
   }
 );
 
-/* =====================================================
-   MY PAYMENTS
-===================================================== */
-
-app.get(
-  "/api/my-payments",
-  auth,
-
-  (req, res) => {
-
-    const payments =
-      db.prepare(`
-        SELECT
-          payments.*,
-          cars.brand,
-          cars.model
-        FROM payments
-        JOIN cars
-          ON cars.id = payments.car_id
-        WHERE payments.user_id = ?
-        ORDER BY payments.id DESC
-      `).all(
-        req.user.sub
-      );
-
-    res.json({
-      success: true,
-      payments
-    });
-
-  }
-);
-
-/* Alias */
-app.get(
-  "/api/my/payments",
-  auth,
-
-  (req, res) => {
-
-    const payments =
-      db.prepare(`
-        SELECT
-          payments.*,
-          cars.brand,
-          cars.model
-        FROM payments
-        JOIN cars
-          ON cars.id = payments.car_id
-        WHERE payments.user_id = ?
-        ORDER BY payments.id DESC
-      `).all(
-        req.user.sub
-      );
-
-    res.json({
-      success: true,
-      payments
-    });
-
-  }
-);
-
-/* =====================================================
+/* =========================
    ADMIN CARS
-===================================================== */
+========================= */
 
 app.get(
   "/api/admin/cars",
   auth,
   admin,
-
   (req, res) => {
-
     const cars =
       db.prepare(`
         SELECT
@@ -1441,34 +1067,18 @@ app.get(
       success: true,
       cars
     });
-
   }
 );
 
-/* =====================================================
-   PUBLISH CAR
-   PATCH + POST SUPPORT
-===================================================== */
-
-function publishCarHandler(
-  req,
-  res
-) {
-
+function publishCar(req, res) {
   const id =
-    Number(
-      req.params.id
-    );
+    Number(req.params.id);
 
-  if (
-    !Number.isInteger(id)
-  ) {
-
+  if (!Number.isInteger(id)) {
     return res.status(400).json({
       error:
         "رقم السيارة غير صحيح"
     });
-
   }
 
   const result =
@@ -1478,64 +1088,37 @@ function publishCarHandler(
       WHERE id = ?
     `).run(id);
 
-  if (
-    result.changes === 0
-  ) {
-
+  if (!result.changes) {
     return res.status(404).json({
       error:
         "السيارة غير موجودة"
     });
-
   }
 
   res.json({
     success: true,
-
     message:
       "تم نشر السيارة"
   });
-
 }
-
-app.patch(
-  "/api/admin/cars/:id/publish",
-  auth,
-  admin,
-  publishCarHandler
-);
 
 app.post(
   "/api/admin/cars/:id/publish",
   auth,
   admin,
-  publishCarHandler
+  publishCar
 );
 
-/* =====================================================
-   REJECT CAR
-===================================================== */
+app.patch(
+  "/api/admin/cars/:id/publish",
+  auth,
+  admin,
+  publishCar
+);
 
-function rejectCarHandler(
-  req,
-  res
-) {
-
+function rejectCar(req, res) {
   const id =
-    Number(
-      req.params.id
-    );
-
-  if (
-    !Number.isInteger(id)
-  ) {
-
-    return res.status(400).json({
-      error:
-        "رقم السيارة غير صحيح"
-    });
-
-  }
+    Number(req.params.id);
 
   const result =
     db.prepare(`
@@ -1544,66 +1127,41 @@ function rejectCarHandler(
       WHERE id = ?
     `).run(id);
 
-  if (
-    result.changes === 0
-  ) {
-
+  if (!result.changes) {
     return res.status(404).json({
       error:
         "السيارة غير موجودة"
     });
-
   }
 
   res.json({
     success: true,
-
     message:
       "تم رفض الإعلان"
   });
-
 }
-
-app.patch(
-  "/api/admin/cars/:id/reject",
-  auth,
-  admin,
-  rejectCarHandler
-);
 
 app.post(
   "/api/admin/cars/:id/reject",
   auth,
   admin,
-  rejectCarHandler
+  rejectCar
 );
 
-/* =====================================================
-   DELETE ADMIN CAR
-===================================================== */
+app.patch(
+  "/api/admin/cars/:id/reject",
+  auth,
+  admin,
+  rejectCar
+);
 
 app.delete(
   "/api/admin/cars/:id",
   auth,
   admin,
-
   (req, res) => {
-
     const id =
-      Number(
-        req.params.id
-      );
-
-    if (
-      !Number.isInteger(id)
-    ) {
-
-      return res.status(400).json({
-        error:
-          "رقم السيارة غير صحيح"
-      });
-
-    }
+      Number(req.params.id);
 
     const car =
       db.prepare(`
@@ -1613,43 +1171,35 @@ app.delete(
       `).get(id);
 
     if (!car) {
-
       return res.status(404).json({
         error:
           "السيارة غير موجودة"
       });
-
     }
 
     db.prepare(
       "DELETE FROM cars WHERE id = ?"
     ).run(id);
 
-    removeImage(
-      car.image
-    );
+    removeImage(car.image);
 
     res.json({
       success: true,
-
       message:
         "تم حذف السيارة"
     });
-
   }
 );
 
-/* =====================================================
+/* =========================
    ADMIN PAYMENTS
-===================================================== */
+========================= */
 
 app.get(
   "/api/admin/payments",
   auth,
   admin,
-
   (req, res) => {
-
     const payments =
       db.prepare(`
         SELECT
@@ -1670,49 +1220,23 @@ app.get(
       success: true,
       payments
     });
-
   }
 );
 
-/* =====================================================
-   APPROVE PAYMENT
-===================================================== */
-
-function approvePaymentHandler(
-  req,
-  res
-) {
-
+function approvePayment(req, res) {
   const id =
-    Number(
-      req.params.id
-    );
-
-  if (
-    !Number.isInteger(id)
-  ) {
-
-    return res.status(400).json({
-      error:
-        "رقم الدفع غير صحيح"
-    });
-
-  }
+    Number(req.params.id);
 
   const payment =
-    db.prepare(`
-      SELECT *
-      FROM payments
-      WHERE id = ?
-    `).get(id);
+    db.prepare(
+      "SELECT * FROM payments WHERE id = ?"
+    ).get(id);
 
   if (!payment) {
-
     return res.status(404).json({
       error:
         "عملية الدفع غير موجودة"
     });
-
   }
 
   db.prepare(`
@@ -1725,60 +1249,70 @@ function approvePaymentHandler(
     UPDATE cars
     SET status = 'published'
     WHERE id = ?
-  `).run(
-    payment.car_id
-  );
+  `).run(payment.car_id);
 
   res.json({
     success: true,
-
     message:
       "تم قبول الدفع ونشر الإعلان"
   });
-
 }
-
-app.patch(
-  "/api/admin/payments/:id/approve",
-  auth,
-  admin,
-  approvePaymentHandler
-);
 
 app.post(
   "/api/admin/payments/:id/approve",
   auth,
   admin,
-  approvePaymentHandler
+  approvePayment
 );
 
-/* =====================================================
-   REJECT PAYMENT
-===================================================== */
+app.patch(
+  "/api/admin/payments/:id/approve",
+  auth,
+  admin,
+  approvePayment
+);
 
-function rejectPaymentHandler(
-  req,
-  res
-) {
+/* =========================
+   ERROR HANDLER
+========================= */
 
-  const id =
-    Number(
-      req.params.id
+app.use(
+  (error, req, res, next) => {
+    console.error(
+      "SERVER ERROR:",
+      error
     );
 
-  if (
-    !Number.isInteger(id)
-  ) {
+    if (
+      error instanceof multer.MulterError
+    ) {
+      return res.status(400).json({
+        error:
+          "حدث خطأ في رفع الصورة"
+      });
+    }
 
-    return res.status(400).json({
+    if (
+      error &&
+      error.message
+    ) {
+      return res.status(400).json({
+        error:
+          error.message
+      });
+    }
+
+    res.status(500).json({
       error:
-        "رقم الدفع غير صحيح"
+        "حدث خطأ في الخادم"
     });
-
   }
+);
 
-  const result =
-    db.prepare(`
-      UPDATE payments
-      SET status = 'rejected'
-     
+/* =========================
+   START
+========================= */
+
+app.listen(
+  PORT,
+  "0.0.0.0",
