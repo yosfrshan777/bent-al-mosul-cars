@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -9,956 +8,919 @@ import '../services/api_service.dart';
 class AddCarScreen extends StatefulWidget {
   const AddCarScreen({
     super.key,
-    required this.api,
-    this.onSuccess,
   });
 
-  final ApiService api;
-  final VoidCallback? onSuccess;
-
   @override
-  State<AddCarScreen> createState() => _AddCarScreenState();
+  State<AddCarScreen> createState() =>
+      _AddCarScreenState();
 }
 
-class _AddCarScreenState extends State<AddCarScreen> {
+class _AddCarScreenState
+    extends State<AddCarScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final brandController = TextEditingController();
-  final modelController = TextEditingController();
-  final yearController = TextEditingController();
-  final priceController = TextEditingController();
-  final kmController = TextEditingController();
-  final cityController = TextEditingController();
-  final descriptionController = TextEditingController();
+  final _brandController =
+      TextEditingController();
 
-  final ImagePicker picker = ImagePicker();
+  final _modelController =
+      TextEditingController();
 
-  List<XFile> images = [];
+  final _yearController =
+      TextEditingController();
 
-  String fuel = 'بنزين';
-  String transmission = 'أوتوماتيك';
-  String plan = 'عادي';
+  final _priceController =
+      TextEditingController();
 
-  bool loading = false;
-  String? error;
+  final _kmController =
+      TextEditingController();
 
-  @override
-  void dispose() {
-    brandController.dispose();
-    modelController.dispose();
-    yearController.dispose();
-    priceController.dispose();
-    kmController.dispose();
-    cityController.dispose();
-    descriptionController.dispose();
-    super.dispose();
-  }
+  final _cityController =
+      TextEditingController();
 
-  Future<void> _pickImages() async {
-    try {
-      final picked = await picker.pickMultiImage(
-        imageQuality: 85,
-        maxWidth: 1800,
+  final _descriptionController =
+      TextEditingController();
+
+  final ImagePicker _picker =
+      ImagePicker();
+
+  final List<XFile> _images = [];
+
+  String _fuel = 'بنزين';
+  String _transmission = 'أوتوماتيك';
+  String _plan = 'عادي';
+
+  bool _loading = false;
+
+  static const int maxImages = 8;
+
+  // =========================================================
+  // PICK MULTIPLE IMAGES
+  // =========================================================
+
+  Future<void> _pickMultipleImages() async {
+    if (_images.length >= maxImages) {
+      _showMessage(
+        'وصلت إلى الحد الأقصى: 8 صور',
       );
-
-      if (!mounted) return;
-
-      if (picked.isNotEmpty) {
-        setState(() {
-          images = picked.take(8).toList();
-        });
-      }
-    } catch (_) {
-      _showMessage('تعذر اختيار الصور');
+      return;
     }
-  }
 
-  Future<void> _takePhoto() async {
     try {
-      final photo = await picker.pickImage(
-        source: ImageSource.camera,
+      final remaining =
+          maxImages - _images.length;
+
+      final picked =
+          await _picker.pickMultiImage(
         imageQuality: 85,
-        maxWidth: 1800,
+        maxWidth: 2000,
+        maxHeight: 2000,
       );
 
-      if (!mounted || photo == null) return;
+      if (picked.isEmpty) {
+        return;
+      }
+
+      final available =
+          picked.take(remaining).toList();
 
       setState(() {
-        if (images.length < 8) {
-          images.add(photo);
-        }
+        _images.addAll(available);
       });
-    } catch (_) {
-      _showMessage('تعذر فتح الكاميرا');
+
+      if (picked.length > remaining) {
+        _showMessage(
+          'تمت إضافة $remaining صور فقط لأن الحد الأقصى 8',
+        );
+      }
+    } catch (e) {
+      _showMessage(
+        'تعذر اختيار الصور',
+      );
     }
   }
 
+  // =========================================================
+  // CAMERA
+  // =========================================================
+
+  Future<void> _takePhoto() async {
+    if (_images.length >= maxImages) {
+      _showMessage(
+        'وصلت إلى الحد الأقصى: 8 صور',
+      );
+      return;
+    }
+
+    try {
+      final photo =
+          await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 2000,
+        maxHeight: 2000,
+      );
+
+      if (photo == null) {
+        return;
+      }
+
+      setState(() {
+        _images.add(photo);
+      });
+    } catch (e) {
+      _showMessage(
+        'تعذر فتح الكاميرا',
+      );
+    }
+  }
+
+  // =========================================================
+  // IMAGE MENU
+  // =========================================================
+
+  Future<void> _showImagePickerMenu() async {
+    if (_images.length >= maxImages) {
+      _showMessage(
+        'وصلت إلى الحد الأقصى: 8 صور',
+      );
+      return;
+    }
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.photo_library,
+                ),
+                title: const Text(
+                  'اختيار عدة صور',
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickMultipleImages();
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.camera_alt,
+                ),
+                title: const Text(
+                  'التقاط صورة بالكاميرا',
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _takePhoto();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // =========================================================
+  // DELETE IMAGE
+  // =========================================================
+
+  void _deleteImage(int index) {
+    if (index < 0 ||
+        index >= _images.length) {
+      return;
+    }
+
+    setState(() {
+      _images.removeAt(index);
+    });
+  }
+
+  // =========================================================
+  // MAKE MAIN IMAGE
+  // =========================================================
+
+  void _makeMainImage(int index) {
+    if (index <= 0 ||
+        index >= _images.length) {
+      return;
+    }
+
+    setState(() {
+      final image = _images.removeAt(index);
+
+      _images.insert(0, image);
+    });
+
+    _showMessage(
+      'تم تحديد الصورة الرئيسية',
+    );
+  }
+
+  // =========================================================
+  // SUBMIT
+  // =========================================================
+
   Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    if (images.isEmpty) {
-      _showMessage('أضف صورة واحدة على الأقل للسيارة');
+    if (_images.isEmpty) {
+      _showMessage(
+        'أضف صورة واحدة على الأقل',
+      );
       return;
     }
 
-    FocusScope.of(context).unfocus();
+    if (_images.length > maxImages) {
+      _showMessage(
+        'يمكن إضافة 8 صور فقط',
+      );
+      return;
+    }
+
+    final year =
+        int.tryParse(
+          _yearController.text.trim(),
+        );
+
+    final price =
+        int.tryParse(
+          _priceController.text
+              .replaceAll(',', '')
+              .trim(),
+        );
+
+    final km =
+        int.tryParse(
+          _kmController.text
+              .replaceAll(',', '')
+              .trim(),
+        ) ??
+        0;
+
+    if (year == null) {
+      _showMessage(
+        'السنة غير صحيحة',
+      );
+      return;
+    }
+
+    if (price == null) {
+      _showMessage(
+        'السعر غير صحيح',
+      );
+      return;
+    }
 
     setState(() {
-      loading = true;
-      error = null;
+      _loading = true;
     });
 
     try {
-      await widget.api.createCar(
-        brand: brandController.text.trim(),
-        model: modelController.text.trim(),
-        year: int.parse(yearController.text.trim()),
-        price: int.parse(
-          priceController.text
-              .replaceAll(',', '')
-              .trim(),
-        ),
-        km: int.tryParse(
-              kmController.text
-                  .replaceAll(',', '')
-                  .trim(),
-            ) ??
-            0,
-        city: cityController.text.trim(),
-        fuel: fuel,
-        transmission: transmission,
+      final result =
+          await ApiService.instance.createCar(
+        brand: _brandController.text,
+        model: _modelController.text,
+        year: year,
+        price: price,
+        km: km,
+        city: _cityController.text,
+        fuel: _fuel,
+        transmission: _transmission,
         description:
-            descriptionController.text.trim(),
-        images: images,
-        plan: plan,
+            _descriptionController.text,
+        plan: _plan,
+
+        // الصورة رقم 0 هي الرئيسية
+        // وجميع الصور الثمانية تُرفع
+        images: List<XFile>.from(_images),
       );
 
-      if (!mounted) return;
-
-      setState(() {
-        loading = false;
-      });
+      if (!mounted) {
+        return;
+      }
 
       _showMessage(
-        'تم إرسال إعلانك للمراجعة',
-        success: true,
+        'تم إرسال السيارة بنجاح',
       );
 
-      widget.onSuccess?.call();
-    } catch (e) {
-      if (!mounted) return;
+      Navigator.pop(
+        context,
+        result,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) {
+        return;
+      }
 
-      setState(() {
-        loading = false;
-        error = e
-            .toString()
-            .replaceFirst('Exception: ', '');
-      });
+      _showMessage(
+        e.message,
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(
+        'حدث خطأ أثناء إضافة السيارة',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
-  void _showMessage(
-    String message, {
-    bool success = false,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  // =========================================================
+  // MESSAGE
+  // =========================================================
+
+  void _showMessage(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+        .hideCurrentSnackBar();
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: success
-            ? const Color(0xFF18A558)
-            : const Color(0xFF292932),
+        content: Text(
+          message,
+          textDirection: TextDirection.rtl,
+        ),
       ),
     );
   }
 
-  InputDecoration _decoration({
-    required String hint,
-    required IconData icon,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-        color: Colors.white38,
-      ),
-      prefixIcon: Icon(
-        icon,
-        color: const Color(0xFFFF176F),
-      ),
-      filled: true,
-      fillColor: const Color(0xFF0D0D11),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFF292932),
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFF292932),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFFFF176F),
-          width: 1.4,
-        ),
-      ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 16,
-      ),
-    );
-  }
+  // =========================================================
+  // TEXT FIELD
+  // =========================================================
 
-  Widget _field({
+  Widget _textField({
     required TextEditingController controller,
-    required String hint,
-    required IconData icon,
+    required String label,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      textDirection: TextDirection.rtl,
-      style: const TextStyle(
-        color: Colors.white,
+    return Padding(
+      padding:
+          const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        textDirection: TextDirection.rtl,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        validator: validator,
       ),
-      decoration: _decoration(
-        hint: hint,
-        icon: icon,
-      ),
-      validator: validator,
     );
   }
 
-  Widget _dropdown<T>({
-    required String title,
-    required T value,
-    required List<T> items,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      dropdownColor: const Color(0xFF1A1A21),
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 14,
-      ),
-      decoration: InputDecoration(
-        labelText: title,
-        labelStyle: const TextStyle(
-          color: Colors.white54,
-        ),
-        filled: true,
-        fillColor: const Color(0xFF0D0D11),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFF292932),
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFF292932),
-          ),
-        ),
-      ),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<T>(
-              value: item,
-              child: Text(item.toString()),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
+  // =========================================================
+  // IMAGES UI
+  // =========================================================
 
-  Widget _imagePicker() {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'صور السيارة',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'أضف صور واضحة للسيارة. يمكنك إضافة حتى 8 صور.',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 14),
-          if (images.isNotEmpty)
-            SizedBox(
-              height: 115,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: images.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final image = images[index];
-
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(13),
-                        child: SizedBox(
-                          width: 135,
-                          height: 115,
-                          child: kIsWeb
-                              ? Image.network(
-                                  image.path,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.file(
-                                  File(image.path),
-                                  fit: BoxFit.cover,
-                                ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 5,
-                        right: 5,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              images.removeAt(index);
-                            });
-                          },
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: const BoxDecoration(
-                              color: Colors.black87,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close_rounded,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (index == 0)
-                        Positioned(
-                          bottom: 5,
-                          left: 5,
-                          child: Container(
-                            padding:
-                                const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  const Color(0xFFFF176F),
-                              borderRadius:
-                                  BorderRadius.circular(7),
-                            ),
-                            child: const Text(
-                              'الصورة الرئيسية',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight:
-                                    FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
+  Widget _buildImagesSection() {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment:
+              MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'صور السيارة',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: images.length >= 8
-                      ? null
-                      : _pickImages,
-                  icon: const Icon(
-                    Icons.photo_library_outlined,
-                  ),
-                  label: const Text(
-                    'اختيار صور',
-                  ),
-                  style:
-                      OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(
-                      color: Color(0xFF44444E),
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(
-                      vertical: 13,
-                    ),
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12),
-                    ),
-                  ),
+            Text(
+              '${_images.length}/8',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 6),
+
+        const Text(
+          'الصورة الأولى هي الصورة الرئيسية',
+          textDirection: TextDirection.rtl,
+          style: TextStyle(
+            color: Colors.grey,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        if (_images.isEmpty)
+          GestureDetector(
+            onTap: _showImagePickerMenu,
+            child: Container(
+              height: 180,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey,
                 ),
+                borderRadius:
+                    BorderRadius.circular(16),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: images.length >= 8
-                      ? null
-                      : _takePhoto,
-                  icon: const Icon(
-                    Icons.camera_alt_outlined,
-                  ),
-                  label: const Text(
-                    'الكاميرا',
-                  ),
-                  style:
-                      OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(
-                      color: Color(0xFF44444E),
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(
-                      vertical: 13,
-                    ),
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _planCard({
-    required String title,
-    required String price,
-    required String description,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration:
-              const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF301323)
-                : const Color(0xFF15151B),
-            borderRadius:
-                BorderRadius.circular(15),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFFFF176F)
-                  : const Color(0xFF292932),
-              width: selected ? 1.5 : 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-            children: [
-              Row(
+              child: const Column(
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        color: selected
-                            ? const Color(
-                                0xFFFF176F,
-                              )
-                            : Colors.white,
-                        fontWeight:
-                            FontWeight.w900,
-                      ),
+                  Icon(
+                    Icons.add_a_photo,
+                    size: 50,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'أضف صور السيارة',
+                    style: TextStyle(
+                      fontSize: 17,
                     ),
                   ),
-                  if (selected)
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color:
-                          Color(0xFFFF176F),
-                      size: 19,
+                  SizedBox(height: 5),
+                  Text(
+                    'يمكنك إضافة حتى 8 صور',
+                    style: TextStyle(
+                      color: Colors.grey,
                     ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 7),
-              Text(
-                price,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                description,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 10,
-                  height: 1.4,
-                ),
-              ),
-            ],
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics:
+                const NeverScrollableScrollPhysics(),
+            itemCount:
+                _images.length < maxImages
+                    ? _images.length + 1
+                    : _images.length,
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1,
+            ),
+            itemBuilder: (context, index) {
+              if (index == _images.length &&
+                  _images.length < maxImages) {
+                return GestureDetector(
+                  onTap: _showImagePickerMenu,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey,
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(14),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add,
+                          size: 45,
+                        ),
+                        SizedBox(height: 5),
+                        Text('إضافة صور'),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final image =
+                  _images[index];
+
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(14),
+                    child: Image.file(
+                      File(image.path),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+
+                  // MAIN BADGE
+                  if (index == 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding:
+                            const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration:
+                            BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius:
+                              BorderRadius.circular(
+                            20,
+                          ),
+                        ),
+                        child: const Text(
+                          'الرئيسية',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // DELETE
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor:
+                          Colors.red,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 19,
+                        ),
+                        onPressed: () {
+                          _deleteImage(index);
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // MAKE MAIN
+                  if (index != 0)
+                    Positioned(
+                      bottom: 6,
+                      left: 6,
+                      right: 6,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _makeMainImage(index);
+                        },
+                        child: const Text(
+                          'اجعلها الرئيسية',
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
+
+        const SizedBox(height: 10),
+
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed:
+                    _images.length >= maxImages
+                        ? null
+                        : _pickMultipleImages,
+                icon: const Icon(
+                  Icons.photo_library,
+                ),
+                label: const Text(
+                  'المعرض',
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed:
+                    _images.length >= maxImages
+                        ? null
+                        : _takePhoto,
+                icon: const Icon(
+                  Icons.camera_alt,
+                ),
+                label: const Text(
+                  'الكاميرا',
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _plans() {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'اختر نوع الإعلان',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _planCard(
-                title: 'عادي',
-                price: '10,000 د.ع',
-                description:
-                    'إعلان أساسي',
-                selected: plan == 'عادي',
-                onTap: () {
-                  setState(() {
-                    plan = 'عادي';
-                  });
-                },
-              ),
-              const SizedBox(width: 8),
-              _planCard(
-                title: 'مميز',
-                price: '20,000 د.ع',
-                description:
-                    'ظهور أفضل',
-                selected: plan == 'مميز',
-                onTap: () {
-                  setState(() {
-                    plan = 'مميز';
-                  });
-                },
-              ),
-              const SizedBox(width: 8),
-              _planCard(
-                title: 'VIP',
-                price: '30,000 د.ع',
-                description:
-                    'أولوية وظهور قوي',
-                selected: plan == 'VIP',
-                onTap: () {
-                  setState(() {
-                    plan = 'VIP';
-                  });
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // =========================================================
+  // BUILD
+  // =========================================================
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor:
-          const Color(0xFF08080B),
-      appBar: AppBar(
-        backgroundColor:
-            const Color(0xFF111116),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'إضافة سيارة',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'إضافة سيارة',
           ),
+          centerTitle: true,
         ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints:
-              const BoxConstraints(
-            maxWidth: 900,
-          ),
+        body: SafeArea(
           child: Form(
             key: _formKey,
-            child: ListView(
+            child: SingleChildScrollView(
               padding:
-                  const EdgeInsets.all(15),
-              children: [
-                _imagePicker(),
-                const SizedBox(height: 14),
+                  const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
+                children: [
+                  _buildImagesSection(),
 
-                Container(
-                  padding:
-                      const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color:
-                        const Color(0xFF15151B),
-                    borderRadius:
-                        BorderRadius.circular(20),
-                    border: Border.all(
-                      color:
-                          const Color(0xFF292932),
-                    ),
+                  const SizedBox(height: 25),
+
+                  _textField(
+                    controller:
+                        _brandController,
+                    label: 'الماركة',
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'أدخل الماركة';
+                      }
+                      return null;
+                    },
                   ),
-                  child: Column(
-                    children: [
-                      _field(
-                        controller:
-                            brandController,
-                        hint: 'ماركة السيارة',
-                        icon: Icons
-                            .directions_car_outlined,
-                        validator: (value) {
-                          if (value == null ||
-                              value.trim().isEmpty) {
-                            return 'أدخل الماركة';
-                          }
-                          return null;
-                        },
+
+                  _textField(
+                    controller:
+                        _modelController,
+                    label: 'الموديل',
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'أدخل الموديل';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  _textField(
+                    controller:
+                        _yearController,
+                    label: 'سنة الصنع',
+                    keyboardType:
+                        TextInputType.number,
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'أدخل السنة';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  _textField(
+                    controller:
+                        _priceController,
+                    label: 'السعر بالدينار العراقي',
+                    keyboardType:
+                        TextInputType.number,
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'أدخل السعر';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  _textField(
+                    controller:
+                        _kmController,
+                    label: 'المسافة بالكيلومتر',
+                    keyboardType:
+                        TextInputType.number,
+                  ),
+
+                  _textField(
+                    controller:
+                        _cityController,
+                    label: 'المحافظة / المدينة',
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'أدخل المدينة';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  DropdownButtonFormField<String>(
+                    value: _fuel,
+                    decoration:
+                        const InputDecoration(
+                      labelText: 'نوع الوقود',
+                      border:
+                          OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'بنزين',
+                        child: Text('بنزين'),
                       ),
-                      const SizedBox(height: 12),
-                      _field(
-                        controller:
-                            modelController,
-                        hint: 'الموديل',
-                        icon: Icons
-                            .drive_eta_outlined,
-                        validator: (value) {
-                          if (value == null ||
-                              value.trim().isEmpty) {
-                            return 'أدخل الموديل';
-                          }
-                          return null;
-                        },
+                      DropdownMenuItem(
+                        value: 'ديزل',
+                        child: Text('ديزل'),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              controller:
-                                  yearController,
-                              hint: 'سنة الصنع',
-                              icon: Icons
-                                  .calendar_today_outlined,
-                              keyboardType:
-                                  TextInputType
-                                      .number,
-                              validator: (value) {
-                                final year =
-                                    int.tryParse(
-                                  value?.trim() ??
-                                      '',
-                                );
-
-                                if (year == null ||
-                                    year < 1950 ||
-                                    year > 2035) {
-                                  return 'السنة غير صحيحة';
-                                }
-
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _field(
-                              controller:
-                                  priceController,
-                              hint:
-                                  'السعر بالدينار',
-                              icon: Icons
-                                  .payments_outlined,
-                              keyboardType:
-                                  TextInputType
-                                      .number,
-                              validator: (value) {
-                                final price =
-                                    int.tryParse(
-                                  (value ?? '')
-                                      .replaceAll(
-                                    ',',
-                                    '',
-                                  )
-                                      .trim(),
-                                );
-
-                                if (price == null ||
-                                    price <= 0) {
-                                  return 'أدخل السعر';
-                                }
-
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
+                      DropdownMenuItem(
+                        value: 'هايبرد',
+                        child: Text('هايبرد'),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              controller:
-                                  kmController,
-                              hint:
-                                  'الممشى بالكيلومتر',
-                              icon: Icons
-                                  .speed_outlined,
-                              keyboardType:
-                                  TextInputType
-                                      .number,
-                              validator: (value) {
-                                if (value == null ||
-                                    value.trim().isEmpty) {
-                                  return 'أدخل الممشى';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _field(
-                              controller:
-                                  cityController,
-                              hint: 'المدينة',
-                              icon: Icons
-                                  .location_on_outlined,
-                              validator: (value) {
-                                if (value == null ||
-                                    value.trim().isEmpty) {
-                                  return 'أدخل المدينة';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _dropdown(
-                              title: 'نوع الوقود',
-                              value: fuel,
-                              items: const [
-                                'بنزين',
-                                'ديزل',
-                                'كهرباء',
-                                'هايبرد',
-                                'غاز',
-                              ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    fuel = value;
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _dropdown(
-                              title: 'ناقل الحركة',
-                              value:
-                                  transmission,
-                              items: const [
-                                'أوتوماتيك',
-                                'عادي',
-                                'CVT',
-                              ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    transmission =
-                                        value;
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller:
-                            descriptionController,
-                        maxLines: 5,
-                        textDirection:
-                            TextDirection.rtl,
-                        style: const TextStyle(
-                          color: Colors.white,
-                        ),
-                        decoration: _decoration(
-                          hint:
-                              'اكتب تفاصيل السيارة وحالتها...',
-                          icon: Icons
-                              .description_outlined,
-                        ),
-                        validator: (value) {
-                          if (value == null ||
-                              value.trim().isEmpty) {
-                            return 'اكتب وصفاً للسيارة';
-                          }
-
-                          if (value.trim().length <
-                              10) {
-                            return 'الوصف قصير جداً';
-                          }
-
-                          return null;
-                        },
+                      DropdownMenuItem(
+                        value: 'كهرباء',
+                        child: Text('كهرباء'),
                       ),
                     ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _fuel = value;
+                        });
+                      }
+                    },
                   ),
-                ),
 
-                const SizedBox(height: 14),
-                _plans(),
+                  const SizedBox(height: 12),
 
-                if (error != null) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    padding:
-                        const EdgeInsets.all(13),
-                    decoration: BoxDecoration(
-                      color:
-                          const Color(0xFF35171E),
-                      borderRadius:
-                          BorderRadius.circular(13),
+                  DropdownButtonFormField<String>(
+                    value: _transmission,
+                    decoration:
+                        const InputDecoration(
+                      labelText: 'ناقل الحركة',
+                      border:
+                          OutlineInputBorder(),
                     ),
-                    child: Text(
-                      error!,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'أوتوماتيك',
+                        child:
+                            Text('أوتوماتيك'),
                       ),
+                      DropdownMenuItem(
+                        value: 'عادي',
+                        child: Text('عادي'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _transmission =
+                              value;
+                        });
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  DropdownButtonFormField<String>(
+                    value: _plan,
+                    decoration:
+                        const InputDecoration(
+                      labelText: 'نوع الإعلان',
+                      border:
+                          OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'عادي',
+                        child: Text(
+                          'عادي - 10,000 د.ع',
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'مميز',
+                        child: Text(
+                          'مميز - 20,000 د.ع',
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'VIP',
+                        child: Text(
+                          'VIP - 30,000 د.ع',
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _plan = value;
+                        });
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller:
+                        _descriptionController,
+                    maxLines: 5,
+                    textDirection:
+                        TextDirection.rtl,
+                    decoration:
+                        const InputDecoration(
+                      labelText:
+                          'وصف السيارة',
+                      alignLabelWithHint: true,
+                      border:
+                          OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  SizedBox(
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed:
+                          _loading
+                              ? null
+                              : _submit,
+                      child: _loading
+                          ? const SizedBox(
+                              width: 25,
+                              height: 25,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'نشر السيارة',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight:
+                                    FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ],
-
-                const SizedBox(height: 18),
-
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        loading ? null : _submit,
-                    icon: loading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child:
-                                CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.publish_rounded,
-                          ),
-                    label: Text(
-                      loading
-                          ? 'جاري إرسال الإعلان...'
-                          : 'إرسال الإعلان للمراجعة',
-                    ),
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFFFF176F),
-                      foregroundColor:
-                          Colors.white,
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(
-                          15,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                const Text(
-                  'بعد إرسال الإعلان، تتم مراجعته من الإدارة قبل نشره.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white38,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  // =========================================================
+  // DISPOSE
+  // =========================================================
+
+  @override
+  void dispose() {
+    _brandController.dispose();
+    _modelController.dispose();
+    _yearController.dispose();
+    _priceController.dispose();
+    _kmController.dispose();
+    _cityController.dispose();
+    _descriptionController.dispose();
+
+    super.dispose();
   }
 }
