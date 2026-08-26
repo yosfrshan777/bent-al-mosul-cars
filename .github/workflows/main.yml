@@ -25,7 +25,7 @@ jobs:
           cache: true
 
       - name: Generate Android files
-        run: flutter create --platforms=android .
+        run: flutter create --project-name bent_al_mosul_cars --platforms=android .
 
       - name: Set Android SDK 35
         run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/' android/app/build.gradle
