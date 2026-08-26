@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
@@ -9,13 +10,31 @@ class ApiService {
 
   static final ApiService instance = ApiService._();
 
-  // غيّر هذا الرابط بعد نشر السيرفر على Render.
-  // مثال:
-  // https://bent-al-mosul-cars.onrender.com
   static const String baseUrl =
       'https://bent-al-mosul-cars.onrender.com';
 
   String get _apiUrl => '$baseUrl/api';
+
+  // =========================================================
+  // IMAGE URL
+  // =========================================================
+
+  String imageUrl(String image) {
+    if (image.startsWith('http://') ||
+        image.startsWith('https://')) {
+      return image;
+    }
+
+    if (image.startsWith('/')) {
+      return '$baseUrl$image';
+    }
+
+    return '$baseUrl/uploads/$image';
+  }
+
+  // =========================================================
+  // PREFS
+  // =========================================================
 
   Future<SharedPreferences> get _prefs async {
     return SharedPreferences.getInstance();
@@ -33,9 +52,14 @@ class ApiService {
 
   Future<void> clearToken() async {
     final prefs = await _prefs;
+
     await prefs.remove('token');
     await prefs.remove('user');
   }
+
+  // =========================================================
+  // HEADERS
+  // =========================================================
 
   Future<Map<String, String>> _headers({
     bool auth = false,
@@ -55,6 +79,10 @@ class ApiService {
     return headers;
   }
 
+  // =========================================================
+  // DECODE
+  // =========================================================
+
   dynamic _decode(http.Response response) {
     try {
       if (response.body.isEmpty) {
@@ -69,12 +97,20 @@ class ApiService {
     }
   }
 
+  // =========================================================
+  // ERROR
+  // =========================================================
+
   String _errorMessage(
     http.Response response,
     dynamic data,
   ) {
     if (data is Map && data['error'] != null) {
       return data['error'].toString();
+    }
+
+    if (response.statusCode == 400) {
+      return 'البيانات المرسلة غير صحيحة';
     }
 
     if (response.statusCode == 401) {
@@ -96,20 +132,28 @@ class ApiService {
     return 'حدث خطأ، حاول مرة أخرى';
   }
 
+  // =========================================================
+  // GET
+  // =========================================================
+
   Future<dynamic> _get(
     String path, {
     bool auth = false,
     Map<String, String>? query,
   }) async {
     try {
-      final uri = Uri.parse('$_apiUrl$path').replace(
+      final uri = Uri.parse(
+        '$_apiUrl$path',
+      ).replace(
         queryParameters: query,
       );
 
       final response = await http
           .get(
             uri,
-            headers: await _headers(auth: auth),
+            headers: await _headers(
+              auth: auth,
+            ),
           )
           .timeout(
             const Duration(seconds: 25),
@@ -120,7 +164,10 @@ class ApiService {
       if (response.statusCode < 200 ||
           response.statusCode >= 300) {
         throw ApiException(
-          _errorMessage(response, data),
+          _errorMessage(
+            response,
+            data,
+          ),
           response.statusCode,
         );
       }
@@ -139,13 +186,19 @@ class ApiService {
     }
   }
 
+  // =========================================================
+  // POST JSON
+  // =========================================================
+
   Future<dynamic> _postJson(
     String path,
     Map<String, dynamic> body, {
     bool auth = false,
   }) async {
     try {
-      final headers = await _headers(auth: auth);
+      final headers = await _headers(
+        auth: auth,
+      );
 
       headers['Content-Type'] =
           'application/json; charset=UTF-8';
@@ -165,7 +218,10 @@ class ApiService {
       if (response.statusCode < 200 ||
           response.statusCode >= 300) {
         throw ApiException(
-          _errorMessage(response, data),
+          _errorMessage(
+            response,
+            data,
+          ),
           response.statusCode,
         );
       }
@@ -228,9 +284,8 @@ class ApiService {
       },
     );
 
-    final result = Map<String, dynamic>.from(
-      data as Map,
-    );
+    final result =
+        Map<String, dynamic>.from(data as Map);
 
     final token = result['token'];
 
@@ -266,9 +321,8 @@ class ApiService {
       },
     );
 
-    final result = Map<String, dynamic>.from(
-      data as Map,
-    );
+    final result =
+        Map<String, dynamic>.from(data as Map);
 
     final token = result['token'];
 
@@ -312,7 +366,7 @@ class ApiService {
   }
 
   // =========================================================
-  // CARS
+  // GET CARS
   // =========================================================
 
   Future<List<dynamic>> getCars({
@@ -412,10 +466,11 @@ class ApiService {
   }
 
   // =========================================================
-  // ADD CAR
+  // CREATE CAR
+  // UP TO 8 IMAGES
   // =========================================================
 
-  Future<Map<String, dynamic>> addCar({
+  Future<Map<String, dynamic>> createCar({
     required String brand,
     required String model,
     required int year,
@@ -425,17 +480,29 @@ class ApiService {
     String fuel = '',
     String transmission = '',
     String description = '',
-    int plan = 10000,
-    File? image,
-    String? publicNo,
+    String plan = 'عادي',
+    required List<XFile> images,
   }) async {
     final token = await getToken();
 
-    if (token == null ||
-        token.isEmpty) {
+    if (token == null || token.isEmpty) {
       throw ApiException(
         'يجب تسجيل الدخول أولاً',
         401,
+      );
+    }
+
+    if (images.isEmpty) {
+      throw ApiException(
+        'أضف صورة واحدة على الأقل',
+        400,
+      );
+    }
+
+    if (images.length > 8) {
+      throw ApiException(
+        'يمكن إضافة 8 صور كحد أقصى',
+        400,
       );
     }
 
@@ -451,46 +518,35 @@ class ApiService {
       request.headers['Authorization'] =
           'Bearer $token';
 
-      request.fields['brand'] =
-          brand.trim();
-
-      request.fields['model'] =
-          model.trim();
-
-      request.fields['year'] =
-          year.toString();
-
-      request.fields['price'] =
-          price.toString();
-
-      request.fields['km'] =
-          km.toString();
-
-      request.fields['city'] =
-          city.trim();
-
-      request.fields['fuel'] =
-          fuel;
-
+      request.fields['brand'] = brand.trim();
+      request.fields['model'] = model.trim();
+      request.fields['year'] = year.toString();
+      request.fields['price'] = price.toString();
+      request.fields['km'] = km.toString();
+      request.fields['city'] = city.trim();
+      request.fields['fuel'] = fuel.trim();
       request.fields['transmission'] =
-          transmission;
-
+          transmission.trim();
       request.fields['description'] =
           description.trim();
+      request.fields['plan'] = plan.trim();
 
-      request.fields['plan'] =
-          plan.toString();
+      // عدد الصور
+      request.fields['images_count'] =
+          images.length.toString();
 
-      if (publicNo != null &&
-          publicNo.trim().isNotEmpty) {
-        request.fields['public_no'] =
-            publicNo.trim();
-      }
+      // الصورة الأولى هي الرئيسية
+      request.fields['main_image_index'] = '0';
 
-      if (image != null) {
+      // =====================================================
+      // رفع الصور الثمانية كحد أقصى
+      // اسم الحقل: images
+      // =====================================================
+
+      for (final image in images) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'image',
+            'images',
             image.path,
           ),
         );
@@ -498,8 +554,8 @@ class ApiService {
 
       final streamedResponse =
           await request.send().timeout(
-                const Duration(seconds: 60),
-              );
+        const Duration(seconds: 120),
+      );
 
       final response =
           await http.Response.fromStream(
@@ -523,19 +579,82 @@ class ApiService {
         );
       }
 
+      if (data is! Map) {
+        throw ApiException(
+          'استجابة غير صحيحة من السيرفر',
+          response.statusCode,
+        );
+      }
+
       return Map<String, dynamic>.from(
-        data as Map,
+        data,
       );
     } on SocketException {
       throw ApiException(
         'لا يوجد اتصال بالإنترنت',
         0,
       );
+    } on http.ClientException {
+      throw ApiException(
+        'تعذر الاتصال بالسيرفر',
+        0,
+      );
     }
   }
 
   // =========================================================
-  // PAYMENT / RECEIPT
+  // OLD ADD CAR
+  // =========================================================
+
+  Future<Map<String, dynamic>> addCar({
+    required String brand,
+    required String model,
+    required int year,
+    required int price,
+    int km = 0,
+    required String city,
+    String fuel = '',
+    String transmission = '',
+    String description = '',
+    int plan = 10000,
+    File? image,
+    String? publicNo,
+  }) async {
+    final images = <XFile>[];
+
+    if (image != null) {
+      images.add(
+        XFile(image.path),
+      );
+    }
+
+    String planName;
+
+    if (plan >= 30000) {
+      planName = 'VIP';
+    } else if (plan >= 20000) {
+      planName = 'مميز';
+    } else {
+      planName = 'عادي';
+    }
+
+    return createCar(
+      brand: brand,
+      model: model,
+      year: year,
+      price: price,
+      km: km,
+      city: city,
+      fuel: fuel,
+      transmission: transmission,
+      description: description,
+      plan: planName,
+      images: images,
+    );
+  }
+
+  // =========================================================
+  // PAYMENT
   // =========================================================
 
   Future<Map<String, dynamic>> uploadPayment({
@@ -547,8 +666,7 @@ class ApiService {
   }) async {
     final token = await getToken();
 
-    if (token == null ||
-        token.isEmpty) {
+    if (token == null || token.isEmpty) {
       throw ApiException(
         'يجب تسجيل الدخول أولاً',
         401,
@@ -570,11 +688,8 @@ class ApiService {
       request.fields['amount'] =
           amount.toString();
 
-      request.fields['kind'] =
-          kind;
-
-      request.fields['reference'] =
-          reference;
+      request.fields['kind'] = kind;
+      request.fields['reference'] = reference;
 
       if (carId != null) {
         request.fields['car_id'] =
@@ -590,8 +705,8 @@ class ApiService {
 
       final streamedResponse =
           await request.send().timeout(
-                const Duration(seconds: 60),
-              );
+        const Duration(seconds: 60),
+      );
 
       final response =
           await http.Response.fromStream(
@@ -665,8 +780,7 @@ class ApiService {
   }) async {
     final token = await getToken();
 
-    if (token == null ||
-        token.isEmpty) {
+    if (token == null || token.isEmpty) {
       throw ApiException(
         'يجب تسجيل الدخول أولاً',
         401,
@@ -691,12 +805,8 @@ class ApiService {
       request.fields['owner_name'] =
           ownerName.trim();
 
-      request.fields['phone'] =
-          phone.trim();
-
-      request.fields['city'] =
-          city.trim();
-
+      request.fields['phone'] = phone.trim();
+      request.fields['city'] = city.trim();
       request.fields['email'] =
           email?.trim() ?? '';
 
@@ -711,8 +821,8 @@ class ApiService {
 
       final streamedResponse =
           await request.send().timeout(
-                const Duration(seconds: 60),
-              );
+        const Duration(seconds: 60),
+      );
 
       final response =
           await http.Response.fromStream(
@@ -756,8 +866,7 @@ class ApiService {
   }) async {
     final token = await getToken();
 
-    if (token == null ||
-        token.isEmpty) {
+    if (token == null || token.isEmpty) {
       throw ApiException(
         'يجب تسجيل الدخول أولاً',
         401,
@@ -776,15 +885,10 @@ class ApiService {
       request.headers['Authorization'] =
           'Bearer $token';
 
-      request.fields['name'] =
-          name.trim();
-
+      request.fields['name'] = name.trim();
       request.fields['price'] =
           price.toString();
-
-      request.fields['city'] =
-          city.trim();
-
+      request.fields['city'] = city.trim();
       request.fields['description'] =
           description.trim();
 
@@ -799,8 +903,8 @@ class ApiService {
 
       final streamedResponse =
           await request.send().timeout(
-                const Duration(seconds: 60),
-              );
+        const Duration(seconds: 60),
+      );
 
       final response =
           await http.Response.fromStream(
@@ -832,10 +936,9 @@ class ApiService {
   }
 }
 
-
-// ===========================================================
+// =========================================================
 // API EXCEPTION
-// ===========================================================
+// =========================================================
 
 class ApiException implements Exception {
   final String message;
