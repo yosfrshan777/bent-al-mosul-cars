@@ -2,12 +2,19 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#ff176f">
 <title>بنت الموصل للسيارات</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html{
+  scroll-behavior:smooth;
+}
 
 body{
   margin:0;
@@ -16,13 +23,36 @@ body{
   font-family:Tahoma,Arial,sans-serif;
 }
 
+button{
+  border:0;
+  outline:0;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+  border-radius:10px;
+  padding:12px 17px;
+  background:#ff176f;
+  color:#fff;
+  font-size:15px;
+  font-family:inherit;
+}
+
+button:active{
+  transform:scale(.97);
+}
+
+.secondary{
+  background:#27272f;
+}
+
 header{
   background:#111116;
   border-bottom:1px solid #292932;
   padding:15px;
   position:sticky;
   top:0;
-  z-index:100;
+  z-index:1000;
 }
 
 .header-inner{
@@ -45,27 +75,6 @@ nav{
   gap:8px;
 }
 
-button{
-  border:0;
-  outline:0;
-  cursor:pointer;
-  touch-action:manipulation;
-  border-radius:10px;
-  padding:12px 17px;
-  background:#ff176f;
-  color:#fff;
-  font-size:15px;
-  font-family:inherit;
-}
-
-button:active{
-  transform:scale(.97);
-}
-
-.secondary{
-  background:#27272f;
-}
-
 main{
   max-width:1100px;
   margin:auto;
@@ -77,7 +86,7 @@ section{
 }
 
 .hidden{
-  display:none!important;
+  display:none !important;
 }
 
 .hero{
@@ -151,7 +160,6 @@ section{
 
 .car-content h3{
   margin:0 0 10px;
-  color:#fff;
 }
 
 .car-content p{
@@ -160,7 +168,7 @@ section{
 }
 
 .price{
-  color:#ff176f!important;
+  color:#ff176f !important;
   font-size:19px;
   font-weight:bold;
 }
@@ -227,6 +235,7 @@ footer{
 }
 
 @media(max-width:600px){
+
   main{
     padding:12px;
   }
@@ -237,6 +246,10 @@ footer{
 
   nav button{
     flex:1 1 40%;
+  }
+
+  button{
+    min-height:46px;
   }
 }
 </style>
@@ -252,25 +265,27 @@ footer{
     </div>
 
     <nav>
-      <button type="button" onclick="showSection('home')">
-        الرئيسية
+
+      <button type="button" data-section="home">
+        🏠 الرئيسية
       </button>
 
-      <button type="button" onclick="showSection('cars')">
-        السيارات
+      <button type="button" data-section="cars">
+        🚗 السيارات
       </button>
 
-      <button type="button" onclick="showSection('login')">
-        تسجيل الدخول
+      <button type="button" data-section="login">
+        🔐 تسجيل الدخول
       </button>
 
-      <button type="button" onclick="showSection('register')">
-        إنشاء حساب
+      <button type="button" data-section="register">
+        👤 إنشاء حساب
       </button>
 
-      <button type="button" onclick="showSection('add')">
+      <button type="button" data-section="add">
         ➕ أضف سيارة
       </button>
+
     </nav>
 
   </div>
@@ -278,7 +293,6 @@ footer{
 
 <main>
 
-<!-- الرئيسية -->
 <section id="home">
 
   <div class="hero">
@@ -291,15 +305,13 @@ footer{
 
     <div class="hero-buttons">
 
-      <button type="button" onclick="showSection('cars')">
+      <button type="button" data-section="cars">
         🔍 تصفح السيارات
       </button>
 
-      <button
-        type="button"
-        class="secondary"
-        onclick="showSection('add')"
-      >
+      <button type="button"
+              class="secondary"
+              data-section="add">
         ➕ أضف سيارتك
       </button>
 
@@ -322,7 +334,6 @@ footer{
 </section>
 
 
-<!-- السيارات -->
 <section id="cars" class="hidden">
 
   <div class="box">
@@ -346,7 +357,6 @@ footer{
 </section>
 
 
-<!-- تسجيل الدخول -->
 <section id="login" class="hidden">
 
   <div class="box">
@@ -382,7 +392,6 @@ footer{
 </section>
 
 
-<!-- إنشاء حساب -->
 <section id="register" class="hidden">
 
   <div class="box">
@@ -426,7 +435,6 @@ footer{
 </section>
 
 
-<!-- إضافة سيارة -->
 <section id="add" class="hidden">
 
   <div class="box">
@@ -539,7 +547,6 @@ footer{
 
 </main>
 
-
 <footer>
   © 2026 بنت الموصل للسيارات
 </footer>
@@ -547,25 +554,44 @@ footer{
 
 <script>
 
+/* =========================
+   المتغيرات
+========================= */
+
 let token = localStorage.getItem("token") || "";
 
 
-/* التنقل بين الصفحات */
+/* =========================
+   التنقل
+========================= */
 
 function showSection(id){
 
-  document
-    .querySelectorAll("main > section")
-    .forEach(function(section){
-      section.classList.add("hidden");
-    });
+  const sections =
+    document.querySelectorAll("main > section");
 
-  const selected = document.getElementById(id);
+  sections.forEach(function(section){
 
-  if(selected){
-    selected.classList.remove("hidden");
-    window.scrollTo(0,0);
+    section.classList.add("hidden");
+
+  });
+
+  const selected =
+    document.getElementById(id);
+
+  if(!selected){
+
+    console.error("Section not found:", id);
+    return;
+
   }
+
+  selected.classList.remove("hidden");
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
 
   if(id === "cars"){
     loadCars();
@@ -574,10 +600,42 @@ function showSection(id){
   if(id === "home"){
     loadLatestCars();
   }
+
 }
 
 
-/* حماية النص */
+/* =========================
+   ربط جميع الأزرار
+========================= */
+
+document.addEventListener("DOMContentLoaded",function(){
+
+  const buttons =
+    document.querySelectorAll(
+      "button[data-section]"
+    );
+
+  buttons.forEach(function(button){
+
+    button.addEventListener("click",function(){
+
+      const section =
+        this.getAttribute("data-section");
+
+      showSection(section);
+
+    });
+
+  });
+
+  loadLatestCars();
+
+});
+
+
+/* =========================
+   حماية النص
+========================= */
 
 function escapeHtml(value){
 
@@ -587,10 +645,13 @@ function escapeHtml(value){
     .replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#039;");
+
 }
 
 
-/* شكل السيارة */
+/* =========================
+   بطاقة السيارة
+========================= */
 
 function carCard(car){
 
@@ -609,9 +670,10 @@ function carCard(car){
           image
           ?
           `<img
-             src="${escapeHtml(image)}"
-             alt="سيارة"
-           >`
+            src="${escapeHtml(image)}"
+            alt="سيارة"
+            loading="lazy"
+          >`
           :
           `🚗`
         }
@@ -637,61 +699,99 @@ function carCard(car){
 
         <p>
           🛣️ الكيلومترات:
-          ${escapeHtml(car.km || car.mileage || "غير محدد")}
+          ${escapeHtml(
+            car.km ||
+            car.mileage ||
+            "غير محدد"
+          )}
         </p>
 
         <p>
           ⛽ الوقود:
-          ${escapeHtml(car.fuel || "غير محدد")}
+          ${escapeHtml(
+            car.fuel ||
+            "غير محدد"
+          )}
         </p>
 
         <p>
           ⚙️ القير:
-          ${escapeHtml(car.transmission || "غير محدد")}
+          ${escapeHtml(
+            car.transmission ||
+            "غير محدد"
+          )}
         </p>
 
         <p class="price">
-          💰 ${escapeHtml(car.price || "غير محدد")} دينار
+          💰
+          ${escapeHtml(
+            car.price ||
+            "غير محدد"
+          )}
+          دينار
         </p>
 
         <p>
-          ${escapeHtml(car.description || "")}
+          ${escapeHtml(
+            car.description ||
+            ""
+          )}
         </p>
 
       </div>
 
     </div>
   `;
+
 }
 
 
-/* تحميل السيارات */
+/* =========================
+   تحميل السيارات
+========================= */
 
 async function loadCars(){
 
   const box =
     document.getElementById("carsList");
 
+  if(!box) return;
+
   const search =
-    document.getElementById("search").value.trim();
+    document
+      .getElementById("search")
+      .value
+      .trim();
 
   box.innerHTML =
-    `<div class="loading">جاري التحميل...</div>`;
+    `<div class="loading">
+      جاري التحميل...
+    </div>`;
 
   try{
 
     let url = "/api/cars";
 
     if(search){
-      url += "?search=" +
+
+      url +=
+        "?search=" +
         encodeURIComponent(search);
+
     }
 
     const response =
-      await fetch(url);
+      await fetch(url,{
+        method:"GET",
+        cache:"no-store"
+      });
 
     if(!response.ok){
-      throw new Error("تعذر تحميل السيارات");
+
+      throw new Error(
+        "تعذر تحميل السيارات"
+      );
+
     }
 
     const data =
@@ -699,8 +799,10 @@ async function loadCars(){
 
     const cars =
       Array.isArray(data)
-      ? data
-      : (data.cars || []);
+      ?
+      data
+      :
+      (data.cars || []);
 
     if(!cars.length){
 
@@ -710,12 +812,17 @@ async function loadCars(){
         </div>`;
 
       return;
+
     }
 
     box.innerHTML =
-      cars.map(carCard).join("");
+      cars
+        .map(carCard)
+        .join("");
 
   }catch(error){
+
+    console.error(error);
 
     box.innerHTML =
       `<div class="message">
@@ -723,23 +830,38 @@ async function loadCars(){
       </div>`;
 
   }
+
 }
 
 
-/* أحدث السيارات */
+/* =========================
+   أحدث السيارات
+========================= */
 
 async function loadLatestCars(){
 
   const box =
-    document.getElementById("latestCars");
+    document.getElementById(
+      "latestCars"
+    );
+
+  if(!box) return;
 
   try{
 
     const response =
-      await fetch("/api/cars");
+      await fetch(
+        "/api/cars",
+        {
+          method:"GET",
+          cache:"no-store"
+        }
+      );
 
     if(!response.ok){
+
       throw new Error();
+
     }
 
     const data =
@@ -747,8 +869,10 @@ async function loadLatestCars(){
 
     const cars =
       Array.isArray(data)
-      ? data
-      : (data.cars || []);
+      ?
+      data
+      :
+      (data.cars || []);
 
     if(!cars.length){
 
@@ -758,15 +882,18 @@ async function loadLatestCars(){
         </div>`;
 
       return;
+
     }
 
     box.innerHTML =
       cars
-      .slice(0,6)
-      .map(carCard)
-      .join("");
+        .slice(0,6)
+        .map(carCard)
+        .join("");
 
   }catch(error){
+
+    console.error(error);
 
     box.innerHTML =
       `<div class="loading">
@@ -774,316 +901,429 @@ async function loadLatestCars(){
       </div>`;
 
   }
+
 }
 
 
-/* البحث */
+/* =========================
+   البحث
+========================= */
 
-document
-  .getElementById("search")
-  .addEventListener("input",function(){
+const searchInput =
+  document.getElementById("search");
 
-    loadCars();
+if(searchInput){
 
-  });
+  searchInput.addEventListener(
+    "input",
+    function(){
+
+      loadCars();
+
+    }
+  );
+
+}
 
 
-/* التسجيل */
+/* =========================
+   التسجيل
+========================= */
 
 document
   .getElementById("registerForm")
-  .addEventListener("submit",async function(e){
+  .addEventListener(
+    "submit",
+    async function(e){
 
-    e.preventDefault();
+      e.preventDefault();
 
-    const message =
-      document.getElementById("registerMessage");
-
-    try{
-
-      const response =
-        await fetch(
-          "/api/auth/register",
-          {
-            method:"POST",
-
-            headers:{
-              "Content-Type":
-              "application/json"
-            },
-
-            body:JSON.stringify({
-
-              name:
-                document
-                .getElementById("registerName")
-                .value
-                .trim(),
-
-              email:
-                document
-                .getElementById("registerEmail")
-                .value
-                .trim(),
-
-              password:
-                document
-                .getElementById("registerPassword")
-                .value
-
-            })
-          }
+      const message =
+        document.getElementById(
+          "registerMessage"
         );
 
-      const data =
-        await response.json();
+      message.innerHTML =
+        `<div class="message">
+          ⏳ جاري إنشاء الحساب...
+        </div>`;
 
-      if(!response.ok){
+      try{
 
-        throw new Error(
-          data.message ||
-          data.error ||
-          "فشل إنشاء الحساب"
-        );
+        const response =
+          await fetch(
+            "/api/auth/register",
+            {
+              method:"POST",
+
+              headers:{
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:JSON.stringify({
+
+                name:
+                  document
+                    .getElementById(
+                      "registerName"
+                    )
+                    .value
+                    .trim(),
+
+                email:
+                  document
+                    .getElementById(
+                      "registerEmail"
+                    )
+                    .value
+                    .trim(),
+
+                password:
+                  document
+                    .getElementById(
+                      "registerPassword"
+                    )
+                    .value
+
+              })
+            }
+          );
+
+        let data = {};
+
+        try{
+
+          data =
+            await response.json();
+
+        }catch(_){}
+
+        if(!response.ok){
+
+          throw new Error(
+            data.message ||
+            data.error ||
+            "فشل إنشاء الحساب"
+          );
+
+        }
+
+        message.innerHTML =
+          `<div class="message">
+            ✅ تم إنشاء الحساب بنجاح.
+            يمكنك تسجيل الدخول الآن.
+          </div>`;
+
+        this.reset();
+
+      }catch(error){
+
+        console.error(error);
+
+        message.innerHTML =
+          `<div class="message">
+            ❌
+            ${escapeHtml(
+              error.message
+            )}
+          </div>`;
 
       }
 
-      message.innerHTML =
-        `<div class="message">
-          ✅ تم إنشاء الحساب بنجاح.
-          يمكنك تسجيل الدخول الآن.
-        </div>`;
-
-      this.reset();
-
-    }catch(error){
-
-      message.innerHTML =
-        `<div class="message">
-          ❌ ${escapeHtml(error.message)}
-        </div>`;
-
     }
+  );
 
-  });
 
-
-/* تسجيل الدخول */
+/* =========================
+   تسجيل الدخول
+========================= */
 
 document
   .getElementById("loginForm")
-  .addEventListener("submit",async function(e){
+  .addEventListener(
+    "submit",
+    async function(e){
 
-    e.preventDefault();
+      e.preventDefault();
 
-    const message =
-      document.getElementById("loginMessage");
-
-    try{
-
-      const response =
-        await fetch(
-          "/api/auth/login",
-          {
-            method:"POST",
-
-            headers:{
-              "Content-Type":
-              "application/json"
-            },
-
-            body:JSON.stringify({
-
-              email:
-                document
-                .getElementById("loginEmail")
-                .value
-                .trim(),
-
-              password:
-                document
-                .getElementById("loginPassword")
-                .value
-
-            })
-          }
+      const message =
+        document.getElementById(
+          "loginMessage"
         );
-
-      const data =
-        await response.json();
-
-      if(!response.ok){
-
-        throw new Error(
-          data.message ||
-          data.error ||
-          "بيانات الدخول غير صحيحة"
-        );
-
-      }
-
-      token =
-        data.token ||
-        data.accessToken ||
-        "";
-
-      if(token){
-        localStorage.setItem(
-          "token",
-          token
-        );
-      }
 
       message.innerHTML =
         `<div class="message">
-          ✅ تم تسجيل الدخول بنجاح.
+          ⏳ جاري تسجيل الدخول...
         </div>`;
 
-    }catch(error){
+      try{
 
-      message.innerHTML =
-        `<div class="message">
-          ❌ ${escapeHtml(error.message)}
-        </div>`;
+        const response =
+          await fetch(
+            "/api/auth/login",
+            {
+              method:"POST",
+
+              headers:{
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:JSON.stringify({
+
+                email:
+                  document
+                    .getElementById(
+                      "loginEmail"
+                    )
+                    .value
+                    .trim(),
+
+                password:
+                  document
+                    .getElementById(
+                      "loginPassword"
+                    )
+                    .value
+
+              })
+            }
+          );
+
+        let data = {};
+
+        try{
+
+          data =
+            await response.json();
+
+        }catch(_){}
+
+        if(!response.ok){
+
+          throw new Error(
+            data.message ||
+            data.error ||
+            "بيانات الدخول غير صحيحة"
+          );
+
+        }
+
+        token =
+          data.token ||
+          data.accessToken ||
+          "";
+
+        if(token){
+
+          localStorage.setItem(
+            "token",
+            token
+          );
+
+        }
+
+        message.innerHTML =
+          `<div class="message">
+            ✅ تم تسجيل الدخول بنجاح.
+          </div>`;
+
+      }catch(error){
+
+        console.error(error);
+
+        message.innerHTML =
+          `<div class="message">
+            ❌
+            ${escapeHtml(
+              error.message
+            )}
+          </div>`;
+
+      }
 
     }
+  );
 
-  });
 
-
-/* إضافة السيارة */
+/* =========================
+   إضافة السيارة
+========================= */
 
 document
   .getElementById("carForm")
-  .addEventListener("submit",async function(e){
+  .addEventListener(
+    "submit",
+    async function(e){
 
-    e.preventDefault();
+      e.preventDefault();
 
-    const message =
-      document.getElementById("carMessage");
+      const message =
+        document.getElementById(
+          "carMessage"
+        );
 
-    if(!token){
+      if(!token){
+
+        message.innerHTML =
+          `<div class="message">
+            ❌ لازم تسجل دخول أولاً.
+          </div>`;
+
+        return;
+
+      }
 
       message.innerHTML =
         `<div class="message">
-          ❌ لازم تسجل دخول أولاً.
+          ⏳ جاري إرسال السيارة...
         </div>`;
 
-      return;
-    }
+      try{
 
-    try{
-
-      const formData =
-        new FormData();
-
-      formData.append(
-        "brand",
-        document.getElementById("brand").value
-      );
-
-      formData.append(
-        "model",
-        document.getElementById("model").value
-      );
-
-      formData.append(
-        "year",
-        document.getElementById("year").value
-      );
-
-      formData.append(
-        "price",
-        document.getElementById("price").value
-      );
-
-      formData.append(
-        "km",
-        document.getElementById("km").value
-      );
-
-      formData.append(
-        "city",
-        document.getElementById("city").value
-      );
-
-      formData.append(
-        "fuel",
-        document.getElementById("fuel").value
-      );
-
-      formData.append(
-        "transmission",
-        document.getElementById("transmission").value
-      );
-
-      formData.append(
-        "description",
-        document.getElementById("description").value
-      );
-
-      const image =
-        document.getElementById("image").files[0];
-
-      if(image){
+        const formData =
+          new FormData();
 
         formData.append(
-          "image",
-          image
+          "brand",
+          document
+            .getElementById("brand")
+            .value
+            .trim()
         );
+
+        formData.append(
+          "model",
+          document
+            .getElementById("model")
+            .value
+            .trim()
+        );
+
+        formData.append(
+          "year",
+          document
+            .getElementById("year")
+            .value
+        );
+
+        formData.append(
+          "price",
+          document
+            .getElementById("price")
+            .value
+        );
+
+        formData.append(
+          "km",
+          document
+            .getElementById("km")
+            .value
+        );
+
+        formData.append(
+          "city",
+          document
+            .getElementById("city")
+            .value
+            .trim()
+        );
+
+        formData.append(
+          "fuel",
+          document
+            .getElementById("fuel")
+            .value
+        );
+
+        formData.append(
+          "transmission",
+          document
+            .getElementById("transmission")
+            .value
+        );
+
+        formData.append(
+          "description",
+          document
+            .getElementById("description")
+            .value
+            .trim()
+        );
+
+        const image =
+          document
+            .getElementById("image")
+            .files[0];
+
+        if(image){
+
+          formData.append(
+            "image",
+            image
+          );
+
+        }
+
+        const response =
+          await fetch(
+            "/api/cars",
+            {
+              method:"POST",
+
+              headers:{
+                "Authorization":
+                  "Bearer " + token
+              },
+
+              body:formData
+            }
+          );
+
+        let data = {};
+
+        try{
+
+          data =
+            await response.json();
+
+        }catch(_){}
+
+        if(!response.ok){
+
+          throw new Error(
+            data.message ||
+            data.error ||
+            "فشل نشر السيارة"
+          );
+
+        }
+
+        message.innerHTML =
+          `<div class="message">
+            ✅ تم إرسال السيارة للمراجعة بنجاح.
+          </div>`;
+
+        this.reset();
+
+      }catch(error){
+
+        console.error(error);
+
+        message.innerHTML =
+          `<div class="message">
+            ❌
+            ${escapeHtml(
+              error.message
+            )}
+          </div>`;
 
       }
-
-      const response =
-        await fetch(
-          "/api/cars",
-          {
-            method:"POST",
-
-            headers:{
-              "Authorization":
-              "Bearer " + token
-            },
-
-            body:formData
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if(!response.ok){
-
-        throw new Error(
-          data.message ||
-          data.error ||
-          "فشل نشر السيارة"
-        );
-
-      }
-
-      message.innerHTML =
-        `<div class="message">
-          ✅ تم إرسال السيارة للمراجعة بنجاح.
-        </div>`;
-
-      this.reset();
-
-    }catch(error){
-
-      message.innerHTML =
-        `<div class="message">
-          ❌ ${escapeHtml(error.message)}
-        </div>`;
 
     }
+  );
 
-  });
-
-
-/* تشغيل الصفحة */
-
-loadLatestCars();
 
 </script>
 
