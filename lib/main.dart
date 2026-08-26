@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'services/api_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/cars_screen.dart';
 import 'screens/add_car_screen.dart';
@@ -18,16 +19,26 @@ class BentAlMosulApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'بنت الموصل للسيارات',
+
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
+
         scaffoldBackgroundColor:
             const Color(0xFF08080B),
+
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF176F),
           brightness: Brightness.dark,
         ),
+
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF111116),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
       ),
+
       home: const MainNavigation(),
     );
   }
@@ -43,43 +54,74 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState
     extends State<MainNavigation> {
+
   int currentIndex = 0;
 
-  late final List<Widget> pages;
-
-  @override
-  void initState() {
-    super.initState();
-
-    pages = const [
-      HomeScreen(),
-      CarsScreen(),
-      AddCarScreen(),
-      ProfileScreen(),
-    ];
-  }
+  final ApiService api = ApiService.instance;
 
   @override
   Widget build(BuildContext context) {
+    final pages = <Widget>[
+      HomeScreen(
+        api: api,
+
+        onOpenCars: () {
+          setState(() {
+            currentIndex = 1;
+          });
+        },
+
+        onAddCar: () {
+          setState(() {
+            currentIndex = 2;
+          });
+        },
+
+        onLogin: () {
+          setState(() {
+            currentIndex = 3;
+          });
+        },
+      ),
+
+      CarsScreen(
+        api: api,
+      ),
+
+      AddCarScreen(
+        api: api,
+      ),
+
+      ProfileScreen(
+        api: api,
+      ),
+    ];
+
     return Directionality(
       textDirection: TextDirection.rtl,
+
       child: Scaffold(
         body: IndexedStack(
           index: currentIndex,
           children: pages,
         ),
+
         bottomNavigationBar:
             NavigationBar(
           selectedIndex: currentIndex,
+
           onDestinationSelected: (index) {
             setState(() {
               currentIndex = index;
             });
           },
+
           backgroundColor:
               const Color(0xFF111116),
+
           indicatorColor:
               const Color(0x33FF176F),
+
           destinations: const [
             NavigationDestination(
               icon: Icon(
@@ -90,16 +132,17 @@ class _MainNavigationState
               ),
               label: 'الرئيسية',
             ),
+
             NavigationDestination(
               icon: Icon(
-                Icons
-                    .directions_car_outlined,
+                Icons.directions_car_outlined,
               ),
               selectedIcon: Icon(
                 Icons.directions_car_rounded,
               ),
               label: 'السيارات',
             ),
+
             NavigationDestination(
               icon: Icon(
                 Icons.add_circle_outline,
@@ -109,6 +152,7 @@ class _MainNavigationState
               ),
               label: 'أضف سيارة',
             ),
+
             NavigationDestination(
               icon: Icon(
                 Icons.person_outline,
