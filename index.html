@@ -8,296 +8,95 @@
 <title>بنت الموصل للسيارات</title>
 
 <style>
-*{
-  box-sizing:border-box;
-  -webkit-tap-highlight-color:transparent;
-}
-
-html{
-  scroll-behavior:smooth;
-}
-
-body{
-  margin:0;
-  background:#08080b;
-  color:#fff;
-  font-family:Tahoma,Arial,sans-serif;
-}
-
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:#08080b;color:#fff;font-family:Tahoma,Arial,sans-serif}
 button{
-  border:0;
-  outline:0;
-  cursor:pointer;
-  touch-action:manipulation;
-  user-select:none;
-  border-radius:10px;
-  padding:12px 17px;
-  background:#ff176f;
-  color:#fff;
-  font-size:15px;
-  font-family:inherit;
-  min-height:46px;
+border:0;outline:0;cursor:pointer;touch-action:manipulation;
+user-select:none;-webkit-user-select:none;border-radius:10px;
+padding:12px 17px;background:#ff176f;color:#fff;
+font-size:15px;font-family:inherit;min-height:46px
 }
-
-button:active{
-  transform:scale(.97);
-}
-
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-.secondary{
-  background:#27272f;
-}
-
+button:active{transform:scale(.97)}
+button:disabled{opacity:.6;cursor:not-allowed}
+.secondary{background:#27272f}
 header{
-  background:#111116;
-  border-bottom:1px solid #292932;
-  padding:15px;
-  position:sticky;
-  top:0;
-  z-index:1000;
+background:#111116;border-bottom:1px solid #292932;padding:15px;
+position:sticky;top:0;z-index:1000
 }
-
-.header-inner{
-  max-width:1100px;
-  margin:auto;
-}
-
+.header-inner{max-width:1100px;margin:auto}
 .logo{
-  text-align:center;
-  color:#ff176f;
-  font-size:25px;
-  font-weight:bold;
-  margin-bottom:14px;
+text-align:center;color:#ff176f;font-size:25px;font-weight:bold;
+margin-bottom:14px
 }
-
-nav{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:8px;
-}
-
-nav button{
-  flex:0 0 auto;
-}
-
-main{
-  max-width:1100px;
-  margin:auto;
-  padding:20px;
-}
-
-section{
-  width:100%;
-}
-
-.hidden{
-  display:none !important;
-}
-
-.hero{
-  text-align:center;
-  padding:40px 10px;
-}
-
-.hero h1{
-  font-size:32px;
-  margin:10px 0;
-}
-
-.hero p{
-  color:#aaa;
-  font-size:17px;
-}
-
+nav{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
+nav button{flex:0 0 auto}
+main{max-width:1100px;margin:auto;padding:20px}
+section{width:100%}
+.hidden{display:none!important}
+.hero{text-align:center;padding:40px 10px}
+.hero h1{font-size:32px;margin:10px 0}
+.hero p{color:#aaa;font-size:17px}
 .hero-buttons{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top:20px;
+display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px
 }
-
 .box{
-  background:#111116;
-  border:1px solid #292932;
-  border-radius:16px;
-  padding:20px;
-  margin-bottom:20px;
+background:#111116;border:1px solid #292932;border-radius:16px;
+padding:20px;margin-bottom:20px
 }
-
-.box h2{
-  margin-top:0;
-  color:#ff176f;
-}
-
+.box h2{margin-top:0;color:#ff176f}
 .cars{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:15px;
+display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:15px
 }
-
 .car{
-  background:#17171d;
-  border:1px solid #292932;
-  border-radius:15px;
-  overflow:hidden;
+background:#17171d;border:1px solid #292932;border-radius:15px;
+overflow:hidden
 }
-
 .car-image{
-  width:100%;
-  height:180px;
-  background:#222;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:60px;
-  overflow:hidden;
+width:100%;height:180px;background:#222;display:flex;
+align-items:center;justify-content:center;font-size:60px;overflow:hidden
 }
-
-.car-image img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
+.car-image img{width:100%;height:100%;object-fit:cover;display:block}
+.car-content{padding:15px}
+.car-content h3{margin:0 0 10px;font-size:20px}
+.car-content p{color:#bbb;line-height:1.6;margin:7px 0}
+.price{color:#ff176f!important;font-size:19px;font-weight:bold}
+input,select,textarea{
+display:block;width:100%;padding:13px;margin:9px 0;
+border:1px solid #35353f;border-radius:10px;background:#08080b;
+color:#fff;font-size:15px;font-family:inherit;outline:none
 }
-
-.car-content{
-  padding:15px;
-}
-
-.car-content h3{
-  margin:0 0 10px;
-  font-size:20px;
-}
-
-.car-content p{
-  color:#bbb;
-  line-height:1.6;
-  margin:7px 0;
-}
-
-.price{
-  color:#ff176f !important;
-  font-size:19px;
-  font-weight:bold;
-}
-
-input,
-select,
-textarea{
-  display:block;
-  width:100%;
-  padding:13px;
-  margin:9px 0;
-  border:1px solid #35353f;
-  border-radius:10px;
-  background:#08080b;
-  color:#fff;
-  font-size:15px;
-  font-family:inherit;
-  outline:none;
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-  border-color:#ff176f;
-}
-
-input[type="file"]{
-  padding:10px;
-}
-
-textarea{
-  min-height:120px;
-  resize:vertical;
-}
-
+input:focus,select:focus,textarea:focus{border-color:#ff176f}
+input[type="file"]{padding:10px}
+textarea{min-height:120px;resize:vertical}
 .message{
-  margin-top:12px;
-  padding:12px;
-  border-radius:10px;
-  background:#202027;
-  line-height:1.7;
+margin-top:12px;padding:12px;border-radius:10px;
+background:#202027;line-height:1.7
 }
-
 .payment{
-  background:#1b1519;
-  border:1px solid #ff176f;
-  border-radius:12px;
-  padding:15px;
-  margin:15px 0;
+background:#1b1519;border:1px solid #ff176f;border-radius:12px;
+padding:15px;margin:15px 0
 }
-
-.payment h3{
-  color:#ff176f;
-  margin-top:0;
-}
-
-.payment p{
-  line-height:1.7;
-}
-
-.loading{
-  color:#aaa;
-  text-align:center;
-  padding:20px;
-}
-
+.payment h3{color:#ff176f;margin-top:0}
+.payment p{line-height:1.7}
+.loading{color:#aaa;text-align:center;padding:20px}
 .empty{
-  grid-column:1/-1;
-  text-align:center;
-  color:#aaa;
-  padding:30px;
+grid-column:1/-1;text-align:center;color:#aaa;padding:30px
 }
-
 footer{
-  border-top:1px solid #292932;
-  text-align:center;
-  padding:30px 15px;
-  color:#888;
-  margin-top:30px;
+border-top:1px solid #292932;text-align:center;padding:30px 15px;
+color:#888;margin-top:30px
 }
-
 @media(max-width:600px){
-  main{
-    padding:12px;
-  }
-
-  .hero{
-    padding:30px 5px;
-  }
-
-  .hero h1{
-    font-size:27px;
-  }
-
-  nav{
-    gap:6px;
-  }
-
-  nav button{
-    flex:1 1 40%;
-    font-size:14px;
-    padding:11px 8px;
-  }
-
-  .hero-buttons button{
-    width:100%;
-  }
-
-  .box{
-    padding:15px;
-  }
-
-  .cars{
-    grid-template-columns:1fr;
-  }
+main{padding:12px}
+.hero{padding:30px 5px}
+.hero h1{font-size:27px}
+nav{gap:6px}
+nav button{flex:1 1 40%;font-size:14px;padding:11px 8px}
+.hero-buttons button{width:100%}
+.box{padding:15px}
+.cars{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -305,1173 +104,1030 @@ footer{
 <body>
 
 <header>
-  <div class="header-inner">
+<div class="header-inner">
 
-    <div class="logo">
-      🚗 بنت الموصل للسيارات
-    </div>
+<div class="logo">🚗 بنت الموصل للسيارات</div>
 
-    <nav id="mainNav">
+<nav id="mainNav">
 
-      <button type="button" data-section="home">
-        🏠 الرئيسية
-      </button>
+<button type="button" data-section="home">🏠 الرئيسية</button>
 
-      <button type="button" data-section="cars">
-        🚗 السيارات
-      </button>
+<button type="button" data-section="cars">🚗 السيارات</button>
 
-      <button type="button" data-section="login">
-        🔐 تسجيل الدخول
-      </button>
+<button type="button" data-section="login">🔐 تسجيل الدخول</button>
 
-      <button type="button" data-section="register">
-        👤 إنشاء حساب
-      </button>
+<button type="button" data-section="register">👤 إنشاء حساب</button>
 
-      <button type="button" data-section="add">
-        ➕ أضف سيارة
-      </button>
+<button type="button" data-section="add">➕ أضف سيارة</button>
 
-    </nav>
-
-  </div>
+</nav>
+</div>
 </header>
 
 <main>
 
 <section id="home">
 
-  <div class="hero">
+<div class="hero">
 
-    <h1>بنت الموصل للسيارات 🚘</h1>
+<h1>بنت الموصل للسيارات 🚘</h1>
 
-    <p>
-      منصة بيع وشراء السيارات في العراق
-    </p>
+<p>منصة بيع وشراء السيارات في العراق</p>
 
-    <div class="hero-buttons">
+<div class="hero-buttons">
 
-      <button type="button" data-section="cars">
-        🔍 تصفح السيارات
-      </button>
+<button type="button" data-section="cars">
+🔍 تصفح السيارات
+</button>
 
-      <button type="button" class="secondary" data-section="add">
-        ➕ أضف سيارتك
-      </button>
+<button type="button" class="secondary" data-section="add">
+➕ أضف سيارتك
+</button>
 
-    </div>
+</div>
+</div>
 
-  </div>
+<div class="box">
 
-  <div class="box">
+<h2>🚘 أحدث السيارات</h2>
 
-    <h2>🚘 أحدث السيارات</h2>
+<div id="latestCars" class="cars">
+<div class="loading">جاري تحميل السيارات...</div>
+</div>
 
-    <div id="latestCars" class="cars">
-      <div class="loading">
-        جاري تحميل السيارات...
-      </div>
-    </div>
-
-  </div>
-
+</div>
 </section>
+
 
 <section id="cars" class="hidden">
 
-  <div class="box">
+<div class="box">
 
-    <h2>🚗 السيارات المعروضة</h2>
+<h2>🚗 السيارات المعروضة</h2>
 
-    <input
-      id="search"
-      type="search"
-      placeholder="🔍 ابحث عن ماركة أو موديل..."
-      autocomplete="off"
-    >
+<input
+id="search"
+type="search"
+placeholder="🔍 ابحث عن ماركة أو موديل..."
+autocomplete="off"
+>
 
-    <div id="carsList" class="cars">
-      <div class="loading">
-        جاري تحميل السيارات...
-      </div>
-    </div>
+<div id="carsList" class="cars">
+<div class="loading">جاري تحميل السيارات...</div>
+</div>
 
-  </div>
-
+</div>
 </section>
+
 
 <section id="login" class="hidden">
 
-  <div class="box">
+<div class="box">
 
-    <h2>🔐 تسجيل الدخول</h2>
+<h2>🔐 تسجيل الدخول</h2>
 
-    <form id="loginForm" autocomplete="on">
+<form id="loginForm" autocomplete="on">
 
-      <input
-        id="loginEmail"
-        name="email"
-        type="email"
-        placeholder="البريد الإلكتروني"
-        autocomplete="email"
-        required
-      >
+<input
+id="loginEmail"
+name="email"
+type="email"
+placeholder="البريد الإلكتروني"
+autocomplete="email"
+required
+>
 
-      <input
-        id="loginPassword"
-        name="password"
-        type="password"
-        placeholder="كلمة المرور"
-        autocomplete="current-password"
-        required
-      >
+<input
+id="loginPassword"
+name="password"
+type="password"
+placeholder="كلمة المرور"
+autocomplete="current-password"
+required
+>
 
-      <button type="submit">
-        🔐 دخول
-      </button>
+<button type="submit">🔐 دخول</button>
 
-    </form>
+</form>
 
-    <div id="loginMessage"></div>
+<div id="loginMessage"></div>
 
-  </div>
-
+</div>
 </section>
+
 
 <section id="register" class="hidden">
 
-  <div class="box">
+<div class="box">
 
-    <h2>👤 إنشاء حساب</h2>
+<h2>👤 إنشاء حساب</h2>
 
-    <form id="registerForm" autocomplete="on">
+<form id="registerForm" autocomplete="on">
 
-      <input
-        id="registerName"
-        name="name"
-        type="text"
-        placeholder="الاسم"
-        autocomplete="name"
-        required
-      >
+<input
+id="registerName"
+name="name"
+type="text"
+placeholder="الاسم"
+autocomplete="name"
+required
+>
 
-      <input
-        id="registerEmail"
-        name="email"
-        type="email"
-        placeholder="البريد الإلكتروني"
-        autocomplete="email"
-        required
-      >
+<input
+id="registerEmail"
+name="email"
+type="email"
+placeholder="البريد الإلكتروني"
+autocomplete="email"
+required
+>
 
-      <input
-        id="registerPassword"
-        name="password"
-        type="password"
-        placeholder="كلمة المرور"
-        minlength="6"
-        autocomplete="new-password"
-        required
-      >
+<input
+id="registerPassword"
+name="password"
+type="password"
+placeholder="كلمة المرور"
+minlength="6"
+autocomplete="new-password"
+required
+>
 
-      <button type="submit">
-        👤 إنشاء الحساب
-      </button>
+<button type="submit">👤 إنشاء الحساب</button>
 
-    </form>
+</form>
 
-    <div id="registerMessage"></div>
+<div id="registerMessage"></div>
 
-  </div>
-
+</div>
 </section>
+
 
 <section id="add" class="hidden">
 
-  <div class="box">
+<div class="box">
 
-    <h2>➕ إضافة سيارة للبيع</h2>
+<h2>➕ إضافة سيارة للبيع</h2>
 
-    <form id="carForm" enctype="multipart/form-data">
+<form id="carForm" enctype="multipart/form-data">
 
-      <input
-        id="brand"
-        name="brand"
-        type="text"
-        placeholder="ماركة السيارة - مثال: Toyota"
-        required
-      >
+<input
+id="brand"
+name="brand"
+type="text"
+placeholder="ماركة السيارة - مثال: Toyota"
+required
+>
 
-      <input
-        id="model"
-        name="model"
-        type="text"
-        placeholder="الموديل - مثال: Camry"
-        required
-      >
+<input
+id="model"
+name="model"
+type="text"
+placeholder="الموديل - مثال: Camry"
+required
+>
 
-      <input
-        id="year"
-        name="year"
-        type="number"
-        placeholder="سنة الصنع"
-        min="1900"
-        max="2100"
-        required
-      >
+<input
+id="year"
+name="year"
+type="number"
+placeholder="سنة الصنع"
+min="1900"
+max="2100"
+required
+>
 
-      <input
-        id="price"
-        name="price"
-        type="number"
-        placeholder="السعر بالدينار العراقي"
-        min="0"
-        required
-      >
+<input
+id="price"
+name="price"
+type="number"
+placeholder="السعر بالدينار العراقي"
+min="0"
+required
+>
 
-      <input
-        id="km"
-        name="km"
-        type="number"
-        placeholder="عدد الكيلومترات"
-        min="0"
-      >
+<input
+id="km"
+name="km"
+type="number"
+placeholder="عدد الكيلومترات"
+min="0"
+>
 
-      <input
-        id="city"
-        name="city"
-        type="text"
-        placeholder="المدينة"
-        value="الموصل"
-        required
-      >
+<input
+id="city"
+name="city"
+type="text"
+placeholder="المدينة"
+value="الموصل"
+required
+>
 
-      <select id="fuel" name="fuel">
-        <option value="بنزين">بنزين</option>
-        <option value="ديزل">ديزل</option>
-        <option value="هايبرد">هايبرد</option>
-        <option value="كهرباء">كهرباء</option>
-      </select>
+<select id="fuel" name="fuel">
+<option value="بنزين">بنزين</option>
+<option value="ديزل">ديزل</option>
+<option value="هايبرد">هايبرد</option>
+<option value="كهرباء">كهرباء</option>
+</select>
 
-      <select id="transmission" name="transmission">
-        <option value="أوتوماتيك">أوتوماتيك</option>
-        <option value="عادي">عادي</option>
-      </select>
+<select id="transmission" name="transmission">
+<option value="أوتوماتيك">أوتوماتيك</option>
+<option value="عادي">عادي</option>
+</select>
 
-      <textarea
-        id="description"
-        name="description"
-        placeholder="اكتب تفاصيل السيارة..."
-      ></textarea>
+<textarea
+id="description"
+name="description"
+placeholder="اكتب تفاصيل السيارة..."
+></textarea>
 
-      <input
-        id="image"
-        name="image"
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/*"
-      >
+<input
+id="image"
+name="image"
+type="file"
+accept="image/jpeg,image/png,image/webp,image/*"
+>
 
-      <div class="payment">
+<div class="payment">
 
-        <h3>💰 أسعار الإعلانات</h3>
+<h3>💰 أسعار الإعلانات</h3>
 
-        <p>الإعلان العادي: <b>10,000 دينار</b></p>
-        <p>الإعلان المميز: <b>20,000 دينار</b></p>
-        <p>VIP: <b>30,000 دينار</b></p>
+<p>الإعلان العادي: <b>10,000 دينار</b></p>
+<p>الإعلان المميز: <b>20,000 دينار</b></p>
+<p>VIP: <b>30,000 دينار</b></p>
 
-        <p>
-          بعد التحويل، ارفع صورة الوصل حتى تتم مراجعة الإعلان.
-        </p>
+<p>
+بعد التحويل، ارفع صورة الوصل حتى تتم مراجعة الإعلان.
+</p>
 
-      </div>
+</div>
 
-      <button id="submitCarButton" type="submit">
-        🚀 نشر السيارة
-      </button>
+<button id="submitCarButton" type="submit">
+🚀 نشر السيارة
+</button>
 
-    </form>
+</form>
 
-    <div id="carMessage"></div>
+<div id="carMessage"></div>
 
-  </div>
-
+</div>
 </section>
 
 </main>
 
 <footer>
-  © 2026 بنت الموصل للسيارات
+© 2026 بنت الموصل للسيارات
 </footer>
+
 
 <script>
 "use strict";
 
-let token = localStorage.getItem("token") || "";
+let token=localStorage.getItem("token")||"";
 
 function $(id){
-  return document.getElementById(id);
+return document.getElementById(id);
 }
 
 function escapeHtml(value){
-  return String(value ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+return String(value??"")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
 }
 
 function getCarsArray(data){
 
-  if(Array.isArray(data)){
-    return data;
-  }
+if(Array.isArray(data)){
+return data;
+}
 
-  if(data && Array.isArray(data.cars)){
-    return data.cars;
-  }
+if(data&&Array.isArray(data.cars)){
+return data.cars;
+}
 
-  if(data && Array.isArray(data.data)){
-    return data.data;
-  }
+if(data&&Array.isArray(data.data)){
+return data.data;
+}
 
-  return [];
+return [];
 }
 
 async function readJson(response){
 
-  try{
-    return await response.json();
-  }catch(error){
-    return {};
-  }function showSection(id){
+try{
+return await response.json();
+}catch(error){
+return {};
+}
 
-  const sections =
-    document.querySelectorAll("main > section");
+}
 
-  sections.forEach(function(section){
-    section.classList.add("hidden");
-  });
 
-  const selected = $(id);
+function showSection(id){
 
-  if(!selected){
-    console.error("Section not found:",id);
-    return;
-  }
+const sections=document.querySelectorAll("main > section");
 
-  selected.classList.remove("hidden");
+sections.forEach(function(section){
+section.classList.add("hidden");
+});
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
+const selected=$(id);
 
-  if(id === "cars"){
-    loadCars();
-  }
+if(!selected){
+console.error("Section not found:",id);
+return;
+}
 
-  if(id === "home"){
-    loadLatestCars();
-  }
+selected.classList.remove("hidden");
+
+window.scrollTo({
+top:0,
+behavior:"smooth"
+});
+
+if(id==="cars"){
+loadCars();
+}
+
+if(id==="home"){
+loadLatestCars();
+}
+
 }
 
 
 function setupNavigation(){
 
-  const buttons =
-    document.querySelectorAll("[data-section]");
+const buttons=document.querySelectorAll("[data-section]");
 
-  buttons.forEach(function(button){
+buttons.forEach(function(button){
 
-    button.addEventListener("click",function(event){
+button.addEventListener("click",function(event){
 
-      event.preventDefault();
+event.preventDefault();
 
-      const section =
-        button.getAttribute("data-section");
+const section=button.getAttribute("data-section");
 
-      if(section){
-        showSection(section);
-      }
+if(section){
+showSection(section);
+}
 
-    });
+});
 
-  });
+});
 
 }
 
 
 function carCard(car){
 
-  const image =
-    car.image ||
-    car.image_url ||
-    car.photo ||
-    "";
+const image=
+car.image||
+car.image_url||
+car.photo||
+"";
 
-  const brand =
-    car.brand || "سيارة";
+const brand=car.brand||"سيارة";
+const model=car.model||"";
+const year=car.year||"غير محدد";
+const city=car.city||"غير محدد";
 
-  const model =
-    car.model || "";
+const km=
+car.km??
+car.mileage??
+"غير محدد";
 
-  const year =
-    car.year || "غير محدد";
+const fuel=car.fuel||"غير محدد";
+const transmission=car.transmission||"غير محدد";
 
-  const city =
-    car.city || "غير محدد";
+const price=
+car.price??
+"غير محدد";
 
-  const km =
-    car.km ??
-    car.mileage ??
-    "غير محدد";
+const description=
+car.description||
+"لا توجد تفاصيل إضافية.";
 
-  const fuel =
-    car.fuel ||
-    "غير محدد";
+return `
+<article class="car">
 
-  const transmission =
-    car.transmission ||
-    "غير محدد";
+<div class="car-image">
 
-  const price =
-    car.price ??
-    "غير محدد";
+${
+image
+?
+`
+<img
+src="${escapeHtml(image)}"
+alt="${escapeHtml(brand+" "+model)}"
+loading="lazy"
+onerror="this.style.display='none';this.parentElement.innerHTML='🚗';"
+>
+`
+:
+`🚗`
+}
 
-  const description =
-    car.description ||
-    "لا توجد تفاصيل إضافية.";
+</div>
 
-  return `
-    <article class="car">
+<div class="car-content">
 
-      <div class="car-image">
+<h3>
+${escapeHtml(brand)}
+${escapeHtml(model)}
+</h3>
 
-        ${
-          image
-          ?
-          `
-          <img
-            src="${escapeHtml(image)}"
-            alt="${escapeHtml(brand + " " + model)}"
-            loading="lazy"
-            onerror="this.style.display='none';this.parentElement.innerHTML='🚗';"
-          >
-          `
-          :
-          `🚗`
-        }
+<p>
+📅 السنة:
+${escapeHtml(year)}
+</p>
 
-      </div>
+<p>
+📍 المدينة:
+${escapeHtml(city)}
+</p>
 
-      <div class="car-content">
+<p>
+🛣️ الكيلومترات:
+${escapeHtml(km)}
+</p>
 
-        <h3>
-          ${escapeHtml(brand)}
-          ${escapeHtml(model)}
-        </h3>
+<p>
+⛽ الوقود:
+${escapeHtml(fuel)}
+</p>
 
-        <p>
-          📅 السنة:
-          ${escapeHtml(year)}
-        </p>
+<p>
+⚙️ القير:
+${escapeHtml(transmission)}
+</p>
 
-        <p>
-          📍 المدينة:
-          ${escapeHtml(city)}
-        </p>
+<p class="price">
+💰 ${escapeHtml(price)} دينار
+</p>
 
-        <p>
-          🛣️ الكيلومترات:
-          ${escapeHtml(km)}
-        </p>
+<p>
+${escapeHtml(description)}
+</p>
 
-        <p>
-          ⛽ الوقود:
-          ${escapeHtml(fuel)}
-        </p>
-
-        <p>
-          ⚙️ القير:
-          ${escapeHtml(transmission)}
-        </p>
-
-        <p class="price">
-          💰
-          ${escapeHtml(price)}
-          دينار
-        </p>
-
-        <p>
-          ${escapeHtml(description)}
-        </p>
-
-      </div>
-
-    </article>
-  `;
+</div>
+</article>
+`;
 
 }
 
 
 async function loadCars(){
 
-  const box = $("carsList");
+const box=$("carsList");
 
-  if(!box){
-    return;
-  }
+if(!box){
+return;
+}
 
-  const searchElement = $("search");
+const searchElement=$("search");
 
-  const search =
-    searchElement
-    ?
-    searchElement.value.trim()
-    :
-    "";
+const search=
+searchElement?
+searchElement.value.trim():
+"";
 
-  box.innerHTML =
-    `
-    <div class="loading">
-      ⏳ جاري تحميل السيارات...
-    </div>
-    `;
+box.innerHTML=`
+<div class="loading">
+⏳ جاري تحميل السيارات...
+</div>
+`;
 
-  try{
+try{
 
-    let url = "/api/cars";
+let url="/api/cars";
 
-    if(search){
+if(search){
 
-      url +=
-        "?search=" +
-        encodeURIComponent(search);
+url+="?search="+encodeURIComponent(search);
 
-    }
+}
 
-    const response =
-      await fetch(url,{
-        method:"GET",
-        cache:"no-store",
-        headers:{
-          "Accept":"application/json"
-        }
-      });
+const response=
+await fetch(url,{
+method:"GET",
+cache:"no-store",
+headers:{
+"Accept":"application/json"
+}
+});
 
-    const data =
-      await readJson(response);
+const data=await readJson(response);
 
-    if(!response.ok){
+if(!response.ok){
 
-      throw new Error(
-        data.message ||
-        data.error ||
-        "تعذر تحميل السيارات"
-      );
+throw new Error(
+data.message||
+data.error||
+"تعذر تحميل السيارات"
+);
 
-    }
+}
 
-    const cars =
-      getCarsArray(data);
+const cars=getCarsArray(data);
 
-    if(!cars.length){
+if(!cars.length){
 
-      box.innerHTML =
-        `
-        <div class="empty">
-          🚗 لا توجد سيارات حالياً.
-        </div>
-        `;
+box.innerHTML=`
+<div class="empty">
+🚗 لا توجد سيارات حالياً.
+</div>
+`;
 
-      return;
-    }
+return;
+}
 
-    box.innerHTML =
-      cars
-        .map(carCard)
-        .join("");
+box.innerHTML=
+cars.map(carCard).join("");
 
-  }catch(error){
+}catch(error){
 
-    console.error("loadCars:",error);
+console.error("loadCars:",error);
 
-    box.innerHTML =
-      `
-      <div class="message">
-        ❌ تعذر تحميل السيارات حالياً.
-        <br>
-        حاول تحديث الصفحة.
-      </div>
-      `;
+box.innerHTML=`
+<div class="message">
+❌ تعذر تحميل السيارات حالياً.
+<br>
+حاول تحديث الصفحة.
+</div>
+`;
 
-  }
+}
 
 }
 
 
 async function loadLatestCars(){
 
-  const box = $("latestCars");
+const box=$("latestCars");
 
-  if(!box){
-    return;
-  }
+if(!box){
+return;
+}
 
-  box.innerHTML =
-    `
-    <div class="loading">
-      ⏳ جاري تحميل السيارات...
-    </div>
-    `;
+box.innerHTML=`
+<div class="loading">
+⏳ جاري تحميل السيارات...
+</div>
+`;
 
-  try{
+try{
 
-    const response =
-      await fetch(
-        "/api/cars",
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "Accept":"application/json"
-          }
-        }
-      );
+const response=
+await fetch("/api/cars",{
+method:"GET",
+cache:"no-store",
+headers:{
+"Accept":"application/json"
+}
+});
 
-    const data =
-      await readJson(response);
+const data=await readJson(response);
 
-    if(!response.ok){
+if(!response.ok){
 
-      throw new Error(
-        data.message ||
-        data.error ||
-        "تعذر تحميل السيارات"
-      );
+throw new Error(
+data.message||
+data.error||
+"تعذر تحميل السيارات"
+);
 
-    }
+}
 
-    const cars =
-      getCarsArray(data);
+const cars=getCarsArray(data);
 
-    if(!cars.length){
+if(!cars.length){
 
-      box.innerHTML =
-        `
-        <div class="empty">
-          🚗 لا توجد سيارات مضافة حالياً.
-        </div>
-        `;
+box.innerHTML=`
+<div class="empty">
+🚗 لا توجد سيارات مضافة حالياً.
+</div>
+`;
 
-      return;
-    }
+return;
+}
 
-    box.innerHTML =
-      cars
-        .slice(0,6)
-        .map(carCard)
-        .join("");
+box.innerHTML=
+cars.slice(0,6).map(carCard).join("");
 
-  }catch(error){
+}catch(error){
 
-    console.error("loadLatestCars:",error);
+console.error("loadLatestCars:",error);
 
-    box.innerHTML =
-      `
-      <div class="empty">
-        🚗 لا توجد سيارات لعرضها حالياً.
-      </div>
-      `;
+box.innerHTML=`
+<div class="empty">
+🚗 لا توجد سيارات لعرضها حالياً.
+</div>
+`;
 
-  }
+}
 
 }
 
 
 function setupSearch(){
 
-  const searchInput = $("search");
+const searchInput=$("search");
 
-  if(!searchInput){
-    return;
-  }
+if(!searchInput){
+return;
+}
 
-  let timer = null;
+let timer=null;
 
-  searchInput.addEventListener("input",function(){
+searchInput.addEventListener("input",function(){
 
-    clearTimeout(timer);
+clearTimeout(timer);
 
-    timer =
-      setTimeout(function(){
-        loadCars();
-      },300);
+timer=setTimeout(function(){
+loadCars();
+},300);
 
-  });
+});
 
 }
 
 
 function setupRegister(){
 
-  const form = $("registerForm");
+const form=$("registerForm");
 
-  if(!form){
-    return;
-  }
+if(!form){
+return;
+}
 
-  form.addEventListener(
-    "submit",
-    async function(e){
+form.addEventListener("submit",async function(e){
 
-      e.preventDefault();
+e.preventDefault();
 
-      const message =
-        $("registerMessage");
+const message=$("registerMessage");
 
-      message.innerHTML =
-        `
-        <div class="message">
-          ⏳ جاري إنشاء الحساب...
-        </div>
-        `;
+message.innerHTML=`
+<div class="message">
+⏳ جاري إنشاء الحساب...
+</div>
+`;
 
-      try{
+try{
 
-        const response =
-          await fetch(
-            "/api/auth/register",
-            {
-              method:"POST",
+const response=
+await fetch("/api/auth/register",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Accept":"application/json"
+},
+body:JSON.stringify({
 
-              headers:{
-                "Content-Type":
-                  "application/json",
-                "Accept":
-                  "application/json"
-              },
+name:$("registerName").value.trim(),
 
-              body:JSON.stringify({
+email:$("registerEmail").value.trim(),
 
-                name:
-                  $("registerName")
-                    .value
-                    .trim(),
+password:$("registerPassword").value
 
-                email:
-                  $("registerEmail")
-                    .value
-                    .trim(),
+})
+});
 
-                password:
-                  $("registerPassword")
-                    .value
+const data=await readJson(response);
 
-              })
+if(!response.ok){
 
-            }
-          );
+throw new Error(
+data.message||
+data.error||
+"فشل إنشاء الحساب"
+);
 
-        const data =
-          await readJson(response);
+}
 
-        if(!response.ok){
+message.innerHTML=`
+<div class="message">
+✅ تم إنشاء الحساب بنجاح.
+<br>
+يمكنك تسجيل الدخول الآن.
+</div>
+`;
 
-          throw new Error(
-            data.message ||
-            data.error ||
-            "فشل إنشاء الحساب"
-          );
+form.reset();
 
-        }
+}catch(error){
 
-        message.innerHTML =
-          `
-          <div class="message">
-            ✅ تم إنشاء الحساب بنجاح.
-            <br>
-            يمكنك تسجيل الدخول الآن.
-          </div>
-          `;
+console.error("register:",error);
 
-        form.reset();
+message.innerHTML=`
+<div class="message">
+❌ ${escapeHtml(error.message)}
+</div>
+`;
 
-      }catch(error){
+}
 
-        console.error("register:",error);
-
-        message.innerHTML =
-          `
-          <div class="message">
-            ❌ ${escapeHtml(error.message)}
-          </div>
-          `;
-
-      }
-
-    }
-  );
+});
 
 }
 
 
 function setupLogin(){
 
-  const form = $("loginForm");
+const form=$("loginForm");
 
-  if(!form){
-    return;
-  }
+if(!form){
+return;
+}
 
-  form.addEventListener(
-    "submit",
-    async function(e){
+form.addEventListener("submit",async function(e){
 
-      e.preventDefault();
+e.preventDefault();
 
-      const message =
-        $("loginMessage");
+const message=$("loginMessage");
 
-      const submitButton =
-        form.querySelector("button[type='submit']");
+const submitButton=
+form.querySelector("button[type='submit']");
 
-      if(submitButton){
-        submitButton.disabled = true;
-      }
+if(submitButton){
+submitButton.disabled=true;
+}
 
-      message.innerHTML =
-        `
-        <div class="message">
-          ⏳ جاري تسجيل الدخول...
-        </div>
-        `;
+message.innerHTML=`
+<div class="message">
+⏳ جاري تسجيل الدخول...
+</div>
+`;
 
-      try{
+try{
 
-        const response =
-          await fetch(
-            "/api/auth/login",
-            {
-              method:"POST",
+const response=
+await fetch("/api/auth/login",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Accept":"application/json"
+},
+body:JSON.stringify({
 
-              headers:{
-                "Content-Type":
-                  "application/json",
-                "Accept":
-                  "application/json"
-              },
+email:$("loginEmail").value.trim(),
 
-              body:JSON.stringify({
+password:$("loginPassword").value
 
-                email:
-                  $("loginEmail")
-                    .value
-                    .trim(),
+})
+});
 
-                password:
-                  $("loginPassword")
-                    .value
+const data=await readJson(response);
 
-              })
+if(!response.ok){
 
-            }
-          );
+throw new Error(
+data.message||
+data.error||
+"بيانات الدخول غير صحيحة"
+);
 
-        const data =
-          await readJson(response);
+}
 
-        if(!response.ok){
+token=
+data.token||
+data.accessToken||
+data.jwt||
+"";
 
-          throw new Error(
-            data.message ||
-            data.error ||
-            "بيانات الدخول غير صحيحة"
-          );
+if(!token){
 
-        }
+throw new Error(
+"تم الدخول لكن لم يتم استلام رمز الدخول من الخادم."
+);
 
-        token =
-          data.token ||
-          data.accessToken ||
-          data.jwt ||
-          "";
+}
 
-        if(!token){
+localStorage.setItem("token",token);
 
-          throw new Error(
-            "تم الدخول لكن لم يتم استلام رمز الدخول من الخادم."
-          );
+message.innerHTML=`
+<div class="message">
+✅ تم تسجيل الدخول بنجاح.
+</div>
+`;
 
-        }
+form.reset();
 
-        localStorage.setItem(
-          "token",
-          token
-        );
+setTimeout(function(){
+showSection("home");
+},800);
 
-        message.innerHTML =
-          `
-          <div class="message">
-            ✅ تم تسجيل الدخول بنجاح.
-          </div>
-          `;
+}catch(error){
 
-        form.reset();
+console.error("login:",error);
 
-        setTimeout(function(){
+message.innerHTML=`
+<div class="message">
+❌ ${escapeHtml(error.message)}
+</div>
+`;
 
-          showSection("home");
+}finally{
 
-        },800);
+if(submitButton){
+submitButton.disabled=false;
+}
 
-      }catch(error){
+}
 
-        console.error("login:",error);
-
-        message.innerHTML =
-          `
-          <div class="message">
-            ❌ ${escapeHtml(error.message)}
-          </div>
-          `;
-
-      }finally{
-
-        if(submitButton){
-          submitButton.disabled = false;
-        }
-
-      }
-
-    }function setupCarForm(){
-
-  const form = $("carForm");
-
-  if(!form){
-    return;
-  }
-
-  form.addEventListener(
-    "submit",
-    async function(e){
-
-      e.preventDefault();
-
-      const message =
-        $("carMessage");
-
-      const submitButton =
-        $("submitCarButton");
-
-      if(!token){
-
-        message.innerHTML =
-          `
-          <div class="message">
-            ❌ لازم تسجل دخول أولاً.
-          </div>
-          `;
-
-        return;
-      }
-
-      if(submitButton){
-        submitButton.disabled = true;
-      }
-
-      message.innerHTML =
-        `
-        <div class="message">
-          ⏳ جاري إرسال السيارة...
-        </div>
-        `;
-
-      try{
-
-        const formData =
-          new FormData();
-
-        formData.append(
-          "brand",
-          $("brand").value.trim()
-        );
-
-        formData.append(
-          "model",
-          $("model").value.trim()
-        );
-
-        formData.append(
-          "year",
-          $("year").value
-        );
-
-        formData.append(
-          "price",
-          $("price").value
-        );
-
-        formData.append(
-          "km",
-          $("km").value
-        );
-
-        formData.append(
-          "city",
-          $("city").value.trim()
-        );
-
-        formData.append(
-          "fuel",
-          $("fuel").value
-        );
-
-        formData.append(
-          "transmission",
-          $("transmission").value
-        );
-
-        formData.append(
-          "description",
-          $("description").value.trim()
-        );
-
-        const imageInput =
-          $("image");
-
-        if(
-          imageInput &&
-          imageInput.files &&
-          imageInput.files.length > 0
-        ){
-
-          formData.append(
-            "image",
-            imageInput.files[0]
-          );
-
-        }
-
-        const response =
-          await fetch(
-            "/api/cars",
-            {
-              method:"POST",
-
-              headers:{
-                "Authorization":
-                  "Bearer " + token,
-
-                "Accept":
-                  "application/json"
-              },
-
-              body:formData
-            }
-          );
-
-        const data =
-          await readJson(response);
-
-        if(!response.ok){
-
-          if(response.status === 401){
-
-            localStorage.removeItem("token");
-
-            token = "";
-
-            throw new Error(
-              "انتهت جلسة تسجيل الدخول. سجل دخول مرة ثانية."
-            );
-
-          }
-
-          throw new Error(
-            data.message ||
-            data.error ||
-            "فشل نشر السيارة"
-          );
-
-        }
-
-        message.innerHTML =
-          `
-          <div class="message">
-            ✅ تم إرسال السيارة للمراجعة بنجاح.
-            <br>
-            بعد موافقة الإدارة ستظهر السيارة في الموقع.
-          </div>
-          `;
-
-        form.reset();
-
-        $("city").value = "الموصل";
-
-        setTimeout(function(){
-          loadLatestCars();
-        },500);
-
-      }catch(error){
-
-        console.error(
-          "car submit:",
-          error
-        );
-
-        message.innerHTML =
-          `
-          <div class="message">
-            ❌ ${escapeHtml(error.message)}
-          </div>
-          `;
-
-      }finally{
-
-        if(submitButton){
-          submitButton.disabled = false;
-        }
-
-      }
-
-    }
-  );
+});
 
 }
 
 
-/* =====================================================
-   تشغيل الموقع
-===================================================== */
+function setupCarForm(){
 
-document.addEventListener(
-  "DOMContentLoaded",
-  function(){
+const form=$("carForm");
 
-    setupNavigation();
+if(!form){
+return;
+}
 
-    setupSearch();
+form.addEventListener("submit",async function(e){
 
-    setupRegister();
+e.preventDefault();
 
-    setupLogin();
+const message=$("carMessage");
 
-    setupCarForm();
+const submitButton=$("submitCarButton");
 
-    loadLatestCars();
+if(!token){
 
-  }
+message.innerHTML=`
+<div class="message">
+❌ لازم تسجل دخول أولاً.
+</div>
+`;
+
+return;
+}
+
+if(submitButton){
+submitButton.disabled=true;
+}
+
+message.innerHTML=`
+<div class="message">
+⏳ جاري إرسال السيارة...
+</div>
+`;
+
+try{
+
+const formData=new FormData();
+
+formData.append(
+"brand",
+$("brand").value.trim()
 );
+
+formData.append(
+"model",
+$("model").value.trim()
+);
+
+formData.append(
+"year",
+$("year").value
+);
+
+formData.append(
+"price",
+$("price").value
+);
+
+formData.append(
+"km",
+$("km").value
+);
+
+formData.append(
+"city",
+$("city").value.trim()
+);
+
+formData.append(
+"fuel",
+$("fuel").value
+);
+
+formData.append(
+"transmission",
+$("transmission").value
+);
+
+formData.append(
+"description",
+$("description").value.trim()
+);
+
+const imageInput=$("image");
+
+if(
+imageInput&&
+imageInput.files&&
+imageInput.files.length>0
+){
+
+formData.append(
+"image",
+imageInput.files[0]
+);
+
+}
+
+const response=
+await fetch("/api/cars",{
+method:"POST",
+headers:{
+"Authorization":"Bearer "+token,
+"Accept":"application/json"
+},
+body:formData
+});
+
+const data=await readJson(response);
+
+if(!response.ok){
+
+if(response.status===401){
+
+localStorage.removeItem("token");
+
+token="";
+
+throw new Error(
+"انتهت جلسة تسجيل الدخول. سجل دخول مرة ثانية."
+);
+
+}
+
+throw new Error(
+data.message||
+data.error||
+"فشل نشر السيارة"
+);
+
+}
+
+message.innerHTML=`
+<div class="message">
+✅ تم إرسال السيارة للمراجعة بنجاح.
+<br>
+بعد موافقة الإدارة ستظهر السيارة في الموقع.
+</div>
+`;
+
+form.reset();
+
+$("city").value="الموصل";
+
+setTimeout(function(){
+loadLatestCars();
+},500);
+
+}catch(error){
+
+console.error("car submit:",error);
+
+message.innerHTML=`
+<div class="message">
+❌ ${escapeHtml(error.message)}
+</div>
+`;
+
+}finally{
+
+if(submitButton){
+submitButton.disabled=false;
+}
+
+}
+
+});
+
+}
+
+
+document.addEventListener("DOMContentLoaded",function(){
+
+setupNavigation();
+setupSearch();
+setupRegister();
+setupLogin();
+setupCarForm();
+loadLatestCars();
+
+});
 
 </script>
 
 </body>
-</html>
-  );
-
-  }
-
-}
+  </html>
