@@ -17,7 +17,12 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.5'
           channel: stable
+          cache: true
+
+      - name: Generate Android files
+        run: flutter create --platforms=android .
 
       - name: Get packages
         run: flutter pub get
@@ -28,5 +33,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: bent-al-mosul-cars-apk
+          name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
