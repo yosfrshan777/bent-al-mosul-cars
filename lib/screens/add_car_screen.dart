@@ -41,7 +41,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   static const int maxImages = 8;
 
   // =========================================================
-  // PICK MULTIPLE IMAGES
+  // اختيار عدة صور
   // =========================================================
 
   Future<void> _pickMultipleImages() async {
@@ -80,7 +80,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // CAMERA
+  // الكاميرا
   // =========================================================
 
   Future<void> _takePhoto() async {
@@ -110,7 +110,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // IMAGE MENU
+  // قائمة الصور
   // =========================================================
 
   Future<void> _showImagePickerMenu() async {
@@ -121,21 +121,34 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
     await showModalBottomSheet(
       context: context,
+      backgroundColor: const Color(0xFF15151B),
       builder: (context) {
         return SafeArea(
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('اختيار عدة صور'),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: Color(0xFFFF176F),
+                ),
+                title: const Text(
+                  'اختيار عدة صور',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _pickMultipleImages();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('التقاط صورة بالكاميرا'),
+                leading: const Icon(
+                  Icons.camera_alt,
+                  color: Color(0xFFFF176F),
+                ),
+                title: const Text(
+                  'التقاط صورة بالكاميرا',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _takePhoto();
@@ -149,7 +162,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // DELETE IMAGE
+  // حذف صورة
   // =========================================================
 
   void _deleteImage(int index) {
@@ -163,7 +176,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // MAKE MAIN IMAGE
+  // تحديد الصورة الرئيسية
   // =========================================================
 
   void _makeMainImage(int index) {
@@ -180,7 +193,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // SUBMIT
+  // إرسال الإعلان
   // =========================================================
 
   Future<void> _submit() async {
@@ -192,11 +205,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
     if (_images.isEmpty) {
       _showMessage('أضف صورة واحدة على الأقل');
-      return;
-    }
-
-    if (_images.length > maxImages) {
-      _showMessage('يمكن إضافة 8 صور فقط');
       return;
     }
 
@@ -278,7 +286,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // MESSAGE
+  // رسالة
   // =========================================================
 
   void _showMessage(String message) {
@@ -299,7 +307,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // TEXT FIELD
+  // حقل نص
   // =========================================================
 
   Widget _textField({
@@ -314,9 +322,19 @@ class _AddCarScreenState extends State<AddCarScreen> {
         controller: controller,
         keyboardType: keyboardType,
         textDirection: TextDirection.rtl,
+        style: const TextStyle(
+          color: Colors.white,
+        ),
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
+          labelStyle: const TextStyle(
+            color: Colors.white60,
+          ),
+          filled: true,
+          fillColor: const Color(0xFF15151B),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         validator: validator,
       ),
@@ -324,7 +342,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   }
 
   // =========================================================
-  // IMAGES UI
+  // قسم الصور
   // =========================================================
 
   Widget _buildImagesSection() {
@@ -337,6 +355,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
             const Text(
               'صور السيارة',
               style: TextStyle(
+                color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -344,6 +363,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
             Text(
               '${_images.length}/8',
               style: const TextStyle(
+                color: Color(0xFFFF176F),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -354,9 +374,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
         const Text(
           'الصورة الأولى هي الصورة الرئيسية',
-          textDirection: TextDirection.rtl,
           style: TextStyle(
-            color: Colors.grey,
+            color: Colors.white54,
           ),
         ),
 
@@ -368,22 +387,26 @@ class _AddCarScreenState extends State<AddCarScreen> {
             child: Container(
               height: 180,
               decoration: BoxDecoration(
+                color: const Color(0xFF15151B),
                 border: Border.all(
-                  color: Colors.grey,
+                  color: const Color(0xFF292932),
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment:
+                    MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.add_a_photo,
                     size: 50,
+                    color: Color(0xFFFF176F),
                   ),
                   SizedBox(height: 10),
                   Text(
                     'أضف صور السيارة',
                     style: TextStyle(
+                      color: Colors.white,
                       fontSize: 17,
                     ),
                   ),
@@ -391,7 +414,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   Text(
                     'يمكنك إضافة حتى 8 صور',
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: Colors.white54,
                     ),
                   ),
                 ],
@@ -401,7 +424,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
         else
           GridView.builder(
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            physics:
+                const NeverScrollableScrollPhysics(),
             itemCount: _images.length < maxImages
                 ? _images.length + 1
                 : _images.length,
@@ -419,20 +443,29 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   onTap: _showImagePickerMenu,
                   child: Container(
                     decoration: BoxDecoration(
+                      color: const Color(0xFF15151B),
                       border: Border.all(
-                        color: Colors.grey,
+                        color: const Color(0xFF292932),
                       ),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius:
+                          BorderRadius.circular(14),
                     ),
                     child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.add,
                           size: 45,
+                          color: Color(0xFFFF176F),
                         ),
                         SizedBox(height: 5),
-                        Text('إضافة صور'),
+                        Text(
+                          'إضافة صور',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -445,26 +478,28 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius:
+                        BorderRadius.circular(14),
                     child: Image.file(
                       File(image.path),
                       fit: BoxFit.cover,
                     ),
                   ),
 
-                  // MAIN BADGE
                   if (index == 0)
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                            const EdgeInsets.symmetric(
                           horizontal: 9,
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(20),
+                          color: const Color(0xFFFF176F),
+                          borderRadius:
+                              BorderRadius.circular(20),
                         ),
                         child: const Text(
                           'الرئيسية',
@@ -477,7 +512,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
                       ),
                     ),
 
-                  // DELETE
                   Positioned(
                     top: 6,
                     left: 6,
@@ -498,7 +532,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
                     ),
                   ),
 
-                  // MAKE MAIN
                   if (index != 0)
                     Positioned(
                       bottom: 6,
@@ -508,6 +541,13 @@ class _AddCarScreenState extends State<AddCarScreen> {
                         onPressed: () {
                           _makeMainImage(index);
                         },
+                        style:
+                            ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Colors.black87,
+                          foregroundColor:
+                              Colors.white,
+                        ),
                         child: const Text(
                           'اجعلها الرئيسية',
                         ),
@@ -524,9 +564,10 @@ class _AddCarScreenState extends State<AddCarScreen> {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: _images.length >= maxImages
-                    ? null
-                    : _pickMultipleImages,
+                onPressed:
+                    _images.length >= maxImages
+                        ? null
+                        : _pickMultipleImages,
                 icon: const Icon(
                   Icons.photo_library,
                 ),
@@ -536,9 +577,10 @@ class _AddCarScreenState extends State<AddCarScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: _images.length >= maxImages
-                    ? null
-                    : _takePhoto,
+                onPressed:
+                    _images.length >= maxImages
+                        ? null
+                        : _takePhoto,
                 icon: const Icon(
                   Icons.camera_alt,
                 ),
@@ -560,8 +602,14 @@ class _AddCarScreenState extends State<AddCarScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: const Color(0xFF08080B),
         appBar: AppBar(
-          title: const Text('إضافة سيارة'),
+          title: const Text(
+            'إضافة سيارة',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           centerTitle: true,
         ),
         body: SafeArea(
@@ -570,7 +618,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
                 children: [
                   _buildImagesSection(),
 
@@ -603,12 +652,26 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   _textField(
                     controller: _yearController,
                     label: 'سنة الصنع',
-                    keyboardType: TextInputType.number,
+                    keyboardType:
+                        TextInputType.number,
                     validator: (value) {
                       if (value == null ||
                           value.trim().isEmpty) {
                         return 'أدخل السنة';
                       }
+
+                      final year =
+                          int.tryParse(value.trim());
+
+                      if (year == null) {
+                        return 'السنة غير صحيحة';
+                      }
+
+                      if (year < 1900 ||
+                          year > DateTime.now().year + 1) {
+                        return 'أدخل سنة صحيحة';
+                      }
+
                       return null;
                     },
                   ),
@@ -616,12 +679,25 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   _textField(
                     controller: _priceController,
                     label: 'السعر بالدينار العراقي',
-                    keyboardType: TextInputType.number,
+                    keyboardType:
+                        TextInputType.number,
                     validator: (value) {
                       if (value == null ||
                           value.trim().isEmpty) {
                         return 'أدخل السعر';
                       }
+
+                      final price = int.tryParse(
+                        value
+                            .replaceAll(',', '')
+                            .trim(),
+                      );
+
+                      if (price == null ||
+                          price <= 0) {
+                        return 'أدخل سعراً صحيحاً';
+                      }
+
                       return null;
                     },
                   ),
@@ -629,7 +705,26 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   _textField(
                     controller: _kmController,
                     label: 'المسافة بالكيلومتر',
-                    keyboardType: TextInputType.number,
+                    keyboardType:
+                        TextInputType.number,
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return null;
+                      }
+
+                      final km = int.tryParse(
+                        value
+                            .replaceAll(',', '')
+                            .trim(),
+                      );
+
+                      if (km == null || km < 0) {
+                        return 'أدخل رقم صحيح';
+                      }
+
+                      return null;
+                    },
                   ),
 
                   _textField(
@@ -648,9 +743,25 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
                   DropdownButtonFormField<String>(
                     value: _fuel,
-                    decoration: const InputDecoration(
+                    dropdownColor:
+                        const Color(0xFF15151B),
+                    decoration:
+                        InputDecoration(
                       labelText: 'نوع الوقود',
-                      border: OutlineInputBorder(),
+                      labelStyle:
+                          const TextStyle(
+                        color: Colors.white60,
+                      ),
+                      filled: true,
+                      fillColor:
+                          const Color(0xFF15151B),
+                      border:
+                          OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          14,
+                        ),
+                      ),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -683,9 +794,25 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
                   DropdownButtonFormField<String>(
                     value: _transmission,
-                    decoration: const InputDecoration(
+                    dropdownColor:
+                        const Color(0xFF15151B),
+                    decoration:
+                        InputDecoration(
                       labelText: 'ناقل الحركة',
-                      border: OutlineInputBorder(),
+                      labelStyle:
+                          const TextStyle(
+                        color: Colors.white60,
+                      ),
+                      filled: true,
+                      fillColor:
+                          const Color(0xFF15151B),
+                      border:
+                          OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          14,
+                        ),
+                      ),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -710,9 +837,25 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
                   DropdownButtonFormField<String>(
                     value: _plan,
-                    decoration: const InputDecoration(
+                    dropdownColor:
+                        const Color(0xFF15151B),
+                    decoration:
+                        InputDecoration(
                       labelText: 'نوع الإعلان',
-                      border: OutlineInputBorder(),
+                      labelStyle:
+                          const TextStyle(
+                        color: Colors.white60,
+                      ),
+                      filled: true,
+                      fillColor:
+                          const Color(0xFF15151B),
+                      border:
+                          OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          14,
+                        ),
+                      ),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -746,13 +889,32 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   const SizedBox(height: 12),
 
                   TextFormField(
-                    controller: _descriptionController,
+                    controller:
+                        _descriptionController,
                     maxLines: 5,
-                    textDirection: TextDirection.rtl,
-                    decoration: const InputDecoration(
+                    textDirection:
+                        TextDirection.rtl,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                    decoration:
+                        InputDecoration(
                       labelText: 'وصف السيارة',
+                      labelStyle:
+                          const TextStyle(
+                        color: Colors.white60,
+                      ),
                       alignLabelWithHint: true,
-                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor:
+                          const Color(0xFF15151B),
+                      border:
+                          OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          14,
+                        ),
+                      ),
                     ),
                   ),
 
@@ -761,24 +923,44 @@ class _AddCarScreenState extends State<AddCarScreen> {
                   SizedBox(
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: _loading ? null : _submit,
+                      onPressed:
+                          _loading ? null : _submit,
+                      style:
+                          ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color(0xFFFF176F),
+                        foregroundColor:
+                            Colors.white,
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(
+                            14,
+                          ),
+                        ),
+                      ),
                       child: _loading
                           ? const SizedBox(
                               width: 25,
                               height: 25,
-                              child: CircularProgressIndicator(
+                              child:
+                                  CircularProgressIndicator(
                                 strokeWidth: 2,
+                                color: Colors.white,
                               ),
                             )
                           : const Text(
                               'نشر السيارة',
                               style: TextStyle(
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontWeight:
+                                    FontWeight.bold,
                               ),
                             ),
                     ),
                   ),
+
+                  const SizedBox(height: 25),
                 ],
               ),
             ),
