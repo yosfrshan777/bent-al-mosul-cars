@@ -23,7 +23,6 @@ class BentAlMosulApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-
         scaffoldBackgroundColor:
             const Color(0xFF08080B),
 
@@ -54,7 +53,6 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState
     extends State<MainNavigation> {
-
   int currentIndex = 0;
 
   final ApiService api = ApiService.instance;
@@ -88,9 +86,8 @@ class _MainNavigationState
         api: api,
       ),
 
-      AddCarScreen(
-        api: api,
-      ),
+      // تم حذف api من هنا لأن AddCarScreen لا يستقبله
+      const AddCarScreen(),
 
       ProfileScreen(
         api: api,
@@ -106,8 +103,7 @@ class _MainNavigationState
           children: pages,
         ),
 
-        bottomNavigationBar:
-            NavigationBar(
+        bottomNavigationBar: NavigationBar(
           selectedIndex: currentIndex,
 
           onDestinationSelected: (index) {
