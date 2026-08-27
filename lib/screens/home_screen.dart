@@ -39,9 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
+      // نحول بيانات السيرفر إلى Car
       final result = await widget.api.getCars();
-
-      if (!mounted) return;
 
       final parsedCars = result
           .whereType<Map>()
@@ -51,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           )
           .toList();
+
+      if (!mounted) return;
 
       setState(() {
         cars = parsedCars.take(6).toList();
@@ -103,7 +104,8 @@ class _HomeScreenState extends State<HomeScreen> {
       child: InkWell(
         onTap: () {},
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             SizedBox(
               height: 175,
@@ -111,14 +113,18 @@ class _HomeScreenState extends State<HomeScreen> {
               child: car.image != null &&
                       car.image!.isNotEmpty
                   ? Image.network(
-                      widget.api.imageUrl(car.image!),
+                      widget.api.imageUrl(
+                        car.image!,
+                      ),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
+                      errorBuilder:
+                          (_, __, ___) {
                         return _imagePlaceholder();
                       },
                     )
                   : _imagePlaceholder(),
             ),
+
             Padding(
               padding: const EdgeInsets.all(15),
               child: Column(
@@ -128,28 +134,35 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     '${car.brand} ${car.model}',
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow:
+                        TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
+
                   const SizedBox(height: 8),
+
                   Row(
                     children: [
                       _infoChip(
                         Icons.calendar_today_rounded,
                         '${car.year}',
                       ),
+
                       const SizedBox(width: 6),
+
                       _infoChip(
                         Icons.location_on_outlined,
                         car.city,
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 13),
+
                   Text(
                     '${_formatPrice(car.price)} د.ع',
                     style: const TextStyle(
@@ -173,13 +186,15 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     return Flexible(
       child: Container(
-        padding: const EdgeInsets.symmetric(
+        padding:
+            const EdgeInsets.symmetric(
           horizontal: 8,
           vertical: 6,
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF202027),
-          borderRadius: BorderRadius.circular(9),
+          borderRadius:
+              BorderRadius.circular(9),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -187,13 +202,17 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               icon,
               size: 13,
-              color: const Color(0xFFFF176F),
+              color:
+                  const Color(0xFFFF176F),
             ),
+
             const SizedBox(width: 4),
+
             Flexible(
               child: Text(
                 text,
-                overflow: TextOverflow.ellipsis,
+                overflow:
+                    TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 11,
@@ -224,7 +243,8 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius:
+            BorderRadius.circular(28),
         gradient: const LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
@@ -235,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         border: Border.all(
-          color: const Color(0xFF3A2631),
+          color: Color(0xFF3A2631),
         ),
       ),
       child: Column(
@@ -256,7 +276,9 @@ class _HomeScreenState extends State<HomeScreen> {
               size: 32,
             ),
           ),
+
           const SizedBox(height: 20),
+
           const Text(
             'بنت الموصل',
             style: TextStyle(
@@ -265,7 +287,9 @@ class _HomeScreenState extends State<HomeScreen> {
               fontWeight: FontWeight.w900,
             ),
           ),
+
           const SizedBox(height: 4),
+
           const Text(
             'للسيارات',
             style: TextStyle(
@@ -274,7 +298,9 @@ class _HomeScreenState extends State<HomeScreen> {
               fontWeight: FontWeight.w900,
             ),
           ),
+
           const SizedBox(height: 14),
+
           const Text(
             'منصة عراقية حديثة لبيع وشراء السيارات وقطع الغيار.',
             style: TextStyle(
@@ -283,53 +309,65 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 1.7,
             ),
           ),
+
           const SizedBox(height: 22),
+
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
               ElevatedButton.icon(
-                onPressed: widget.onOpenCars,
+                onPressed:
+                    widget.onOpenCars,
                 icon: const Icon(
                   Icons.search_rounded,
                 ),
                 label: const Text(
                   'تصفح السيارات',
                 ),
-                style: ElevatedButton.styleFrom(
+                style:
+                    ElevatedButton.styleFrom(
                   backgroundColor:
                       const Color(0xFFFF176F),
-                  foregroundColor: Colors.white,
+                  foregroundColor:
+                      Colors.white,
                   padding:
                       const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 13,
                   ),
-                  shape: RoundedRectangleBorder(
+                  shape:
+                      RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(13),
                   ),
                 ),
               ),
+
               OutlinedButton.icon(
-                onPressed: widget.onAddCar,
+                onPressed:
+                    widget.onAddCar,
                 icon: const Icon(
                   Icons.add_rounded,
                 ),
                 label: const Text(
                   'أضف سيارتك',
                 ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
+                style:
+                    OutlinedButton.styleFrom(
+                  foregroundColor:
+                      Colors.white,
                   side: const BorderSide(
-                    color: Color(0xFF44444E),
+                    color:
+                        Color(0xFF44444E),
                   ),
                   padding:
                       const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 13,
                   ),
-                  shape: RoundedRectangleBorder(
+                  shape:
+                      RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(13),
                   ),
@@ -347,19 +385,25 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           child: _actionCard(
-            icon: Icons.directions_car_filled_rounded,
+            icon: Icons
+                .directions_car_filled_rounded,
             title: 'السيارات',
             subtitle: 'تصفح الإعلانات',
-            onTap: widget.onOpenCars,
+            onTap:
+                widget.onOpenCars,
           ),
         ),
+
         const SizedBox(width: 10),
+
         Expanded(
           child: _actionCard(
-            icon: Icons.add_circle_outline_rounded,
+            icon: Icons
+                .add_circle_outline_rounded,
             title: 'بيع سيارتك',
             subtitle: 'أضف إعلان جديد',
-            onTap: widget.onAddCar,
+            onTap:
+                widget.onAddCar,
           ),
         ),
       ],
@@ -374,28 +418,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Material(
       color: const Color(0xFF15151B),
-      borderRadius: BorderRadius.circular(18),
+      borderRadius:
+          BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius:
+            BorderRadius.circular(18),
         child: Padding(
-          padding: const EdgeInsets.all(15),
+          padding:
+              const EdgeInsets.all(15),
           child: Row(
             children: [
               Container(
                 width: 45,
                 height: 45,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF28141F),
+                decoration:
+                    BoxDecoration(
+                  color:
+                      const Color(0xFF28141F),
                   borderRadius:
                       BorderRadius.circular(13),
                 ),
                 child: Icon(
                   icon,
-                  color: const Color(0xFFFF176F),
+                  color:
+                      const Color(0xFFFF176F),
                 ),
               ),
+
               const SizedBox(width: 10),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment:
@@ -403,15 +455,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style:
+                          const TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                            FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 3),
+
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style:
+                          const TextStyle(
                         color: Colors.white54,
                         fontSize: 11,
                       ),
@@ -431,8 +488,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SizedBox(
         height: 260,
         child: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFF176F),
+          child:
+              CircularProgressIndicator(
+            color:
+                Color(0xFFFF176F),
           ),
         ),
       );
@@ -441,9 +500,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (error != null) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(25),
+        padding:
+            const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: const Color(0xFF15151B),
+          color:
+              const Color(0xFF15151B),
           borderRadius:
               BorderRadius.circular(18),
         ),
@@ -454,14 +515,19 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white54,
               size: 42,
             ),
+
             const SizedBox(height: 10),
+
             Text(
               error!,
-              style: const TextStyle(
+              style:
+                  const TextStyle(
                 color: Colors.white70,
               ),
             ),
+
             const SizedBox(height: 12),
+
             TextButton(
               onPressed: _loadCars,
               child: const Text(
@@ -476,20 +542,25 @@ class _HomeScreenState extends State<HomeScreen> {
     if (cars.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(30),
+        padding:
+            const EdgeInsets.all(30),
         decoration: BoxDecoration(
-          color: const Color(0xFF15151B),
+          color:
+              const Color(0xFF15151B),
           borderRadius:
               BorderRadius.circular(18),
         ),
         child: const Column(
           children: [
             Icon(
-              Icons.directions_car_outlined,
+              Icons
+                  .directions_car_outlined,
               color: Colors.white38,
               size: 50,
             ),
+
             SizedBox(height: 10),
+
             Text(
               'لا توجد سيارات مضافة حالياً',
               style: TextStyle(
@@ -504,9 +575,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return SizedBox(
       height: 325,
       child: ListView.builder(
-        scrollDirection: Axis.horizontal,
+        scrollDirection:
+            Axis.horizontal,
         itemCount: cars.length,
-        itemBuilder: (context, index) {
+        itemBuilder:
+            (context, index) {
           return _buildCarCard(
             cars[index],
           );
@@ -518,20 +591,26 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF08080B),
+      backgroundColor:
+          const Color(0xFF08080B),
+
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFFFF176F),
+          color:
+              const Color(0xFFFF176F),
           backgroundColor:
               const Color(0xFF15151B),
           onRefresh: _loadCars,
+
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(
+            padding:
+                const EdgeInsets.fromLTRB(
               16,
               16,
               16,
               35,
             ),
+
             children: [
               _buildHero(),
 
@@ -543,22 +622,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
               Row(
                 mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                    MainAxisAlignment
+                        .spaceBetween,
                 children: [
                   const Text(
                     'أحدث السيارات',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                      fontWeight:
+                          FontWeight.w900,
                     ),
                   ),
+
                   TextButton(
-                    onPressed: widget.onOpenCars,
+                    onPressed:
+                        widget.onOpenCars,
                     child: const Text(
                       'عرض الكل',
                       style: TextStyle(
-                        color: Color(0xFFFF176F),
+                        color:
+                            Color(0xFFFF176F),
                       ),
                     ),
                   ),
