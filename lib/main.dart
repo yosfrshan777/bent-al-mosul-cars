@@ -23,8 +23,7 @@ class BentAlMosulApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor:
-            const Color(0xFF08080B),
+        scaffoldBackgroundColor: const Color(0xFF08080B),
 
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF176F),
@@ -51,8 +50,7 @@ class MainNavigation extends StatefulWidget {
       _MainNavigationState();
 }
 
-class _MainNavigationState
-    extends State<MainNavigation> {
+class _MainNavigationState extends State<MainNavigation> {
   int currentIndex = 0;
 
   final ApiService api = ApiService.instance;
@@ -62,19 +60,16 @@ class _MainNavigationState
     final pages = <Widget>[
       HomeScreen(
         api: api,
-
         onOpenCars: () {
           setState(() {
             currentIndex = 1;
           });
         },
-
         onAddCar: () {
           setState(() {
             currentIndex = 2;
           });
         },
-
         onLogin: () {
           setState(() {
             currentIndex = 3;
@@ -86,7 +81,8 @@ class _MainNavigationState
         api: api,
       ),
 
-      // تم حذف api من هنا لأن AddCarScreen لا يستقبله
+      // تم إصلاح الخطأ هنا:
+      // AddCarScreen لا يستقبل api
       const AddCarScreen(),
 
       ProfileScreen(
@@ -96,7 +92,6 @@ class _MainNavigationState
 
     return Directionality(
       textDirection: TextDirection.rtl,
-
       child: Scaffold(
         body: IndexedStack(
           index: currentIndex,
@@ -112,11 +107,9 @@ class _MainNavigationState
             });
           },
 
-          backgroundColor:
-              const Color(0xFF111116),
+          backgroundColor: const Color(0xFF111116),
 
-          indicatorColor:
-              const Color(0x33FF176F),
+          indicatorColor: const Color(0x33FF176F),
 
           destinations: const [
             NavigationDestination(
