@@ -21,11 +21,8 @@ class BentAlMosulApp extends StatelessWidget {
       title: 'بنت الموصل للسيارات',
 
       theme: ThemeData(
-        useMaterial3: true,
         brightness: Brightness.dark,
-
-        scaffoldBackgroundColor:
-            const Color(0xFF08080B),
+        scaffoldBackgroundColor: const Color(0xFF08080B),
 
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF176F),
@@ -36,11 +33,48 @@ class BentAlMosulApp extends StatelessWidget {
           backgroundColor: Color(0xFF111116),
           foregroundColor: Colors.white,
           elevation: 0,
+          centerTitle: true,
         ),
 
-        inputDecorationTheme:
-            const InputDecorationTheme(
-          border: OutlineInputBorder(),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF15151B),
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Color(0xFF292932),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Color(0xFFFF176F),
+              width: 2,
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFFF176F),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(
+              double.infinity,
+              52,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
         ),
       ),
 
@@ -57,120 +91,145 @@ class MainNavigation extends StatefulWidget {
       _MainNavigationState();
 }
 
-class _MainNavigationState
-    extends State<MainNavigation> {
+class _MainNavigationState extends State<MainNavigation> {
+  late final ApiService api;
 
   int currentIndex = 0;
 
-  final ApiService api =
-      ApiService.instance;
+  @override
+  void initState() {
+    super.initState();
+
+    api = ApiService();
+  }
+
+  void _openAddCar() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCarScreen(
+          api: api,
+        ),
+      ),
+    );
+  }
+
+  void _openLogin() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'صفحة تسجيل الدخول موجودة ضمن الحساب',
+          textDirection: TextDirection.rtl,
+        ),
+      ),
+    );
+  }
+
+  void _openAdmin() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'لوحة الإدارة',
+          textDirection: TextDirection.rtl,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final pages = <Widget>[
+    final List<Widget> screens = [
       HomeScreen(
         api: api,
-
-        onOpenCars: () {
-          setState(() {
-            currentIndex = 1;
-          });
-        },
-
-        onAddCar: () {
-          setState(() {
-            currentIndex = 2;
-          });
-        },
-
-        onLogin: () {
-          setState(() {
-            currentIndex = 3;
-          });
-        },
       ),
 
       CarsScreen(
         api: api,
+        onCarTap: (car) {
+          // يمكن فتح تفاصيل السيارة هنا لاحقاً
+        },
       ),
 
-      // مهم:
-      // AddCarScreen لا يستقبل api
-      // لأنه يستخدم ApiService.instance داخله
-      const AddCarScreen(),
+      const SizedBox.shrink(),
 
       ProfileScreen(
         api: api,
+        onLogin: _openLogin,
+        onAddCar: _openAddCar,
+        onAdmin: _openAdmin,
       ),
     ];
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
+    return Scaffold(
+      body: IndexedStack(
+        index: currentIndex,
+        children: screens,
+      ),
 
-      child: Scaffold(
-        body: IndexedStack(
-          index: currentIndex,
-          children: pages,
-        ),
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFF111116),
+        indicatorColor: const Color(0xFF321222),
 
-        bottomNavigationBar:
-            NavigationBar(
-          selectedIndex: currentIndex,
+        selectedIndex: currentIndex,
 
-          onDestinationSelected: (index) {
-            setState(() {
-              currentIndex = index;
-            });
-          },
+        onDestinationSelected: (index) {
+          if (index == 2) {
+            _openAddCar();
+            return;
+          }
 
-          backgroundColor:
-              const Color(0xFF111116),
+          setState(() {
+            currentIndex = index;
+          });
+        },
 
-          indicatorColor:
-              const Color(0x33FF176F),
-
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(
-                Icons.home_outlined,
-              ),
-              selectedIcon: Icon(
-                Icons.home_rounded,
-              ),
-              label: 'الرئيسية',
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(
+              Icons.home_outlined,
             ),
-
-            NavigationDestination(
-              icon: Icon(
-                Icons.directions_car_outlined,
-              ),
-              selectedIcon: Icon(
-                Icons.directions_car_rounded,
-              ),
-              label: 'السيارات',
+            selectedIcon: Icon(
+              Icons.home_rounded,
+              color: Color(0xFFFF176F),
             ),
+            label: 'الرئيسية',
+          ),
 
-            NavigationDestination(
-              icon: Icon(
-                Icons.add_circle_outline,
-              ),
-              selectedIcon: Icon(
-                Icons.add_circle_rounded,
-              ),
-              label: 'أضف سيارة',
+          NavigationDestination(
+            icon: Icon(
+              Icons.directions_car_outlined,
             ),
+            selectedIcon: Icon(
+              Icons.directions_car_rounded,
+              color: Color(0xFFFF176F),
+            ),
+            label: 'السيارات',
+          ),
 
-            NavigationDestination(
-              icon: Icon(
-                Icons.person_outline,
-              ),
-              selectedIcon: Icon(
-                Icons.person_rounded,
-              ),
-              label: 'حسابي',
+          NavigationDestination(
+            icon: Icon(
+              Icons.add_circle_outline_rounded,
+              size: 30,
             ),
-          ],
-        ),
+            selectedIcon: Icon(
+              Icons.add_circle_rounded,
+              color: Color(0xFFFF176F),
+              size: 30,
+            ),
+            label: 'بيع سيارتك',
+          ),
+
+          NavigationDestination(
+            icon: Icon(
+              Icons.person_outline_rounded,
+            ),
+            selectedIcon: Icon(
+              Icons.person_rounded,
+              color: Color(0xFFFF176F),
+            ),
+            label: 'حسابي',
+          ),
+        ],
       ),
     );
   }
