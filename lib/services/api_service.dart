@@ -360,6 +360,22 @@ class ApiService {
   }
 
   // =========================================================
+  // PROFILE
+  // =========================================================
+
+  Future<Map<String, dynamic>> getProfile() async {
+    final data = await me();
+
+    if (data['user'] is Map) {
+      return Map<String, dynamic>.from(
+        data['user'] as Map,
+      );
+    }
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  // =========================================================
   // LOGOUT
   // =========================================================
 
@@ -398,47 +414,54 @@ class ApiService {
       query: query.isEmpty ? null : query,
     );
 
+    List<dynamic> rawCars;
+
     if (data is List) {
-      return data
-          .map(
-            (e) => Car.fromJson(
-              Map<String, dynamic>.from(e as Map),
-            ),
-          )
-          .toList();
-    }
-
-    if (data is Map &&
+      rawCars = data;
+    } else if (data is Map &&
         data['cars'] is List) {
-      return (data['cars'] as List)
-          .map(
-            (e) => Car.fromJson(
-              Map<String, dynamic>.from(e as Map),
-            ),
-          )
-          .toList();
+      rawCars = List<dynamic>.from(
+        data['cars'] as List,
+      );
+    } else {
+      return <Car>[];
     }
 
-    return <Car>[];
+    return rawCars
+        .whereType<Map>()
+        .map(
+          (item) => Car.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        )
+        .toList();
   }
 
   // =========================================================
   // RANDOM CARS
   // =========================================================
 
-  Future<List<dynamic>> getRandomCars() async {
+  Future<List<Car>> getRandomCars() async {
     final data = await _get(
       '/cars/random',
     );
 
     if (data is Map &&
         data['cars'] is List) {
-      return List<dynamic>.from(
-        data['cars'],
-      );
+      final list =
+          List<dynamic>.from(data['cars'] as List);
+
+      return list
+          .whereType<Map>()
+          .map(
+            (item) => Car.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList();
     }
 
-    return <dynamic>[];
+    return <Car>[];
   }
 
   // =========================================================
@@ -461,7 +484,7 @@ class ApiService {
   // MY CARS
   // =========================================================
 
-  Future<List<dynamic>> getMyCars() async {
+  Future<List<Car>> getMyCars() async {
     final data = await _get(
       '/my-cars',
       auth: true,
@@ -469,12 +492,20 @@ class ApiService {
 
     if (data is Map &&
         data['cars'] is List) {
-      return List<dynamic>.from(
-        data['cars'],
-      );
+      final list =
+          List<dynamic>.from(data['cars'] as List);
+
+      return list
+          .whereType<Map>()
+          .map(
+            (item) => Car.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList();
     }
 
-    return <dynamic>[];
+    return <Car>[];
   }
 
   // =========================================================
@@ -739,6 +770,11 @@ class ApiService {
         'لا يوجد اتصال بالإنترنت',
         0,
       );
+    } on http.ClientException {
+      throw ApiException(
+        'تعذر الاتصال بالسيرفر',
+        0,
+      );
     }
   }
 
@@ -764,7 +800,7 @@ class ApiService {
     if (data is Map &&
         data['parts'] is List) {
       return List<dynamic>.from(
-        data['parts'],
+        data['parts'] as List,
       );
     }
 
@@ -855,6 +891,11 @@ class ApiService {
         'لا يوجد اتصال بالإنترنت',
         0,
       );
+    } on http.ClientException {
+      throw ApiException(
+        'تعذر الاتصال بالسيرفر',
+        0,
+      );
     }
   }
 
@@ -935,6 +976,11 @@ class ApiService {
     } on SocketException {
       throw ApiException(
         'لا يوجد اتصال بالإنترنت',
+        0,
+      );
+    } on http.ClientException {
+      throw ApiException(
+        'تعذر الاتصال بالسيرفر',
         0,
       );
     }
