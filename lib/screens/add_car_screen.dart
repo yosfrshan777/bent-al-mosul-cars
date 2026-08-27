@@ -14,8 +14,7 @@ class AddCarScreen extends StatefulWidget {
   final ApiService api;
 
   @override
-  State<AddCarScreen> createState() =>
-      _AddCarScreenState();
+  State<AddCarScreen> createState() => _AddCarScreenState();
 }
 
 class _AddCarScreenState extends State<AddCarScreen> {
@@ -47,9 +46,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
   Future<void> _pickMultipleImages() async {
     if (_images.length >= maxImages) {
-      _showMessage(
-        'وصلت إلى الحد الأقصى: 8 صور',
-      );
+      _showMessage('وصلت إلى الحد الأقصى: 8 صور');
       return;
     }
 
@@ -77,10 +74,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
           'تمت إضافة $remaining صور فقط لأن الحد الأقصى 8',
         );
       }
-    } catch (e) {
-      _showMessage(
-        'تعذر اختيار الصور',
-      );
+    } catch (_) {
+      _showMessage('تعذر اختيار الصور');
     }
   }
 
@@ -90,9 +85,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
   Future<void> _takePhoto() async {
     if (_images.length >= maxImages) {
-      _showMessage(
-        'وصلت إلى الحد الأقصى: 8 صور',
-      );
+      _showMessage('وصلت إلى الحد الأقصى: 8 صور');
       return;
     }
 
@@ -111,10 +104,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
       setState(() {
         _images.add(photo);
       });
-    } catch (e) {
-      _showMessage(
-        'تعذر فتح الكاميرا',
-      );
+    } catch (_) {
+      _showMessage('تعذر فتح الكاميرا');
     }
   }
 
@@ -124,9 +115,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
   Future<void> _showImagePickerMenu() async {
     if (_images.length >= maxImages) {
-      _showMessage(
-        'وصلت إلى الحد الأقصى: 8 صور',
-      );
+      _showMessage('وصلت إلى الحد الأقصى: 8 صور');
       return;
     }
 
@@ -137,24 +126,16 @@ class _AddCarScreenState extends State<AddCarScreen> {
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(
-                  Icons.photo_library,
-                ),
-                title: const Text(
-                  'اختيار عدة صور',
-                ),
+                leading: const Icon(Icons.photo_library),
+                title: const Text('اختيار عدة صور'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickMultipleImages();
                 },
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.camera_alt,
-                ),
-                title: const Text(
-                  'التقاط صورة بالكاميرا',
-                ),
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('التقاط صورة بالكاميرا'),
                 onTap: () {
                   Navigator.pop(context);
                   _takePhoto();
@@ -195,9 +176,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
       _images.insert(0, image);
     });
 
-    _showMessage(
-      'تم تحديد الصورة الرئيسية',
-    );
+    _showMessage('تم تحديد الصورة الرئيسية');
   }
 
   // =========================================================
@@ -212,16 +191,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
     }
 
     if (_images.isEmpty) {
-      _showMessage(
-        'أضف صورة واحدة على الأقل',
-      );
+      _showMessage('أضف صورة واحدة على الأقل');
       return;
     }
 
     if (_images.length > maxImages) {
-      _showMessage(
-        'يمكن إضافة 8 صور فقط',
-      );
+      _showMessage('يمكن إضافة 8 صور فقط');
       return;
     }
 
@@ -243,16 +218,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
         0;
 
     if (year == null) {
-      _showMessage(
-        'السنة غير صحيحة',
-      );
+      _showMessage('السنة غير صحيحة');
       return;
     }
 
     if (price == null) {
-      _showMessage(
-        'السعر غير صحيح',
-      );
+      _showMessage('السعر غير صحيح');
       return;
     }
 
@@ -262,19 +233,16 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
     try {
       final result = await widget.api.createCar(
-        brand: _brandController.text,
-        model: _modelController.text,
+        brand: _brandController.text.trim(),
+        model: _modelController.text.trim(),
         year: year,
         price: price,
         km: km,
-        city: _cityController.text,
+        city: _cityController.text.trim(),
         fuel: _fuel,
         transmission: _transmission,
-        description: _descriptionController.text,
+        description: _descriptionController.text.trim(),
         plan: _plan,
-
-        // الصورة رقم 0 هي الرئيسية
-        // وجميع الصور الثمانية تُرفع
         images: List<XFile>.from(_images),
       );
 
@@ -282,9 +250,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
         return;
       }
 
-      _showMessage(
-        'تم إرسال السيارة بنجاح',
-      );
+      _showMessage('تم إرسال السيارة بنجاح');
 
       Navigator.pop(
         context,
@@ -295,17 +261,13 @@ class _AddCarScreenState extends State<AddCarScreen> {
         return;
       }
 
-      _showMessage(
-        e.message,
-      );
-    } catch (e) {
+      _showMessage(e.message);
+    } catch (_) {
       if (!mounted) {
         return;
       }
 
-      _showMessage(
-        'حدث خطأ أثناء إضافة السيارة',
-      );
+      _showMessage('حدث خطأ أثناء إضافة السيارة');
     } finally {
       if (mounted) {
         setState(() {
@@ -387,7 +349,9 @@ class _AddCarScreenState extends State<AddCarScreen> {
             ),
           ],
         ),
+
         const SizedBox(height: 6),
+
         const Text(
           'الصورة الأولى هي الصورة الرئيسية',
           textDirection: TextDirection.rtl,
@@ -395,7 +359,9 @@ class _AddCarScreenState extends State<AddCarScreen> {
             color: Colors.grey,
           ),
         ),
+
         const SizedBox(height: 12),
+
         if (_images.isEmpty)
           GestureDetector(
             onTap: _showImagePickerMenu,
@@ -551,7 +517,9 @@ class _AddCarScreenState extends State<AddCarScreen> {
               );
             },
           ),
+
         const SizedBox(height: 10),
+
         Row(
           children: [
             Expanded(
@@ -562,9 +530,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 icon: const Icon(
                   Icons.photo_library,
                 ),
-                label: const Text(
-                  'المعرض',
-                ),
+                label: const Text('المعرض'),
               ),
             ),
             const SizedBox(width: 10),
@@ -576,9 +542,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 icon: const Icon(
                   Icons.camera_alt,
                 ),
-                label: const Text(
-                  'الكاميرا',
-                ),
+                label: const Text('الكاميرا'),
               ),
             ),
           ],
@@ -597,9 +561,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'إضافة سيارة',
-          ),
+          title: const Text('إضافة سيارة'),
           centerTitle: true,
         ),
         body: SafeArea(
