@@ -36,35 +36,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadProfile();
   }
 
+  // =========================================================
+  // LOAD PROFILE
+  // =========================================================
+
   Future<void> _loadProfile() async {
-    setState(() {
-      loading = true;
-    });
+    if (mounted) {
+      setState(() {
+        loading = true;
+      });
+    }
 
     try {
-      final profile = await widget.api.getProfile();
+      final token = await widget.api.getToken();
+
+      if (token == null || token.isEmpty) {
+        if (!mounted) return;
+
+        setState(() {
+          loading = false;
+          loggedIn = false;
+          isAdmin = false;
+          name = 'زائر';
+          email = '';
+          phone = '';
+        });
+
+        return;
+      }
+
+      final profile = await widget.api.me();
 
       if (!mounted) return;
 
       setState(() {
         loggedIn = true;
-        name = profile['name']?.toString() ?? 'المستخدم';
-        email = profile['email']?.toString() ?? '';
-        phone = profile['phone']?.toString() ?? '';
+
+        name =
+            profile['name']?.toString() ??
+            profile['user']?['name']?.toString() ??
+            'المستخدم';
+
+        email =
+            profile['email']?.toString() ??
+            profile['user']?['email']?.toString() ??
+            '';
+
+        phone =
+            profile['phone']?.toString() ??
+            profile['user']?['phone']?.toString() ??
+            '';
+
         isAdmin =
             profile['isAdmin'] == true ||
-            profile['role']?.toString() == 'admin';
+            profile['is_admin'] == true ||
+            profile['role']?.toString().toLowerCase() ==
+                'admin' ||
+            profile['user']?['isAdmin'] == true ||
+            profile['user']?['role']
+                    ?.toString()
+                    .toLowerCase() ==
+                'admin';
+
         loading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+
+      if (e.statusCode == 401) {
+        await widget.api.clearToken();
+      }
+
+      setState(() {
+        loading = false;
+        loggedIn = false;
+        isAdmin = false;
+        name = 'زائر';
+        email = '';
+        phone = '';
       });
     } catch (_) {
       if (!mounted) return;
 
       setState(() {
-        loggedIn = false;
         loading = false;
+        loggedIn = false;
+        isAdmin = false;
+        name = 'زائر';
+        email = '';
+        phone = '';
       });
     }
   }
+
+  // =========================================================
+  // LOGOUT
+  // =========================================================
 
   Future<void> _logout() async {
     await widget.api.logout();
@@ -79,12 +146,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       phone = '';
     });
 
+    ScaffoldMessenger.of(context)
+        .hideCurrentSnackBar();
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('تم تسجيل الخروج'),
+        content: Text(
+          'تم تسجيل الخروج',
+          textDirection: TextDirection.rtl,
+        ),
       ),
     );
   }
+
+  // =========================================================
+  // AVATAR
+  // =========================================================
 
   Widget _avatar() {
     return Container(
@@ -114,6 +191,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // =========================================================
+  // PROFILE HEADER
+  // =========================================================
+
   Widget _profileHeader() {
     return Container(
       width: double.infinity,
@@ -128,37 +209,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _avatar(),
+
           const SizedBox(height: 15),
+
           Text(
             name,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 23,
               fontWeight: FontWeight.w900,
             ),
           ),
+
           if (email.isNotEmpty) ...[
             const SizedBox(height: 5),
             Text(
               email,
+              textDirection: TextDirection.ltr,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white54,
                 fontSize: 13,
               ),
             ),
           ],
+
           if (phone.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               phone,
+              textDirection: TextDirection.ltr,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white54,
                 fontSize: 13,
               ),
             ),
           ],
+
           if (isAdmin) ...[
             const SizedBox(height: 12),
+
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 13,
@@ -166,7 +258,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               decoration: BoxDecoration(
                 color: const Color(0xFF321222),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius:
+                    BorderRadius.circular(10),
                 border: Border.all(
                   color: const Color(0xFFFF176F),
                 ),
@@ -175,7 +268,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.admin_panel_settings_rounded,
+                    Icons
+                        .admin_panel_settings_rounded,
                     color: Color(0xFFFF176F),
                     size: 18,
                   ),
@@ -195,6 +289,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+  // =========================================================
+  // MENU ITEM
+  // =========================================================
 
   Widget _menuItem({
     required IconData icon,
@@ -224,7 +322,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 44,
           decoration: BoxDecoration(
             color: const Color(0xFF21121A),
-            borderRadius: BorderRadius.circular(13),
+            borderRadius:
+                BorderRadius.circular(13),
           ),
           child: Icon(
             icon,
@@ -234,6 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         title: Text(
           title,
+          textDirection: TextDirection.rtl,
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w800,
@@ -243,6 +343,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ? null
             : Text(
                 subtitle,
+                textDirection:
+                    TextDirection.rtl,
                 style: const TextStyle(
                   color: Colors.white38,
                   fontSize: 11,
@@ -256,11 +358,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // =========================================================
+  // GUEST VIEW
+  // =========================================================
+
   Widget _guestView() {
     return Column(
       children: [
         _avatar(),
+
         const SizedBox(height: 18),
+
         const Text(
           'أهلاً بك في بنت الموصل',
           textAlign: TextAlign.center,
@@ -270,7 +378,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontWeight: FontWeight.w900,
           ),
         ),
+
         const SizedBox(height: 8),
+
         const Text(
           'سجّل الدخول حتى تتمكن من إضافة سياراتك وإدارة إعلاناتك.',
           textAlign: TextAlign.center,
@@ -279,7 +389,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 1.6,
           ),
         ),
+
         const SizedBox(height: 22),
+
         SizedBox(
           width: double.infinity,
           height: 53,
@@ -307,29 +419,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // =========================================================
+  // BUILD
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF08080B),
+      backgroundColor:
+          const Color(0xFF08080B),
+
       appBar: AppBar(
-        backgroundColor: const Color(0xFF111116),
+        backgroundColor:
+            const Color(0xFF111116),
         foregroundColor: Colors.white,
         elevation: 0,
+
         title: const Text(
           'حسابي',
           style: TextStyle(
             fontWeight: FontWeight.w900,
           ),
         ),
+
         actions: [
           IconButton(
-            onPressed: _loadProfile,
+            onPressed: loading
+                ? null
+                : _loadProfile,
             icon: const Icon(
               Icons.refresh_rounded,
             ),
           ),
         ],
       ),
+
       body: loading
           ? const Center(
               child: CircularProgressIndicator(
@@ -337,18 +461,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             )
           : RefreshIndicator(
-              color: const Color(0xFFFF176F),
+              color:
+                  const Color(0xFFFF176F),
+
               onRefresh: _loadProfile,
+
               child: ListView(
-                padding: const EdgeInsets.all(15),
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+
+                padding:
+                    const EdgeInsets.all(15),
+
                 children: [
+                  // =================================================
+                  // GUEST
+                  // =================================================
+
                   if (!loggedIn)
                     Container(
-                      padding: const EdgeInsets.all(22),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF15151B),
+                      padding:
+                          const EdgeInsets.all(22),
+                      decoration:
+                          BoxDecoration(
+                        color:
+                            const Color(0xFF15151B),
                         borderRadius:
-                            BorderRadius.circular(24),
+                            BorderRadius.circular(
+                          24,
+                        ),
                         border: Border.all(
                           color:
                               const Color(0xFF292932),
@@ -356,8 +497,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: _guestView(),
                     )
+
+                  // =================================================
+                  // LOGGED USER
+                  // =================================================
+
                   else ...[
                     _profileHeader(),
+
                     const SizedBox(height: 18),
 
                     const Text(
@@ -365,49 +512,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 19,
-                        fontWeight: FontWeight.w900,
+                        fontWeight:
+                            FontWeight.w900,
                       ),
                     ),
+
                     const SizedBox(height: 11),
 
+                    // بيع سيارة
                     _menuItem(
-                      icon:
-                          Icons.add_circle_outline_rounded,
+                      icon: Icons
+                          .add_circle_outline_rounded,
                       title: 'بيع سيارتك',
                       subtitle:
                           'إضافة إعلان سيارة جديد',
                       onTap: widget.onAddCar,
                     ),
 
+                    // إعلاناتي
                     _menuItem(
-                      icon:
-                          Icons.directions_car_filled_outlined,
+                      icon: Icons
+                          .directions_car_filled_outlined,
                       title: 'إعلاناتي',
                       subtitle:
                           'عرض وإدارة سياراتك',
-                      onTap: () {},
+                      onTap: () {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'قسم إعلاناتي قيد التجهيز',
+                              textDirection:
+                                  TextDirection.rtl,
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
+                    // المدفوعات
                     _menuItem(
-                      icon:
-                          Icons.receipt_long_outlined,
+                      icon: Icons
+                          .receipt_long_outlined,
                       title: 'المدفوعات',
                       subtitle:
                           'متابعة طلبات الدفع والإيصالات',
-                      onTap: () {},
+                      onTap: () {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'قسم المدفوعات قيد التجهيز',
+                              textDirection:
+                                  TextDirection.rtl,
+                            ),
+                          ),
+                        );
+                      },
                     ),
+
+                    // =================================================
+                    // ADMIN
+                    // =================================================
 
                     if (isAdmin) ...[
                       const SizedBox(height: 12),
+
                       const Text(
                         'الإدارة',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 19,
-                          fontWeight: FontWeight.w900,
+                          fontWeight:
+                              FontWeight.w900,
                         ),
                       ),
+
                       const SizedBox(height: 11),
+
                       _menuItem(
                         icon: Icons
                             .admin_panel_settings_rounded,
@@ -420,13 +604,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     const SizedBox(height: 12),
 
+                    // =================================================
+                    // LOGOUT
+                    // =================================================
+
                     _menuItem(
-                      icon: Icons.logout_rounded,
-                      title: 'تسجيل الخروج',
+                      icon:
+                          Icons.logout_rounded,
+                      title:
+                          'تسجيل الخروج',
                       subtitle:
                           'الخروج من الحساب الحالي',
-                      iconColor: Colors.redAccent,
+                      iconColor:
+                          Colors.redAccent,
                       onTap: _logout,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    const Center(
+                      child: Text(
+                        'بنت الموصل للسيارات',
+                        style: TextStyle(
+                          color: Colors.white24,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   ],
                 ],
