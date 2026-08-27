@@ -23,7 +23,9 @@ class BentAlMosulApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF08080B),
+
+        scaffoldBackgroundColor:
+            const Color(0xFF08080B),
 
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF176F),
@@ -34,6 +36,11 @@ class BentAlMosulApp extends StatelessWidget {
           backgroundColor: Color(0xFF111116),
           foregroundColor: Colors.white,
           elevation: 0,
+        ),
+
+        inputDecorationTheme:
+            const InputDecorationTheme(
+          border: OutlineInputBorder(),
         ),
       ),
 
@@ -50,26 +57,32 @@ class MainNavigation extends StatefulWidget {
       _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState
+    extends State<MainNavigation> {
+
   int currentIndex = 0;
 
-  final ApiService api = ApiService.instance;
+  final ApiService api =
+      ApiService.instance;
 
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
       HomeScreen(
         api: api,
+
         onOpenCars: () {
           setState(() {
             currentIndex = 1;
           });
         },
+
         onAddCar: () {
           setState(() {
             currentIndex = 2;
           });
         },
+
         onLogin: () {
           setState(() {
             currentIndex = 3;
@@ -81,8 +94,9 @@ class _MainNavigationState extends State<MainNavigation> {
         api: api,
       ),
 
-      // تم إصلاح الخطأ هنا:
+      // مهم:
       // AddCarScreen لا يستقبل api
+      // لأنه يستخدم ApiService.instance داخله
       const AddCarScreen(),
 
       ProfileScreen(
@@ -92,13 +106,15 @@ class _MainNavigationState extends State<MainNavigation> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
+
       child: Scaffold(
         body: IndexedStack(
           index: currentIndex,
           children: pages,
         ),
 
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar:
+            NavigationBar(
           selectedIndex: currentIndex,
 
           onDestinationSelected: (index) {
@@ -107,9 +123,11 @@ class _MainNavigationState extends State<MainNavigation> {
             });
           },
 
-          backgroundColor: const Color(0xFF111116),
+          backgroundColor:
+              const Color(0xFF111116),
 
-          indicatorColor: const Color(0x33FF176F),
+          indicatorColor:
+              const Color(0x33FF176F),
 
           destinations: const [
             NavigationDestination(
