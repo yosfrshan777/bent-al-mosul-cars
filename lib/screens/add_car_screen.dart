@@ -8,40 +8,28 @@ import '../services/api_service.dart';
 class AddCarScreen extends StatefulWidget {
   const AddCarScreen({
     super.key,
+    required this.api,
   });
+
+  final ApiService api;
 
   @override
   State<AddCarScreen> createState() =>
       _AddCarScreenState();
 }
 
-class _AddCarScreenState
-    extends State<AddCarScreen> {
+class _AddCarScreenState extends State<AddCarScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _brandController =
-      TextEditingController();
+  final _brandController = TextEditingController();
+  final _modelController = TextEditingController();
+  final _yearController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _kmController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
-  final _modelController =
-      TextEditingController();
-
-  final _yearController =
-      TextEditingController();
-
-  final _priceController =
-      TextEditingController();
-
-  final _kmController =
-      TextEditingController();
-
-  final _cityController =
-      TextEditingController();
-
-  final _descriptionController =
-      TextEditingController();
-
-  final ImagePicker _picker =
-      ImagePicker();
+  final ImagePicker _picker = ImagePicker();
 
   final List<XFile> _images = [];
 
@@ -66,11 +54,9 @@ class _AddCarScreenState
     }
 
     try {
-      final remaining =
-          maxImages - _images.length;
+      final remaining = maxImages - _images.length;
 
-      final picked =
-          await _picker.pickMultiImage(
+      final picked = await _picker.pickMultiImage(
         imageQuality: 85,
         maxWidth: 2000,
         maxHeight: 2000,
@@ -80,8 +66,7 @@ class _AddCarScreenState
         return;
       }
 
-      final available =
-          picked.take(remaining).toList();
+      final available = picked.take(remaining).toList();
 
       setState(() {
         _images.addAll(available);
@@ -112,8 +97,7 @@ class _AddCarScreenState
     }
 
     try {
-      final photo =
-          await _picker.pickImage(
+      final photo = await _picker.pickImage(
         source: ImageSource.camera,
         imageQuality: 85,
         maxWidth: 2000,
@@ -188,8 +172,7 @@ class _AddCarScreenState
   // =========================================================
 
   void _deleteImage(int index) {
-    if (index < 0 ||
-        index >= _images.length) {
+    if (index < 0 || index >= _images.length) {
       return;
     }
 
@@ -203,14 +186,12 @@ class _AddCarScreenState
   // =========================================================
 
   void _makeMainImage(int index) {
-    if (index <= 0 ||
-        index >= _images.length) {
+    if (index <= 0 || index >= _images.length) {
       return;
     }
 
     setState(() {
       final image = _images.removeAt(index);
-
       _images.insert(0, image);
     });
 
@@ -244,20 +225,17 @@ class _AddCarScreenState
       return;
     }
 
-    final year =
-        int.tryParse(
-          _yearController.text.trim(),
-        );
+    final year = int.tryParse(
+      _yearController.text.trim(),
+    );
 
-    final price =
-        int.tryParse(
-          _priceController.text
-              .replaceAll(',', '')
-              .trim(),
-        );
+    final price = int.tryParse(
+      _priceController.text
+          .replaceAll(',', '')
+          .trim(),
+    );
 
-    final km =
-        int.tryParse(
+    final km = int.tryParse(
           _kmController.text
               .replaceAll(',', '')
               .trim(),
@@ -283,8 +261,7 @@ class _AddCarScreenState
     });
 
     try {
-      final result =
-          await ApiService.instance.createCar(
+      final result = await widget.api.createCar(
         brand: _brandController.text,
         model: _modelController.text,
         year: year,
@@ -293,8 +270,7 @@ class _AddCarScreenState
         city: _cityController.text,
         fuel: _fuel,
         transmission: _transmission,
-        description:
-            _descriptionController.text,
+        description: _descriptionController.text,
         plan: _plan,
 
         // الصورة رقم 0 هي الرئيسية
@@ -348,11 +324,9 @@ class _AddCarScreenState
       return;
     }
 
-    ScaffoldMessenger.of(context)
-        .hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
@@ -373,8 +347,7 @@ class _AddCarScreenState
     String? Function(String?)? validator,
   }) {
     return Padding(
-      padding:
-          const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
@@ -394,12 +367,10 @@ class _AddCarScreenState
 
   Widget _buildImagesSection() {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
-          mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
               'صور السيارة',
@@ -416,9 +387,7 @@ class _AddCarScreenState
             ),
           ],
         ),
-
         const SizedBox(height: 6),
-
         const Text(
           'الصورة الأولى هي الصورة الرئيسية',
           textDirection: TextDirection.rtl,
@@ -426,9 +395,7 @@ class _AddCarScreenState
             color: Colors.grey,
           ),
         ),
-
         const SizedBox(height: 12),
-
         if (_images.isEmpty)
           GestureDetector(
             onTap: _showImagePickerMenu,
@@ -438,12 +405,10 @@ class _AddCarScreenState
                 border: Border.all(
                   color: Colors.grey,
                 ),
-                borderRadius:
-                    BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: const Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.add_a_photo,
@@ -470,12 +435,10 @@ class _AddCarScreenState
         else
           GridView.builder(
             shrinkWrap: true,
-            physics:
-                const NeverScrollableScrollPhysics(),
-            itemCount:
-                _images.length < maxImages
-                    ? _images.length + 1
-                    : _images.length,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _images.length < maxImages
+                ? _images.length + 1
+                : _images.length,
             gridDelegate:
                 const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -493,12 +456,10 @@ class _AddCarScreenState
                       border: Border.all(
                         color: Colors.grey,
                       ),
-                      borderRadius:
-                          BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.add,
@@ -512,15 +473,13 @@ class _AddCarScreenState
                 );
               }
 
-              final image =
-                  _images[index];
+              final image = _images[index];
 
               return Stack(
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius:
-                        BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(14),
                     child: Image.file(
                       File(image.path),
                       fit: BoxFit.cover,
@@ -533,26 +492,20 @@ class _AddCarScreenState
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding:
-                            const EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 9,
                           vertical: 5,
                         ),
-                        decoration:
-                            BoxDecoration(
+                        decoration: BoxDecoration(
                           color: Colors.black87,
-                          borderRadius:
-                              BorderRadius.circular(
-                            20,
-                          ),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
                           'الرئيسية',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
-                            fontWeight:
-                                FontWeight.bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -564,8 +517,7 @@ class _AddCarScreenState
                     left: 6,
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor:
-                          Colors.red,
+                      backgroundColor: Colors.red,
                       child: IconButton(
                         padding: EdgeInsets.zero,
                         icon: const Icon(
@@ -599,17 +551,14 @@ class _AddCarScreenState
               );
             },
           ),
-
         const SizedBox(height: 10),
-
         Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed:
-                    _images.length >= maxImages
-                        ? null
-                        : _pickMultipleImages,
+                onPressed: _images.length >= maxImages
+                    ? null
+                    : _pickMultipleImages,
                 icon: const Icon(
                   Icons.photo_library,
                 ),
@@ -621,10 +570,9 @@ class _AddCarScreenState
             const SizedBox(width: 10),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed:
-                    _images.length >= maxImages
-                        ? null
-                        : _takePhoto,
+                onPressed: _images.length >= maxImages
+                    ? null
+                    : _takePhoto,
                 icon: const Icon(
                   Icons.camera_alt,
                 ),
@@ -658,19 +606,16 @@ class _AddCarScreenState
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildImagesSection(),
 
                   const SizedBox(height: 25),
 
                   _textField(
-                    controller:
-                        _brandController,
+                    controller: _brandController,
                     label: 'الماركة',
                     validator: (value) {
                       if (value == null ||
@@ -682,8 +627,7 @@ class _AddCarScreenState
                   ),
 
                   _textField(
-                    controller:
-                        _modelController,
+                    controller: _modelController,
                     label: 'الموديل',
                     validator: (value) {
                       if (value == null ||
@@ -695,11 +639,9 @@ class _AddCarScreenState
                   ),
 
                   _textField(
-                    controller:
-                        _yearController,
+                    controller: _yearController,
                     label: 'سنة الصنع',
-                    keyboardType:
-                        TextInputType.number,
+                    keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null ||
                           value.trim().isEmpty) {
@@ -710,11 +652,9 @@ class _AddCarScreenState
                   ),
 
                   _textField(
-                    controller:
-                        _priceController,
+                    controller: _priceController,
                     label: 'السعر بالدينار العراقي',
-                    keyboardType:
-                        TextInputType.number,
+                    keyboardType: TextInputType.number,
                     validator: (value) {
                       if (value == null ||
                           value.trim().isEmpty) {
@@ -725,16 +665,13 @@ class _AddCarScreenState
                   ),
 
                   _textField(
-                    controller:
-                        _kmController,
+                    controller: _kmController,
                     label: 'المسافة بالكيلومتر',
-                    keyboardType:
-                        TextInputType.number,
+                    keyboardType: TextInputType.number,
                   ),
 
                   _textField(
-                    controller:
-                        _cityController,
+                    controller: _cityController,
                     label: 'المحافظة / المدينة',
                     validator: (value) {
                       if (value == null ||
@@ -749,11 +686,9 @@ class _AddCarScreenState
 
                   DropdownButtonFormField<String>(
                     value: _fuel,
-                    decoration:
-                        const InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'نوع الوقود',
-                      border:
-                          OutlineInputBorder(),
+                      border: OutlineInputBorder(),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -786,17 +721,14 @@ class _AddCarScreenState
 
                   DropdownButtonFormField<String>(
                     value: _transmission,
-                    decoration:
-                        const InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'ناقل الحركة',
-                      border:
-                          OutlineInputBorder(),
+                      border: OutlineInputBorder(),
                     ),
                     items: const [
                       DropdownMenuItem(
                         value: 'أوتوماتيك',
-                        child:
-                            Text('أوتوماتيك'),
+                        child: Text('أوتوماتيك'),
                       ),
                       DropdownMenuItem(
                         value: 'عادي',
@@ -806,8 +738,7 @@ class _AddCarScreenState
                     onChanged: (value) {
                       if (value != null) {
                         setState(() {
-                          _transmission =
-                              value;
+                          _transmission = value;
                         });
                       }
                     },
@@ -817,11 +748,9 @@ class _AddCarScreenState
 
                   DropdownButtonFormField<String>(
                     value: _plan,
-                    decoration:
-                        const InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'نوع الإعلان',
-                      border:
-                          OutlineInputBorder(),
+                      border: OutlineInputBorder(),
                     ),
                     items: const [
                       DropdownMenuItem(
@@ -855,18 +784,13 @@ class _AddCarScreenState
                   const SizedBox(height: 12),
 
                   TextFormField(
-                    controller:
-                        _descriptionController,
+                    controller: _descriptionController,
                     maxLines: 5,
-                    textDirection:
-                        TextDirection.rtl,
-                    decoration:
-                        const InputDecoration(
-                      labelText:
-                          'وصف السيارة',
+                    textDirection: TextDirection.rtl,
+                    decoration: const InputDecoration(
+                      labelText: 'وصف السيارة',
                       alignLabelWithHint: true,
-                      border:
-                          OutlineInputBorder(),
+                      border: OutlineInputBorder(),
                     ),
                   ),
 
@@ -875,16 +799,12 @@ class _AddCarScreenState
                   SizedBox(
                     height: 55,
                     child: ElevatedButton(
-                      onPressed:
-                          _loading
-                              ? null
-                              : _submit,
+                      onPressed: _loading ? null : _submit,
                       child: _loading
                           ? const SizedBox(
                               width: 25,
                               height: 25,
-                              child:
-                                  CircularProgressIndicator(
+                              child: CircularProgressIndicator(
                                 strokeWidth: 2,
                               ),
                             )
@@ -892,8 +812,7 @@ class _AddCarScreenState
                               'نشر السيارة',
                               style: TextStyle(
                                 fontSize: 18,
-                                fontWeight:
-                                    FontWeight.bold,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                     ),
