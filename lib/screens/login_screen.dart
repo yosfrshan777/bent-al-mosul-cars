@@ -6,49 +6,40 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({
     super.key,
     required this.api,
-    this.onLoginSuccess,
+    this.onSuccess,
     this.onRegister,
   });
 
   final ApiService api;
-  final VoidCallback? onLoginSuccess;
+  final VoidCallback? onSuccess;
   final VoidCallback? onRegister;
 
   @override
-  State<LoginScreen> createState() =>
-      _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _loginController =
-      TextEditingController();
-
-  final _passwordController =
-      TextEditingController();
+  final _loginController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   bool loading = false;
   bool obscurePassword = true;
-  String? error;
 
-  @override
-  void dispose() {
-    _loginController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+  // =========================================================
+  // LOGIN
+  // =========================================================
 
   Future<void> _login() async {
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    FocusScope.of(context).unfocus();
-
     setState(() {
       loading = true;
-      error = null;
     });
 
     try {
@@ -59,408 +50,327 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      setState(() {
-        loading = false;
-      });
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'تم تسجيل الدخول بنجاح',
+            textDirection: TextDirection.rtl,
           ),
-          backgroundColor:
-              Color(0xFF18A558),
         ),
       );
 
-      widget.onLoginSuccess?.call();
-    } catch (e) {
+      widget.onSuccess?.call();
+    } on ApiException catch (e) {
       if (!mounted) return;
 
-      setState(() {
-        loading = false;
-        error = _cleanError(e);
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.message,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'حدث خطأ أثناء تسجيل الدخول',
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 
-  String _cleanError(Object error) {
-    final text = error.toString();
+  // =========================================================
+  // INPUT
+  // =========================================================
 
-    if (text.contains('401')) {
-      return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
-    }
-
-    if (text.contains('SocketException')) {
-      return 'تعذر الاتصال بالخادم';
-    }
-
-    return text
-        .replaceFirst('Exception: ', '')
-        .trim()
-        .isEmpty
-        ? 'حدث خطأ أثناء تسجيل الدخول'
-        : text.replaceFirst(
-            'Exception: ',
-            '',
-          );
-  }
-
-  InputDecoration _inputDecoration({
-    required String hint,
+  InputDecoration _decoration({
+    required String label,
     required IconData icon,
     Widget? suffix,
   }) {
     return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(
-        color: Colors.white38,
-      ),
+      labelText: label,
       prefixIcon: Icon(
         icon,
         color: const Color(0xFFFF176F),
       ),
       suffixIcon: suffix,
-      filled: true,
-      fillColor: const Color(0xFF0D0D11),
       border: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Color(0xFF292932),
-        ),
+        borderRadius: BorderRadius.circular(14),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
           color: Color(0xFF292932),
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(
           color: Color(0xFFFF176F),
-          width: 1.4,
+          width: 1.5,
         ),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: Colors.redAccent,
-        ),
-      ),
-      contentPadding:
-          const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 16,
-      ),
+      filled: true,
+      fillColor: const Color(0xFF15151B),
     );
   }
 
-  Widget _logo() {
-    return Container(
-      width: 82,
-      height: 82,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFF176F),
-            Color(0xFFE0005C),
-          ],
-        ),
-        borderRadius:
-            BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFF176F)
-                .withOpacity(.25),
-            blurRadius: 25,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: const Icon(
-        Icons.directions_car_filled_rounded,
-        color: Colors.white,
-        size: 44,
-      ),
-    );
-  }
-
-  Widget _header() {
-    return Column(
-      children: [
-        _logo(),
-        const SizedBox(height: 20),
-        const Text(
-          'بنت الموصل',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 29,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'للسيارات',
-          style: TextStyle(
-            color: Color(0xFFFF176F),
-            fontSize: 23,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 9),
-        const Text(
-          'سجّل دخولك حتى تكمل استخدام التطبيق',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white54,
-            fontSize: 13,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _loginForm() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius:
-            BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'تسجيل الدخول',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 21,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            TextFormField(
-              controller: _loginController,
-              keyboardType:
-                  TextInputType.emailAddress,
-              textDirection: TextDirection.ltr,
-              style: const TextStyle(
-                color: Colors.white,
-              ),
-              decoration: _inputDecoration(
-                hint:
-                    'البريد الإلكتروني أو رقم الهاتف',
-                icon: Icons.person_outline_rounded,
-              ),
-              validator: (value) {
-                if (value == null ||
-                    value.trim().isEmpty) {
-                  return 'أدخل البريد أو رقم الهاتف';
-                }
-
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            TextFormField(
-              controller: _passwordController,
-              obscureText: obscurePassword,
-              textDirection: TextDirection.ltr,
-              style: const TextStyle(
-                color: Colors.white,
-              ),
-              decoration: _inputDecoration(
-                hint: 'كلمة المرور',
-                icon: Icons.lock_outline_rounded,
-                suffix: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      obscurePassword =
-                          !obscurePassword;
-                    });
-                  },
-                  icon: Icon(
-                    obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons
-                            .visibility_off_outlined,
-                    color: Colors.white54,
-                  ),
-                ),
-              ),
-              validator: (value) {
-                if (value == null ||
-                    value.isEmpty) {
-                  return 'أدخل كلمة المرور';
-                }
-
-                return null;
-              },
-            ),
-
-            if (error != null) ...[
-              const SizedBox(height: 14),
-              Container(
-                padding:
-                    const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF35171E),
-                  borderRadius:
-                      BorderRadius.circular(12),
-                  border: Border.all(
-                    color:
-                        Colors.redAccent
-                            .withOpacity(.35),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      color: Colors.redAccent,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        error!,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 18),
-
-            SizedBox(
-              height: 54,
-              child: ElevatedButton(
-                onPressed:
-                    loading ? null : _login,
-                style:
-                    ElevatedButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFFFF176F),
-                  foregroundColor:
-                      Colors.white,
-                  disabledBackgroundColor:
-                      const Color(0xFF7D1744),
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(14),
-                  ),
-                ),
-                child: loading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child:
-                            CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text(
-                        'دخول',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight:
-                              FontWeight.w900,
-                        ),
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _registerButton() {
-    return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.center,
-      children: [
-        const Text(
-          'ما عندك حساب؟',
-          style: TextStyle(
-            color: Colors.white54,
-          ),
-        ),
-        TextButton(
-          onPressed: widget.onRegister,
-          child: const Text(
-            'إنشاء حساب',
-            style: TextStyle(
-              color: Color(0xFFFF176F),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  // =========================================================
+  // BUILD
+  // =========================================================
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor:
-          const Color(0xFF08080B),
-      appBar: AppBar(
-        backgroundColor:
-            Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.fromLTRB(
-            18,
-            10,
-            18,
-            35,
-          ),
-          child: ConstrainedBox(
-            constraints:
-                const BoxConstraints(
-              maxWidth: 520,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF08080B),
+        appBar: AppBar(
+          title: const Text(
+            'تسجيل الدخول',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
             ),
-            child: Column(
-              children: [
-                _header(),
-                const SizedBox(height: 30),
-                _loginForm(),
-                const SizedBox(height: 10),
-                _registerButton(),
-              ],
+          ),
+          centerTitle: true,
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 25),
+
+                  // =================================================
+                  // LOGO
+                  // =================================================
+
+                  Center(
+                    child: Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF176F),
+                        borderRadius:
+                            BorderRadius.circular(28),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFFF176F,
+                            ).withOpacity(.25),
+                            blurRadius: 25,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons
+                            .directions_car_filled_rounded,
+                        color: Colors.white,
+                        size: 50,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'أهلاً بك في بنت الموصل',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  const Text(
+                    'سجّل الدخول إلى حسابك',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 14,
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // =================================================
+                  // LOGIN FIELD
+                  // =================================================
+
+                  TextFormField(
+                    controller: _loginController,
+                    textDirection: TextDirection.ltr,
+                    keyboardType:
+                        TextInputType.emailAddress,
+                    decoration: _decoration(
+                      label: 'البريد الإلكتروني أو رقم الهاتف',
+                      icon: Icons.person_outline_rounded,
+                    ),
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'أدخل البريد الإلكتروني أو رقم الهاتف';
+                      }
+
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // =================================================
+                  // PASSWORD
+                  // =================================================
+
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: obscurePassword,
+                    textDirection: TextDirection.ltr,
+                    decoration: _decoration(
+                      label: 'كلمة المرور',
+                      icon: Icons.lock_outline_rounded,
+                      suffix: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            obscurePassword =
+                                !obscurePassword;
+                          });
+                        },
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons
+                                  .visibility_off_outlined
+                              : Icons
+                                  .visibility_outlined,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null ||
+                          value.isEmpty) {
+                        return 'أدخل كلمة المرور';
+                      }
+
+                      if (value.length < 6) {
+                        return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                      }
+
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // =================================================
+                  // LOGIN BUTTON
+                  // =================================================
+
+                  SizedBox(
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed:
+                          loading ? null : _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color(0xFFFF176F),
+                        foregroundColor: Colors.white,
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: loading
+                          ? const SizedBox(
+                              width: 25,
+                              height: 25,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'تسجيل الدخول',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight:
+                                    FontWeight.w900,
+                              ),
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // =================================================
+                  // REGISTER
+                  // =================================================
+
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'ليس لديك حساب؟',
+                        style: TextStyle(
+                          color: Colors.white54,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: loading
+                            ? null
+                            : widget.onRegister,
+                        child: const Text(
+                          'إنشاء حساب',
+                          style: TextStyle(
+                            color:
+                                Color(0xFFFF176F),
+                            fontWeight:
+                                FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  // =========================================================
+  // DISPOSE
+  // =========================================================
+
+  @override
+  void dispose() {
+    _loginController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
