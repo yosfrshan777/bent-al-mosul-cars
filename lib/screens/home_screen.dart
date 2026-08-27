@@ -43,8 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (!mounted) return;
 
+      final parsedCars = result
+          .whereType<Map>()
+          .map(
+            (item) => Car.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList();
+
       setState(() {
-        cars = result.take(6).toList();
+        cars = parsedCars.take(6).toList();
         loading = false;
       });
     } catch (e) {
@@ -65,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (i > 0 && (text.length - i) % 3 == 0) {
         buffer.write(',');
       }
+
       buffer.write(text[i]);
     }
 
@@ -157,7 +167,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _infoChip(IconData icon, String text) {
+  Widget _infoChip(
+    IconData icon,
+    String text,
+  ) {
     return Flexible(
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -222,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         border: Border.all(
-          color: Color(0xFF3A2631),
+          color: const Color(0xFF3A2631),
         ),
       ),
       child: Column(
@@ -494,7 +507,9 @@ class _HomeScreenState extends State<HomeScreen> {
         scrollDirection: Axis.horizontal,
         itemCount: cars.length,
         itemBuilder: (context, index) {
-          return _buildCarCard(cars[index]);
+          return _buildCarCard(
+            cars[index],
+          );
         },
       ),
     );
@@ -519,9 +534,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             children: [
               _buildHero(),
+
               const SizedBox(height: 16),
+
               _buildQuickActions(),
+
               const SizedBox(height: 28),
+
               Row(
                 mainAxisAlignment:
                     MainAxisAlignment.spaceBetween,
@@ -545,7 +564,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 10),
+
               _buildLatestCars(),
             ],
           ),
