@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/car.dart';
+
 class ApiService {
   ApiService._();
 
@@ -369,7 +371,7 @@ class ApiService {
   // GET CARS
   // =========================================================
 
-  Future<List<dynamic>> getCars({
+  Future<List<Car>> getCars({
     String? search,
     String? brand,
     String? city,
@@ -397,17 +399,27 @@ class ApiService {
     );
 
     if (data is List) {
-      return data;
+      return data
+          .map(
+            (e) => Car.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList();
     }
 
     if (data is Map &&
         data['cars'] is List) {
-      return List<dynamic>.from(
-        data['cars'],
-      );
+      return (data['cars'] as List)
+          .map(
+            (e) => Car.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList();
     }
 
-    return <dynamic>[];
+    return <Car>[];
   }
 
   // =========================================================
@@ -531,17 +543,10 @@ class ApiService {
           description.trim();
       request.fields['plan'] = plan.trim();
 
-      // عدد الصور
       request.fields['images_count'] =
           images.length.toString();
 
-      // الصورة الأولى هي الرئيسية
       request.fields['main_image_index'] = '0';
-
-      // =====================================================
-      // رفع الصور الثمانية كحد أقصى
-      // اسم الحقل: images
-      // =====================================================
 
       for (final image in images) {
         request.files.add(
