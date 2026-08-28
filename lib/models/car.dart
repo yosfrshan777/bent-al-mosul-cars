@@ -56,8 +56,12 @@ class Car {
       description:
           json['description']?.toString() ?? '',
       image: json['image']?.toString(),
-      plan: _toInt(json['plan'], fallback: 10000),
-      status: json['status']?.toString() ?? 'pending',
+      plan: _toInt(
+        json['plan'],
+        fallback: 10000,
+      ),
+      status:
+          json['status']?.toString() ?? 'pending',
       sellerName:
           json['seller_name']?.toString(),
       sellerPhone:
@@ -104,6 +108,10 @@ class Car {
   bool get isVip => plan >= 30000;
 
   bool get isFeatured => plan >= 20000;
+
+  bool get isApproved =>
+      status == 'approved' ||
+      status == 'active';
 
   static int _toInt(
     dynamic value, {
