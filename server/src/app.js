@@ -8,6 +8,7 @@ const { testDatabase } = require('./db');
 const authRoutes = require('./routes/auth');
 const carRoutes = require('./routes/cars');
 const adminRoutes = require('./routes/admin');
+const paymentRoutes = require('./routes/payment');
 
 const app = express();
 
@@ -65,6 +66,11 @@ app.use(
   adminRoutes,
 );
 
+app.use(
+  '/api/payment',
+  paymentRoutes,
+);
+
 app.use((req, res) => {
   res.status(404).json({
     message: 'الرابط غير موجود',
@@ -84,7 +90,7 @@ app.use(
 
     res.status(500).json({
       message:
-          'حدث خطأ داخلي في السيرفر',
+        'حدث خطأ داخلي في السيرفر',
     });
   },
 );
