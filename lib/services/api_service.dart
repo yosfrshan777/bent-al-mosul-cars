@@ -6,20 +6,27 @@ import 'package:image_picker/image_picker.dart';
 
 class ApiException implements Exception {
   final String message;
+  final int? statusCode;
 
-  const ApiException(this.message);
+  const ApiException(
+    this.message, {
+    this.statusCode,
+  });
 
   @override
   String toString() => message;
 }
 
 class ApiService {
-  ApiService._();
+  ApiService({
+    String? baseUrl,
+  }) : baseUrl = (baseUrl ?? _defaultBaseUrl)
+            .replaceFirst(RegExp(r'/$'), '');
 
-  static final ApiService instance = ApiService._();
+  static const String _defaultBaseUrl =
+      'https://YOUR-SERVER-DOMAIN.com/api';
 
-  static const String baseUrl =
-      'https://YOUR-SERVER.com/api';
+  final String baseUrl;
 
   String? _token;
 
@@ -32,51 +39,16 @@ class ApiService {
   }
 
   Map<String, String> get _headers {
-    return {
+    final headers = <String, String>{
       'Accept': 'application/json',
-      if (_token != null && _token!.isNotEmpty)
-        'Authorization': 'Bearer $_token',
     };
-  }
 
-  String imageUrl(String image) {
-    if (image.startsWith('http://') ||
-        image.startsWith('https://')) {
-      return image;
+    if (_token != null && _token!.isNotEmpty) {
+      headers['Authorization'] =
+          'Bearer $_token';
     }
 
-    final cleanBase = baseUrl.endsWith('/')
-        ? baseUrl.substring(0, baseUrl.length - 1)
-        : baseUrl;
-
-    final cleanImage = image.startsWith('/')
-        ? image.substring(1)
-        : image;
-
-    return '$cleanBase/$cleanImage';
-  }
-
-  dynamic _decode(String body) {
-    if (body.trim().isEmpty) return null;
-
-    try {
-      return jsonDecode(body);
-    } catch (_) {
-      return body;
-    }
-  }
-
-  String _message(dynamic data) {
-    if (data is Map) {
-      final value =
-          data['message'] ?? data['error'];
-
-      if (value != null) {
-        return value.toString();
-      }
-    }
-
-    return 'حدث خطأ في السيرفر';
+    return headers;
   }
 
   Future<dynamic> _request(
@@ -87,18 +59,18 @@ class ApiService {
     final uri = Uri.parse('$baseUrl$path');
 
     try {
-      late http.Response response;
-
       final headers = {
-        'Content-Type': 'application/json',
         ..._headers,
+        'Content-Type': 'application/json',
       };
+
+      late http.Response response;
 
       switch (method) {
         case 'GET':
           response = await http.get(
             uri,
-            headers: _headers,
+            headers: headers,
           );
           break;
 
@@ -121,7 +93,7 @@ class ApiService {
         case 'DELETE':
           response = await http.delete(
             uri,
-            headers: _headers,
+            headers: headers,
           );
           break;
 
@@ -131,26 +103,48 @@ class ApiService {
           );
       }
 
-      final data = _decode(response.body);
+      dynamic data;
+
+      if (response.body.trim().isNotEmpty) {
+        try {
+          data = jsonDecode(response.body);
+        } catch (_) {
+          data = null;
+        }
+      }
 
       if (response.statusCode < 200 ||
           response.statusCode >= 300) {
+        String message =
+            'حدث خطأ في السيرفر';
+
+        if (data is Map) {
+          final value =
+              data['message'] ??
+              data['error'];
+
+          if (value != null) {
+            message = value.toString();
+          }
+        }
+
+        if (response.statusCode == 401) {
+          clearToken();
+        }
+
         throw ApiException(
-          _message(data),
+          message,
+          statusCode: response.statusCode,
         );
       }
 
       return data;
-    } on ApiException {
-      rethrow;
     } on SocketException {
       throw const ApiException(
         'لا يوجد اتصال بالسيرفر',
       );
-    } on HttpException {
-      throw const ApiException(
-        'تعذر الوصول إلى السيرفر',
-      );
+    } on ApiException {
+      rethrow;
     } catch (_) {
       throw const ApiException(
         'حدث خطأ أثناء الاتصال بالسيرفر',
@@ -158,17 +152,13 @@ class ApiService {
     }
   }
 
-  // =========================================================
-  // AUTH
-  // =========================================================
-
   Future<dynamic> login({
     required String phone,
     required String password,
   }) async {
     final data = await _request(
       'POST',
-      '/login',
+      '/auth/login',
       body: {
         'phone': phone,
         'password': password,
@@ -176,7 +166,8 @@ class ApiService {
     );
 
     if (data is Map) {
-      final token = data['token'] ??
+      final token =
+          data['token'] ??
           data['access_token'];
 
       if (token != null) {
@@ -191,22 +182,34 @@ class ApiService {
     required String name,
     required String phone,
     required String password,
-  }) {
-    return _request(
+  }) async {
+    final data = await _request(
       'POST',
-      '/register',
+      '/auth/register',
       body: {
         'name': name,
         'phone': phone,
         'password': password,
       },
     );
+
+    if (data is Map) {
+      final token =
+          data['token'] ??
+          data['access_token'];
+
+      if (token != null) {
+        setToken(token.toString());
+      }
+    }
+
+    return data;
   }
 
-  Future<dynamic> me() {
+  Future<dynamic> me() async {
     return _request(
       'GET',
-      '/me',
+      '/auth/me',
     );
   }
 
@@ -214,16 +217,12 @@ class ApiService {
     try {
       await _request(
         'POST',
-        '/logout',
+        '/auth/logout',
       );
     } finally {
       clearToken();
     }
   }
-
-  // =========================================================
-  // CARS
-  // =========================================================
 
   Future<List<dynamic>> getCars() async {
     final data = await _request(
@@ -235,34 +234,12 @@ class ApiService {
       return data;
     }
 
-    if (data is Map) {
-      final cars = data['cars'];
-
-      if (cars is List) {
-        return cars;
-      }
-
-      final items = data['items'];
-
-      if (items is List) {
-        return items;
-      }
-
-      final results = data['results'];
-
-      if (results is List) {
-        return results;
-      }
+    if (data is Map &&
+        data['cars'] is List) {
+      return data['cars'];
     }
 
     return [];
-  }
-
-  Future<dynamic> getCar(int id) {
-    return _request(
-      'GET',
-      '/cars/$id',
-    );
   }
 
   Future<dynamic> createCar({
@@ -278,10 +255,16 @@ class ApiService {
     required String plan,
     required List<XFile> images,
   }) async {
-    final uri = Uri.parse('$baseUrl/cars');
+    if (_token == null || _token!.isEmpty) {
+      throw const ApiException(
+        'يجب تسجيل الدخول أولاً',
+      );
+    }
 
-    final request =
-        http.MultipartRequest('POST', uri);
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/cars'),
+    );
 
     request.headers.addAll(_headers);
 
@@ -303,6 +286,7 @@ class ApiService {
         await http.MultipartFile.fromPath(
           'images',
           image.path,
+          filename: image.name,
         ),
       );
     }
@@ -316,22 +300,39 @@ class ApiService {
         streamed,
       );
 
-      final data = _decode(response.body);
+      dynamic data;
+
+      if (response.body.trim().isNotEmpty) {
+        try {
+          data = jsonDecode(response.body);
+        } catch (_) {}
+      }
 
       if (response.statusCode < 200 ||
           response.statusCode >= 300) {
+        String message =
+            'تعذر نشر السيارة';
+
+        if (data is Map &&
+            data['message'] != null) {
+          message =
+              data['message'].toString();
+        }
+
         throw ApiException(
-          _message(data),
+          message,
+          statusCode:
+              response.statusCode,
         );
       }
 
       return data;
-    } on ApiException {
-      rethrow;
     } on SocketException {
       throw const ApiException(
         'لا يوجد اتصال بالسيرفر',
       );
+    } on ApiException {
+      rethrow;
     } catch (_) {
       throw const ApiException(
         'حدث خطأ أثناء رفع السيارة',
@@ -339,190 +340,215 @@ class ApiService {
     }
   }
 
-  Future<dynamic> updateCar({
-    required int id,
-    required Map<String, dynamic> data,
-  }) {
-    return _request(
-      'PUT',
-      '/cars/$id',
-      body: data,
-    );
-  }
-
-  Future<dynamic> deleteCar(int id) {
-    return _request(
-      'DELETE',
-      '/cars/$id',
-    );
-  }
-
-  // =========================================================
-  // ADMIN
-  // =========================================================
-
   Future<dynamic> getAdminData() {
     return _request(
       'GET',
-      '/admin',
+      '/admin/dashboard',
     );
   }
 
-  Future<dynamic> getAdminUsers() {
+  Future<dynamic> getPendingRequests() {
     return _request(
       'GET',
-      '/admin/users',
+      '/admin/requests/pending',
     );
   }
 
-  Future<dynamic> getPendingCars() {
-    return _request(
-      'GET',
-      '/admin/cars/pending',
-    );
-  }
-
-  Future<dynamic> approveCar(int id) {
-    return _request(
-      'POST',
-      '/admin/cars/$id/approve',
-    );
-  }
-
-  Future<dynamic> rejectCar(int id) {
-    return _request(
-      'POST',
-      '/admin/cars/$id/reject',
-    );
-  }
-
-  // =========================================================
-  // الأقسام
-  // =========================================================
-
-  Future<dynamic> getPendingRequests({
-    String? section,
-  }) {
-    final path = section == null ||
-            section.isEmpty
-        ? '/admin/requests/pending'
-        : '/admin/requests/pending?section=$section';
-
-    return _request(
-      'GET',
-      path,
-    );
-  }
-
-  Future<dynamic> approveRequest(
-    int id,
-  ) {
+  Future<dynamic> approveRequest(int id) {
     return _request(
       'POST',
       '/admin/requests/$id/approve',
     );
   }
 
-  Future<dynamic> rejectRequest(
-    int id,
-  ) {
+  Future<dynamic> rejectRequest(int id) {
     return _request(
       'POST',
       '/admin/requests/$id/reject',
     );
   }
 
-  // =========================================================
-  // الأدمن والمالك
-  // =========================================================
-
-  Future<dynamic> getAdmins() {
-    return _request(
-      'GET',
-      '/admin/admins',
-    );
-  }
-
-  Future<dynamic> addAdmin({
-    required String name,
-    required String phone,
-    required String password,
-  }) {
-    return _request(
-      'POST',
-      '/admin/admins',
-      body: {
-        'name': name,
-        'phone': phone,
-        'password': password,
-      },
-    );
-  }
-
-  Future<dynamic> removeAdmin(int id) {
-    return _request(
-      'DELETE',
-      '/admin/admins/$id',
-    );
-  }
-
-  // =========================================================
-  // إعدادات الاستلام والتحويل
-  // =========================================================
-
   Future<dynamic> getPaymentSettings() {
     return _request(
       'GET',
-      '/admin/payment-settings',
+      '/payment/settings',
     );
   }
 
   Future<dynamic> updatePaymentSettings({
-    String? phone,
-    String? cardNumber,
-    String? accountName,
+    required String phone,
+    required String cardNumber,
+    required String accountName,
     String? method,
   }) {
     return _request(
       'PUT',
       '/admin/payment-settings',
       body: {
-        if (phone != null)
-          'phone': phone,
-        if (cardNumber != null)
-          'card_number': cardNumber,
-        if (accountName != null)
-          'account_name': accountName,
-        if (method != null)
-          'method': method,
+        'phone': phone,
+        'card_number': cardNumber,
+        'account_name': accountName,
+        'method': method ?? 'card',
       },
     );
   }
 
-  // =========================================================
-  // أسعار الإعلانات
-  // =========================================================
-
-  Future<dynamic> getPlanPrices() {
+  Future<dynamic> getShowrooms() {
     return _request(
       'GET',
-      '/admin/plan-prices',
+      '/showrooms',
     );
   }
 
-  Future<dynamic> updatePlanPrices({
-    required int normal,
-    required int featured,
-    required int vip,
+  Future<dynamic> getShowroom(int id) {
+    return _request(
+      'GET',
+      '/showrooms/$id',
+    );
+  }
+
+  Future<dynamic> requestShowroom({
+    required String name,
+    required String phone,
+    required String city,
   }) {
     return _request(
-      'PUT',
-      '/admin/plan-prices',
+      'POST',
+      '/showrooms/request',
       body: {
-        'normal': normal,
-        'featured': featured,
-        'vip': vip,
+        'name': name,
+        'phone': phone,
+        'city': city,
       },
     );
+  }
+
+  Future<dynamic> getParts() {
+    return _request(
+      'GET',
+      '/parts',
+    );
+  }
+
+  Future<dynamic> getPartStore(int id) {
+    return _request(
+      'GET',
+      '/parts/$id',
+    );
+  }
+
+  Future<dynamic> requestParts({
+    required String name,
+    required String phone,
+    required String city,
+  }) {
+    return _request(
+      'POST',
+      '/parts/request',
+      body: {
+        'name': name,
+        'phone': phone,
+        'city': city,
+      },
+    );
+  }
+
+  Future<dynamic> getConversations() {
+    return _request(
+      'GET',
+      '/messages/conversations',
+    );
+  }
+
+  Future<dynamic> getMessages(int userId) {
+    return _request(
+      'GET',
+      '/messages/$userId',
+    );
+  }
+
+  Future<dynamic> sendMessage({
+    required int receiverId,
+    required String text,
+  }) {
+    return _request(
+      'POST',
+      '/messages',
+      body: {
+        'receiver_id': receiverId,
+        'text': text,
+      },
+    );
+  }
+
+  Future<dynamic> createPayment({
+    required int amount,
+    required String method,
+    String? phone,
+    String? cardNumber,
+    String? accountName,
+    String? reference,
+  }) {
+    return _request(
+      'POST',
+      '/payment',
+      body: {
+        'amount': amount,
+        'method': method,
+        'phone': phone,
+        'card_number': cardNumber,
+        'account_name': accountName,
+        'reference': reference,
+      },
+    );
+  }
+
+  Future<dynamic> getMyPayments() {
+    return _request(
+      'GET',
+      '/payment/mine',
+    );
+  }
+
+  Future<dynamic> getAdminPayments() {
+    return _request(
+      'GET',
+      '/payment/admin',
+    );
+  }
+
+  Future<dynamic> approvePayment(int id) {
+    return _request(
+      'POST',
+      '/payment/admin/$id/approve',
+    );
+  }
+
+  Future<dynamic> rejectPayment(int id) {
+    return _request(
+      'POST',
+      '/payment/admin/$id/reject',
+    );
+  }
+
+  String imageUrl(String path) {
+    if (path.startsWith('http://') ||
+        path.startsWith('https://')) {
+      return path;
+    }
+
+    if (path.startsWith('/')) {
+      return baseUrl.replaceFirst(
+            '/api',
+            '',
+          ) +
+          path;
+    }
+
+    return baseUrl.replaceFirst(
+          '/api',
+          '',
+        ) +
+        '/$path';
   }
 }
