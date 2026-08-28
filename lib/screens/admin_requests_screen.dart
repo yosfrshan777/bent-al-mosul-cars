@@ -17,8 +17,8 @@ class AdminRequestsScreen extends StatefulWidget {
 
 class _AdminRequestsScreenState
     extends State<AdminRequestsScreen> {
-  bool _loading = false;
-  List<Map<String, dynamic>> _requests = [];
+  bool _loading = true;
+  List<dynamic> _requests = [];
 
   @override
   void initState() {
@@ -32,45 +32,18 @@ class _AdminRequestsScreenState
     });
 
     try {
-      final result =
+      final data =
           await widget.api.getPendingRequests();
-
-      final list = <Map<String, dynamic>>[];
-
-      if (result is List) {
-        for (final item in result) {
-          if (item is Map) {
-            list.add(
-              Map<String, dynamic>.from(item),
-            );
-          }
-        }
-      } else if (result is Map &&
-          result['requests'] is List) {
-        for (final item in result['requests']) {
-          if (item is Map) {
-            list.add(
-              Map<String, dynamic>.from(item),
-            );
-          }
-        }
-      }
 
       if (!mounted) return;
 
       setState(() {
-        _requests = list;
+        _requests = data is List ? data : [];
       });
     } on ApiException catch (e) {
-      if (mounted) {
-        _message(e.message);
-      }
+      _message(e.message);
     } catch (_) {
-      if (mounted) {
-        _message(
-          'تعذر تحميل الطلبات',
-        );
-      }
+      _message('تعذر تحميل الطلبات');
     } finally {
       if (mounted) {
         setState(() {
@@ -80,356 +53,55 @@ class _AdminRequestsScreenState
     }
   }
 
-  Future<void> _approve(
-    Map<String, dynamic> request,
-  ) async {
-    final id = _toInt(request['id']);
-
-    if (id <= 0) {
-      _message('رقم الطلب غير صحيح');
-      return;
-    }
-
+  Future<void> _approve(int id) async {
     try {
       await widget.api.approveRequest(id);
 
       if (!mounted) return;
 
-      setState(() {
-        _requests.remove(request);
-      });
+      _message('تمت الموافقة على الإعلان');
 
-      _message('تمت الموافقة على الطلب');
+      await _loadRequests();
     } on ApiException catch (e) {
       _message(e.message);
     } catch (_) {
-      _message(
-        'حدث خطأ أثناء الموافقة',
-      );
+      _message('تعذر تنفيذ العملية');
     }
   }
 
-  Future<void> _reject(
-    Map<String, dynamic> request,
-  ) async {
-    final id = _toInt(request['id']);
-
-    if (id <= 0) {
-      _message('رقم الطلب غير صحيح');
-      return;
-    }
-
+  Future<void> _reject(int id) async {
     try {
       await widget.api.rejectRequest(id);
 
       if (!mounted) return;
 
-      setState(() {
-        _requests.remove(request);
-      });
+      _message('تم رفض الإعلان');
 
-      _message('تم رفض الطلب');
+      await _loadRequests();
     } on ApiException catch (e) {
       _message(e.message);
     } catch (_) {
-      _message(
-        'حدث خطأ أثناء رفض الطلب',
-      );
+      _message('تعذر تنفيذ العملية');
     }
   }
 
-  int _toInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-
-    return int.tryParse(
-          value?.toString() ?? '',
-        ) ??
-        0;
-  }
-
-  String _value(
-    Map<String, dynamic> data,
-    List<String> keys,
-  ) {
-    for (final key in keys) {
-      final value = data[key];
-
-      if (value != null &&
-          value.toString().trim().isNotEmpty) {
-        return value.toString();
-      }
-    }
-
-    return 'غير محدد';
-  }
-
-  IconData _requestIcon(
-    Map<String, dynamic> request,
-  ) {
-    final type = _value(
-      request,
-      ['type', 'section', 'role'],
-    ).toLowerCase();
-
-    if (type.contains('part') ||
-        type.contains('قطع')) {
-      return Icons.build_rounded;
-    }
-
-    if (type.contains('shop') ||
-        type.contains('showroom') ||
-        type.contains('معرض')) {
-      return Icons.store_rounded;
-    }
-
-    return Icons.directions_car_rounded;
-  }
-
-  Widget _requestCard(
-    Map<String, dynamic> request,
-  ) {
-    final name = _value(
-      request,
-      ['name', 'user_name', 'seller_name'],
-    );
-
-    final phone = _value(
-      request,
-      ['phone', 'user_phone', 'seller_phone'],
-    );
-
-    final type = _value(
-      request,
-      ['type', 'section', 'role'],
-    );
-
-    final city = _value(
-      request,
-      ['city', 'location'],
-    );
-
-    final created = _value(
-      request,
-      ['created_at', 'date'],
-    );
-
-    return Container(
-      margin: const EdgeInsets.only(
-        bottom: 12,
-      ),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius:
-            BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF29151F),
-                  borderRadius:
-                      BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  _requestIcon(request),
-                  color:
-                      const Color(0xFFFF176F),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow:
-                          TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight:
-                            FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      type,
-                      style: const TextStyle(
-                        color:
-                            Color(0xFFFF176F),
-                        fontSize: 12,
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '#${request['id'] ?? '-'}',
-                style: const TextStyle(
-                  color: Colors.white30,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          _detail(
-            Icons.phone_rounded,
-            'الهاتف',
-            phone,
-          ),
-
-          _detail(
-            Icons.location_on_outlined,
-            'الموقع',
-            city,
-          ),
-
-          if (created != 'غير محدد')
-            _detail(
-              Icons.access_time_rounded,
-              'التاريخ',
-              created,
-            ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    _approve(request);
-                  },
-                  icon: const Icon(
-                    Icons.check_rounded,
-                  ),
-                  label: const Text(
-                    'موافقة',
-                  ),
-                  style:
-                      ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.green.shade700,
-                    foregroundColor:
-                        Colors.white,
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    _reject(request);
-                  },
-                  icon: const Icon(
-                    Icons.close_rounded,
-                  ),
-                  label: const Text(
-                    'رفض',
-                  ),
-                  style:
-                      OutlinedButton.styleFrom(
-                    foregroundColor:
-                        Colors.redAccent,
-                    side:
-                        const BorderSide(
-                      color: Colors.redAccent,
-                    ),
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _detail(
-    IconData icon,
-    String title,
-    String value,
-  ) {
-    return Padding(
-      padding:
-          const EdgeInsets.only(bottom: 7),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Colors.white38,
-          ),
-          const SizedBox(width: 7),
-          Text(
-            '$title: ',
-            style: const TextStyle(
-              color: Colors.white38,
-              fontSize: 11,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              overflow:
-                  TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _message(String message) {
+  void _message(String text) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(
-            message,
-            textDirection: TextDirection.rtl,
-          ),
+          content: Text(text),
         ),
       );
+  }
+
+  String _text(
+    Map<String, dynamic> item,
+    String key,
+  ) {
+    return item[key]?.toString() ?? '';
   }
 
   @override
@@ -437,11 +109,10 @@ class _AdminRequestsScreenState
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            const Color(0xFF08080B),
+        backgroundColor: const Color(0xFF08080B),
         appBar: AppBar(
           title: const Text(
-            'طلبات الإدارة',
+            'طلبات الموافقة',
             style: TextStyle(
               fontWeight: FontWeight.w900,
             ),
@@ -457,63 +128,374 @@ class _AdminRequestsScreenState
             ),
           ],
         ),
-        body: SafeArea(
-          child: _loading && _requests.isEmpty
-              ? const Center(
-                  child:
-                      CircularProgressIndicator(
-                    color:
-                        Color(0xFFFF176F),
-                  ),
-                )
-              : RefreshIndicator(
-                  color:
-                      const Color(0xFFFF176F),
-                  onRefresh: _loadRequests,
-                  child: _requests.isEmpty
-                      ? ListView(
-                          children: const [
-                            SizedBox(
-                              height: 180,
+        body: _loading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFFF176F),
+                ),
+              )
+            : _requests.isEmpty
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons
+                              .check_circle_outline_rounded,
+                          color: Color(0xFFFF176F),
+                          size: 60,
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'ماكو طلبات معلقة',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    color: const Color(0xFFFF176F),
+                    onRefresh: _loadRequests,
+                    child: ListView.builder(
+                      padding:
+                          const EdgeInsets.all(16),
+                      itemCount: _requests.length,
+                      itemBuilder: (_, index) {
+                        final raw =
+                            _requests[index];
+
+                        if (raw is! Map) {
+                          return const SizedBox();
+                        }
+
+                        final item =
+                            Map<String, dynamic>.from(
+                          raw,
+                        );
+
+                        final id =
+                            int.tryParse(
+                                  _text(
+                                    item,
+                                    'id',
+                                  ),
+                                ) ??
+                                0;
+
+                        final brand =
+                            _text(
+                              item,
+                              'brand',
+                            );
+
+                        final model =
+                            _text(
+                              item,
+                              'model',
+                            );
+
+                        final year =
+                            _text(
+                              item,
+                              'year',
+                            );
+
+                        final price =
+                            _text(
+                              item,
+                              'price',
+                            );
+
+                        final city =
+                            _text(
+                              item,
+                              'city',
+                            );
+
+                        final seller =
+                            _text(
+                              item,
+                              'seller_name',
+                            );
+
+                        final phone =
+                            _text(
+                              item,
+                              'seller_phone',
+                            );
+
+                        final plan =
+                            _text(
+                              item,
+                              'plan',
+                            );
+
+                        return Container(
+                          margin:
+                              const EdgeInsets.only(
+                            bottom: 14,
+                          ),
+                          padding:
+                              const EdgeInsets.all(15),
+                          decoration:
+                              BoxDecoration(
+                            color: const Color(
+                              0xFF15151B,
                             ),
-                            Icon(
-                              Icons
-                                  .inbox_outlined,
-                              color:
-                                  Colors.white24,
-                              size: 70,
+                            borderRadius:
+                                BorderRadius.circular(
+                              18,
                             ),
-                            SizedBox(
-                              height: 15,
-                            ),
-                            Center(
-                              child: Text(
-                                'لا توجد طلبات معلقة',
-                                style:
-                                    TextStyle(
-                                  color:
-                                      Colors.white54,
-                                  fontSize: 16,
-                                ),
+                            border: Border.all(
+                              color: const Color(
+                                0xFF292932,
                               ),
                             ),
-                          ],
-                        )
-                      : ListView.builder(
-                          padding:
-                              const EdgeInsets
-                                  .all(16),
-                          itemCount:
-                              _requests.length,
-                          itemBuilder:
-                              (_, index) {
-                            return _requestCard(
-                              _requests[index],
-                            );
-                          },
-                        ),
-                ),
-        ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment
+                                    .stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration:
+                                        BoxDecoration(
+                                      color:
+                                          const Color(
+                                        0xFF29131F,
+                                      ),
+                                      borderRadius:
+                                          BorderRadius
+                                              .circular(
+                                        14,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons
+                                          .directions_car_rounded,
+                                      color: Color(
+                                        0xFFFF176F,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 12,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      '$brand $model',
+                                      style:
+                                          const TextStyle(
+                                        color:
+                                            Colors.white,
+                                        fontSize: 18,
+                                        fontWeight:
+                                            FontWeight
+                                                .w900,
+                                      ),
+                                    ),
+                                  ),
+                                  if (plan
+                                      .toUpperCase()
+                                      .contains('VIP'))
+                                    Container(
+                                      padding:
+                                          const EdgeInsets
+                                              .symmetric(
+                                        horizontal: 9,
+                                        vertical: 5,
+                                      ),
+                                      decoration:
+                                          BoxDecoration(
+                                        color:
+                                            const Color(
+                                          0xFFFF176F,
+                                        ),
+                                        borderRadius:
+                                            BorderRadius
+                                                .circular(
+                                          20,
+                                        ),
+                                      ),
+                                      child:
+                                          const Text(
+                                        'VIP',
+                                        style:
+                                            TextStyle(
+                                          color:
+                                              Colors.white,
+                                          fontSize: 10,
+                                          fontWeight:
+                                              FontWeight
+                                                  .w900,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+
+                              const SizedBox(
+                                height: 14,
+                              ),
+
+                              _info(
+                                Icons
+                                    .calendar_month_rounded,
+                                'السنة',
+                                year,
+                              ),
+
+                              _info(
+                                Icons
+                                    .attach_money_rounded,
+                                'السعر',
+                                price.isEmpty
+                                    ? ''
+                                    : '\$$price',
+                              ),
+
+                              _info(
+                                Icons
+                                    .location_on_rounded,
+                                'الموقع',
+                                city,
+                              ),
+
+                              if (seller.isNotEmpty)
+                                _info(
+                                  Icons
+                                      .person_rounded,
+                                  'البائع',
+                                  seller,
+                                ),
+
+                              if (phone.isNotEmpty)
+                                _info(
+                                  Icons
+                                      .phone_rounded,
+                                  'الهاتف',
+                                  phone,
+                                ),
+
+                              const SizedBox(
+                                height: 12,
+                              ),
+
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child:
+                                        ElevatedButton.icon(
+                                      onPressed:
+                                          id == 0
+                                              ? null
+                                              : () =>
+                                                  _approve(
+                                                    id,
+                                                  ),
+                                      icon:
+                                          const Icon(
+                                        Icons
+                                            .check_rounded,
+                                      ),
+                                      label:
+                                          const Text(
+                                        'موافقة',
+                                      ),
+                                      style:
+                                          ElevatedButton
+                                              .styleFrom(
+                                        backgroundColor:
+                                            const Color(
+                                          0xFFFF176F,
+                                        ),
+                                        foregroundColor:
+                                            Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Expanded(
+                                    child:
+                                        OutlinedButton.icon(
+                                      onPressed:
+                                          id == 0
+                                              ? null
+                                              : () =>
+                                                  _reject(
+                                                    id,
+                                                  ),
+                                      icon:
+                                          const Icon(
+                                        Icons
+                                            .close_rounded,
+                                      ),
+                                      label:
+                                          const Text(
+                                        'رفض',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+      ),
+    );
+  }
+
+  Widget _info(
+    IconData icon,
+    String title,
+    String value,
+  ) {
+    if (value.isEmpty) {
+      return const SizedBox();
+    }
+
+    return Padding(
+      padding:
+          const EdgeInsets.only(bottom: 7),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: Colors.white38,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$title: ',
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 12,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
