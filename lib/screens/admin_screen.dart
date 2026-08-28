@@ -11,283 +11,89 @@ class AdminScreen extends StatefulWidget {
   final ApiService api;
 
   @override
-  State<AdminScreen> createState() => _AdminScreenState();
+  State<AdminScreen> createState() =>
+      _AdminScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController tabController;
+class _AdminScreenState extends State<AdminScreen> {
+  int _selectedSection = 0;
 
-  bool loading = true;
-  String? error;
+  final List<_AdminSection> _sections = const [
+    _AdminSection(
+      title: 'المعارض',
+      icon: Icons.store_rounded,
+    ),
+    _AdminSection(
+      title: 'قطع الغيار',
+      icon: Icons.build_rounded,
+    ),
+    _AdminSection(
+      title: 'البيع والشراء',
+      icon: Icons.swap_horiz_rounded,
+    ),
+  ];
 
-  List<dynamic> pendingCars = [];
-  List<dynamic> users = [];
-  List<dynamic> payments = [];
-
-  @override
-  void initState() {
-    super.initState();
-
-    tabController = TabController(
-      length: 3,
-      vsync: this,
-    );
-
-    _loadAdminData();
-  }
-
-  @override
-  void dispose() {
-    tabController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadAdminData() async {
-    setState(() {
-      loading = true;
-      error = null;
-    });
-
-    try {
-      final result =
-          await widget.api.getAdminDashboard();
-
-      if (!mounted) return;
-
-      setState(() {
-        pendingCars =
-            result['pendingCars'] as List? ?? [];
-        users =
-            result['users'] as List? ?? [];
-        payments =
-            result['payments'] as List? ?? [];
-
-        loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        loading = false;
-        error = e
-            .toString()
-            .replaceFirst('Exception: ', '');
-      });
-    }
-  }
-
-  Future<void> _approveCar(
-    dynamic car,
-  ) async {
-    final id = car['id'];
-
-    try {
-      await widget.api.adminUpdateCar(
-        id: id,
-        action: 'approve',
-      );
-
-      _showMessage(
-        'تمت الموافقة على الإعلان',
-        success: true,
-      );
-
-      await _loadAdminData();
-    } catch (e) {
-      _showMessage(
-        e
-            .toString()
-            .replaceFirst('Exception: ', ''),
-      );
-    }
-  }
-
-  Future<void> _rejectCar(
-    dynamic car,
-  ) async {
-    final id = car['id'];
-
-    try {
-      await widget.api.adminUpdateCar(
-        id: id,
-        action: 'reject',
-      );
-
-      _showMessage(
-        'تم رفض الإعلان',
-      );
-
-      await _loadAdminData();
-    } catch (e) {
-      _showMessage(
-        e
-            .toString()
-            .replaceFirst('Exception: ', ''),
-      );
-    }
-  }
-
-  Future<void> _deleteCar(
-    dynamic car,
-  ) async {
-    final id = car['id'];
-
-    final confirmed =
-        await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor:
-              const Color(0xFF18181F),
-          title: const Text(
-            'حذف الإعلان',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            textDirection: TextDirection.rtl,
           ),
-          content: const Text(
-            'هل أنت متأكد من حذف هذا الإعلان؟',
-            style: TextStyle(
-              color: Colors.white70,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(
-                context,
-                false,
-              ),
-              child: const Text(
-                'إلغاء',
-              ),
-            ),
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(
-                context,
-                true,
-              ),
-              child: const Text(
-                'حذف',
-                style: TextStyle(
-                  color: Colors.redAccent,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) {
-      return;
-    }
-
-    try {
-      await widget.api.adminUpdateCar(
-        id: id,
-        action: 'delete',
+        ),
       );
-
-      _showMessage('تم حذف الإعلان');
-
-      await _loadAdminData();
-    } catch (e) {
-      _showMessage(
-        e
-            .toString()
-            .replaceFirst('Exception: ', ''),
-      );
-    }
   }
 
-  Future<void> _changeUserRole(
-    dynamic user,
-    String role,
-  ) async {
-    try {
-      await widget.api.adminChangeUserRole(
-        userId: user['id'],
-        role: role,
-      );
-
-      _showMessage(
-        role == 'admin'
-            ? 'تمت إضافة الأدمن'
-            : 'تمت إزالة صلاحية الأدمن',
-        success: true,
-      );
-
-      await _loadAdminData();
-    } catch (e) {
-      _showMessage(
-        e
-            .toString()
-            .replaceFirst('Exception: ', ''),
-      );
-    }
-  }
-
-  Future<void> _approvePayment(
-    dynamic payment,
-  ) async {
-    try {
-      await widget.api.adminUpdatePayment(
-        id: payment['id'],
-        status: 'approved',
-      );
-
-      _showMessage(
-        'تم تأكيد الدفع',
-        success: true,
-      );
-
-      await _loadAdminData();
-    } catch (e) {
-      _showMessage(
-        e
-            .toString()
-            .replaceFirst('Exception: ', ''),
-      );
-    }
-  }
-
-  void _showMessage(
-    String message, {
-    bool success = false,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: success
-            ? const Color(0xFF18A558)
-            : const Color(0xFF292932),
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF15151B),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFF292932),
+        ),
       ),
-    );
-  }
-
-  Widget _empty(
-    String text,
-    IconData icon,
-  ) {
-    return Center(
-      child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
+      child: Row(
         children: [
-          Icon(
-            icon,
-            size: 65,
-            color: Colors.white24,
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A1420),
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: const Icon(
+              Icons.admin_panel_settings_rounded,
+              color: Color(0xFFFF176F),
+              size: 32,
+            ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white54,
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'لوحة الإدارة',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  'إدارة الطلبات والإعلانات',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -295,48 +101,303 @@ class _AdminScreenState extends State<AdminScreen>
     );
   }
 
-  Widget _carItem(
-    dynamic car,
-  ) {
-    final brand =
-        car['brand']?.toString() ?? '';
-    final model =
-        car['model']?.toString() ?? '';
-    final city =
-        car['city']?.toString() ?? '';
-    final price =
-        car['price']?.toString() ?? '';
+  Widget _buildSections() {
+    return Column(
+      children: List.generate(
+        _sections.length,
+        (index) {
+          final section = _sections[index];
+          final selected =
+              _selectedSection == index;
+
+          return Padding(
+            padding:
+                const EdgeInsets.only(bottom: 10),
+            child: Material(
+              color: selected
+                  ? const Color(0xFF2A1420)
+                  : const Color(0xFF15151B),
+              borderRadius:
+                  BorderRadius.circular(17),
+              child: InkWell(
+                borderRadius:
+                    BorderRadius.circular(17),
+                onTap: () {
+                  setState(() {
+                    _selectedSection = index;
+                  });
+                },
+                child: Padding(
+                  padding:
+                      const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? const Color(
+                                  0xFFFF176F,
+                                )
+                              : const Color(
+                                  0xFF222229,
+                                ),
+                          borderRadius:
+                              BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          section.icon,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Text(
+                          section.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_left_rounded,
+                        color: Colors.white54,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRequests() {
+    final section = _sections[_selectedSection];
 
     return Container(
-      margin:
-          const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF15151B),
-        borderRadius:
-            BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: const Color(0xFF292932),
         ),
       ),
       child: Column(
         crossAxisAlignment:
-            CrossAxisAlignment.start,
+            CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color:
-                      const Color(0xFF21121A),
-                  borderRadius:
-                      BorderRadius.circular(13),
+              Icon(
+                section.icon,
+                color: const Color(0xFFFF176F),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  'طلبات ${section.title}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.directions_car_rounded,
-                  color: Color(0xFFFF176F),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A1420),
+                  borderRadius:
+                      BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '0',
+                  style: TextStyle(
+                    color: Color(0xFFFF176F),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Icon(
+            Icons.inbox_rounded,
+            color: Colors.white24,
+            size: 52,
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'لا توجد طلبات حالياً',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStats() {
+    return Row(
+      children: [
+        Expanded(
+          child: _statCard(
+            Icons.directions_car_rounded,
+            'السيارات',
+            '0',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _statCard(
+            Icons.people_alt_rounded,
+            'المستخدمون',
+            '0',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _statCard(
+            Icons.pending_actions_rounded,
+            'طلبات',
+            '0',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _statCard(
+    IconData icon,
+    String title,
+    String value,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: 15,
+        horizontal: 8,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF15151B),
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: const Color(0xFF292932),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: const Color(0xFFFF176F),
+            size: 24,
+          ),
+          const SizedBox(height: 7),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminActions() {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'إدارة النظام',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 19,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _adminAction(
+          icon: Icons.account_balance_rounded,
+          title: 'طريقة الاستلام والتحويل',
+          subtitle:
+              'تغيير رقم الهاتف أو رقم البطاقة',
+          onTap: () {
+            _showMessage(
+              'إعدادات التحويل ستكون من هنا',
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        _adminAction(
+          icon: Icons.manage_accounts_rounded,
+          title: 'الأدمنية والمالك',
+          subtitle:
+              'إدارة صلاحيات المشرفين والمالك',
+          onTap: () {
+            _showMessage(
+              'إدارة الأدمنية والمالك',
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _adminAction({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: const Color(0xFF15151B),
+      borderRadius: BorderRadius.circular(17),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(17),
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF222229),
+                  borderRadius:
+                      BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  color: const Color(0xFFFF176F),
                 ),
               ),
               const SizedBox(width: 12),
@@ -346,447 +407,86 @@ class _AdminScreenState extends State<AdminScreen>
                       CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$brand $model',
+                      title,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 17,
-                        fontWeight:
-                            FontWeight.w900,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$city • $price د.ع',
+                      subtitle,
                       style: const TextStyle(
                         color: Colors.white54,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () =>
-                      _approveCar(car),
-                  style:
-                      ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFF18A558),
-                    foregroundColor:
-                        Colors.white,
-                  ),
-                  child: const Text(
-                    'موافقة',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () =>
-                      _rejectCar(car),
-                  style:
-                      OutlinedButton.styleFrom(
-                    foregroundColor:
-                        Colors.orangeAccent,
-                    side: const BorderSide(
-                      color: Colors.orangeAccent,
-                    ),
-                  ),
-                  child: const Text(
-                    'رفض',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: () =>
-                    _deleteCar(car),
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.redAccent,
-                ),
+              const Icon(
+                Icons.chevron_left_rounded,
+                color: Colors.white38,
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _pendingTab() {
-    if (pendingCars.isEmpty) {
-      return _empty(
-        'لا توجد إعلانات بانتظار المراجعة',
-        Icons.check_circle_outline_rounded,
-      );
-    }
-
-    return RefreshIndicator(
-      color: const Color(0xFFFF176F),
-      onRefresh: _loadAdminData,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(15),
-        itemCount: pendingCars.length,
-        itemBuilder: (_, index) {
-          return _carItem(
-            pendingCars[index],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _userItem(
-    dynamic user,
-  ) {
-    final role =
-        user['role']?.toString() ?? 'user';
-
-    final admin = role == 'admin';
-
-    return Container(
-      margin:
-          const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius:
-            BorderRadius.circular(17),
-        border: Border.all(
-          color: const Color(0xFF292932),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: admin
-                  ? const Color(0xFF321222)
-                  : const Color(0xFF202027),
-              borderRadius:
-                  BorderRadius.circular(13),
-            ),
-            child: Icon(
-              admin
-                  ? Icons
-                      .admin_panel_settings_rounded
-                  : Icons.person_outline_rounded,
-              color: admin
-                  ? const Color(0xFFFF176F)
-                  : Colors.white54,
-            ),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user['name']
-                          ?.toString() ??
-                      'مستخدم',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight:
-                        FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  user['email']
-                          ?.toString() ??
-                      '',
-                  style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          PopupMenuButton<String>(
-            color: const Color(0xFF202027),
-            onSelected: (value) =>
-                _changeUserRole(
-              user,
-              value,
-            ),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: admin
-                    ? 'user'
-                    : 'admin',
-                child: Text(
-                  admin
-                      ? 'إزالة الأدمن'
-                      : 'جعله أدمن',
-                  style:
-                      const TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-            icon: const Icon(
-              Icons.more_vert_rounded,
-              color: Colors.white54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _usersTab() {
-    if (users.isEmpty) {
-      return _empty(
-        'لا توجد بيانات مستخدمين',
-        Icons.people_outline_rounded,
-      );
-    }
-
-    return RefreshIndicator(
-      color: const Color(0xFFFF176F),
-      onRefresh: _loadAdminData,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(15),
-        itemCount: users.length,
-        itemBuilder: (_, index) {
-          return _userItem(
-            users[index],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _paymentItem(
-    dynamic payment,
-  ) {
-    final status =
-        payment['status']?.toString() ??
-            'pending';
-
-    final approved =
-        status == 'approved';
-
-    return Container(
-      margin:
-          const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius:
-            BorderRadius.circular(17),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-        children: [
-          Text(
-            'طلب دفع #${payment['id'] ?? ''}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            '${payment['amount'] ?? 0} د.ع',
-            style: const TextStyle(
-              color: Color(0xFFFF176F),
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'الحالة: ${approved ? 'مؤكد' : 'بانتظار التأكيد'}',
-            style: TextStyle(
-              color: approved
-                  ? const Color(0xFF18A558)
-                  : Colors.orangeAccent,
-              fontSize: 12,
-            ),
-          ),
-          if (!approved) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () =>
-                    _approvePayment(
-                  payment,
-                ),
-                style:
-                    ElevatedButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFF18A558),
-                ),
-                child: const Text(
-                  'تأكيد الدفع',
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _paymentsTab() {
-    if (payments.isEmpty) {
-      return _empty(
-        'لا توجد طلبات دفع',
-        Icons.payments_outlined,
-      );
-    }
-
-    return RefreshIndicator(
-      color: const Color(0xFFFF176F),
-      onRefresh: _loadAdminData,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(15),
-        itemCount: payments.length,
-        itemBuilder: (_, index) {
-          return _paymentItem(
-            payments[index],
-          );
-        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor:
-          const Color(0xFF08080B),
-      appBar: AppBar(
-        backgroundColor:
-            const Color(0xFF111116),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'لوحة الإدارة',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF08080B),
+        appBar: AppBar(
+          title: const Text(
+            'الإدارة',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+            ),
           ),
+          centerTitle: true,
         ),
-        actions: [
-          IconButton(
-            onPressed: _loadAdminData,
-            icon: const Icon(
-              Icons.refresh_rounded,
-            ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 16),
+              _buildQuickStats(),
+              const SizedBox(height: 25),
+              const Text(
+                'الأقسام',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildSections(),
+              const SizedBox(height: 12),
+              _buildRequests(),
+              const SizedBox(height: 25),
+              _buildAdminActions(),
+              const SizedBox(height: 30),
+            ],
           ),
-        ],
-        bottom: TabBar(
-          controller: tabController,
-          indicatorColor:
-              const Color(0xFFFF176F),
-          labelColor:
-              const Color(0xFFFF176F),
-          unselectedLabelColor:
-              Colors.white54,
-          tabs: const [
-            Tab(
-              icon: Icon(
-                Icons.directions_car_rounded,
-              ),
-              text: 'الإعلانات',
-            ),
-            Tab(
-              icon: Icon(
-                Icons.people_alt_outlined,
-              ),
-              text: 'المستخدمون',
-            ),
-            Tab(
-              icon: Icon(
-                Icons.payments_outlined,
-              ),
-              text: 'المدفوعات',
-            ),
-          ],
         ),
       ),
-      body: loading
-          ? const Center(
-              child:
-                  CircularProgressIndicator(
-                color: Color(0xFFFF176F),
-              ),
-            )
-          : error != null
-              ? Center(
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.all(25),
-                    child: Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons
-                              .admin_panel_settings_outlined,
-                          color: Colors.white30,
-                          size: 65,
-                        ),
-                        const SizedBox(
-                            height: 15),
-                        Text(
-                          error!,
-                          textAlign:
-                              TextAlign.center,
-                          style:
-                              const TextStyle(
-                            color:
-                                Colors.white60,
-                          ),
-                        ),
-                        const SizedBox(
-                            height: 15),
-                        ElevatedButton(
-                          onPressed:
-                              _loadAdminData,
-                          style:
-                              ElevatedButton
-                                  .styleFrom(
-                            backgroundColor:
-                                const Color(
-                              0xFFFF176F,
-                            ),
-                          ),
-                          child: const Text(
-                            'إعادة المحاولة',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : TabBarView(
-                  controller: tabController,
-                  children: [
-                    _pendingTab(),
-                    _usersTab(),
-                    _paymentsTab(),
-                  ],
-                ),
     );
   }
+}
+
+class _AdminSection {
+  final String title;
+  final IconData icon;
+
+  const _AdminSection({
+    required this.title,
+    required this.icon,
+  });
 }
