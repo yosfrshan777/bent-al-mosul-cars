@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/car.dart';
 import '../services/api_service.dart';
-import 'car_details_screen.dart';
 
 class CarsScreen extends StatefulWidget {
   const CarsScreen({
@@ -13,19 +12,15 @@ class CarsScreen extends StatefulWidget {
   final ApiService api;
 
   @override
-  State<CarsScreen> createState() => _CarsScreenState();
+  State<CarsScreen> createState() =>
+      _CarsScreenState();
 }
 
 class _CarsScreenState extends State<CarsScreen> {
-  final TextEditingController _searchController =
-      TextEditingController();
-
-  List<Car> _cars = [];
   bool _loading = true;
   String? _error;
 
-  String _city = 'الكل';
-  String _fuel = 'الكل';
+  List<Car> _cars = [];
 
   @override
   void initState() {
@@ -40,20 +35,14 @@ class _CarsScreenState extends State<CarsScreen> {
     });
 
     try {
-      final result = await widget.api.getCars();
+      final data = await widget.api.getCars();
 
-      final cars = result
+      final cars = data
           .whereType<Map>()
           .map(
             (item) => Car.fromJson(
               Map<String, dynamic>.from(item),
             ),
-          )
-          .where(
-            (car) =>
-                car.status == 'approved' ||
-                car.status == 'active' ||
-                car.status.isEmpty,
           )
           .toList();
 
@@ -61,193 +50,180 @@ class _CarsScreenState extends State<CarsScreen> {
 
       setState(() {
         _cars = cars;
-        _loading = false;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _loading = false;
         _error = e.message;
       });
     } catch (_) {
       if (!mounted) return;
 
       setState(() {
-        _loading = false;
         _error = 'تعذر تحميل السيارات';
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
-  List<Car> get _filteredCars {
-    final query =
-        _searchController.text.trim().toLowerCase();
-
-    return _cars.where((car) {
-      final matchesSearch =
-          query.isEmpty ||
-          car.brand.toLowerCase().contains(query) ||
-          car.model.toLowerCase().contains(query) ||
-          car.city.toLowerCase().contains(query);
-
-      final matchesCity =
-          _city == 'الكل' || car.city == _city;
-
-      final matchesFuel =
-          _fuel == 'الكل' || car.fuel == _fuel;
-
-      return matchesSearch &&
-          matchesCity &&
-          matchesFuel;
-    }).toList();
-  }
-
-  List<String> get _cities {
-    final values = _cars
-        .map((car) => car.city)
-        .where((value) => value.isNotEmpty)
-        .toSet()
-        .toList();
-
-    values.sort();
-
-    return ['الكل', ...values];
-  }
-
-  List<String> get _fuels {
-    final values = _cars
-        .map((car) => car.fuel)
-        .where((value) => value.isNotEmpty)
-        .toSet()
-        .toList();
-
-    values.sort();
-
-    return ['الكل', ...values];
-  }
-
-  String _formatPrice(int price) {
-    final text = price.toString();
+  String _price(int value) {
+    final text = value.toString();
     final buffer = StringBuffer();
 
     for (int i = 0; i < text.length; i++) {
-      if (i > 0 && (text.length - i) % 3 == 0) {
+      if (i > 0 &&
+          (text.length - i) % 3 == 0) {
         buffer.write(',');
       }
 
       buffer.write(text[i]);
     }
 
-    return buffer.toString();
+    return '\$$buffer';
   }
 
-  Widget _searchBox() {
-    return TextField(
-      controller: _searchController,
-      onChanged: (_) {
-        setState(() {});
-      },
-      textDirection: TextDirection.rtl,
-      style: const TextStyle(
-        color: Colors.white,
-      ),
-      decoration: InputDecoration(
-        hintText: 'ابحث عن الماركة أو الموديل...',
-        hintStyle: const TextStyle(
-          color: Colors.white38,
-        ),
-        prefixIcon: const Icon(
-          Icons.search_rounded,
-          color: Color(0xFFFF176F),
-        ),
-        suffixIcon:
-            _searchController.text.isEmpty
-                ? null
-                : IconButton(
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() {});
-                    },
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Colors.white54,
+  void _openCar(Car car) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF111116),
+      isScrollControlled: true,
+      builder: (_) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '${car.brand} ${car.model}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 23,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-        filled: true,
-        fillColor: const Color(0xFF15151B),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: Color(0xFF292932),
+                  const SizedBox(height: 12),
+                  _detail(
+                    'السنة',
+                    car.year.toString(),
+                  ),
+                  _detail(
+                    'السعر',
+                    _price(car.price),
+                  ),
+                  _detail(
+                    'الممشى',
+                    '${car.km} كم',
+                  ),
+                  _detail(
+                    'الموقع',
+                    car.city,
+                  ),
+                  _detail(
+                    'الوقود',
+                    car.fuel,
+                  ),
+                  _detail(
+                    'القير',
+                    car.transmission,
+                  ),
+                  if (car.description.isNotEmpty)
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(
+                        top: 10,
+                      ),
+                      child: Text(
+                        car.description,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  if (car.sellerPhone != null)
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(
+                        top: 16,
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(
+                          Icons.phone_rounded,
+                        ),
+                        label: Text(
+                          car.sellerPhone!,
+                        ),
+                        style:
+                            ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color(
+                            0xFFFF176F,
+                          ),
+                          foregroundColor:
+                              Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _filter({
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Expanded(
-      child: DropdownButtonFormField<String>(
-        value: items.contains(value)
-            ? value
-            : 'الكل',
-        dropdownColor: const Color(0xFF15151B),
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: const Color(0xFF15151B),
-          contentPadding:
-              const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 4,
-          ),
-          border: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Color(0xFF292932),
+  Widget _detail(
+    String title,
+    String value,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 7,
+      ),
+      child: Row(
+        children: [
+          Text(
+            '$title: ',
+            style: const TextStyle(
+              color: Colors.white38,
             ),
           ),
-        ),
-        items: items
-            .map(
-              (item) => DropdownMenuItem<String>(
-                value: item,
-                child: Text(
-                  item,
-                  overflow:
-                      TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
-                ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
-            )
-            .toList(),
-        onChanged: onChanged,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _carCard(Car car) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CarDetailsScreen(
-              car: car,
-              api: widget.api,
-            ),
-          ),
-        );
-      },
+      onTap: () => _openCar(car),
       child: Container(
+        margin: const EdgeInsets.only(
+          bottom: 14,
+        ),
         decoration: BoxDecoration(
           color: const Color(0xFF15151B),
           borderRadius:
@@ -259,125 +235,169 @@ class _CarsScreenState extends State<CarsScreen> {
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment:
-              CrossAxisAlignment.start,
+              CrossAxisAlignment.stretch,
           children: [
-            Expanded(
+            SizedBox(
+              height: 190,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  car.image != null &&
-                          car.image!.isNotEmpty
-                      ? Image.network(
+                  car.image == null ||
+                          car.image!.isEmpty
+                      ? Container(
+                          color:
+                              const Color(
+                            0xFF202027,
+                          ),
+                          child: const Icon(
+                            Icons
+                                .directions_car_rounded,
+                            color:
+                                Colors.white24,
+                            size: 70,
+                          ),
+                        )
+                      : Image.network(
                           widget.api.imageUrl(
                             car.image!,
                           ),
                           fit: BoxFit.cover,
                           errorBuilder:
-                              (_, __, ___) =>
-                                  _placeholder(),
-                        )
-                      : _placeholder(),
+                              (_, __, ___) {
+                            return Container(
+                              color:
+                                  const Color(
+                                0xFF202027,
+                              ),
+                              child: const Icon(
+                                Icons
+                                    .directions_car_rounded,
+                                color:
+                                    Colors.white24,
+                                size: 70,
+                              ),
+                            );
+                          },
+                        ),
 
-                  if (car.isVip)
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        padding:
-                            const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFFF176F),
-                          borderRadius:
-                              BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'VIP',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight:
-                                FontWeight.w900,
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Row(
+                      children: [
+                        if (car.isVip)
+                          Container(
+                            padding:
+                                const EdgeInsets
+                                    .symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration:
+                                BoxDecoration(
+                              color:
+                                  const Color(
+                                0xFFFF176F,
+                              ),
+                              borderRadius:
+                                  BorderRadius
+                                      .circular(
+                                20,
+                              ),
+                            ),
+                            child:
+                                const Text(
+                              'VIP',
+                              style:
+                                  TextStyle(
+                                color:
+                                    Colors.white,
+                                fontWeight:
+                                    FontWeight
+                                        .w900,
+                                fontSize: 11,
+                              ),
+                            ),
                           ),
+                      ],
+                    ),
+                  ),
+
+                  Positioned(
+                    bottom: 10,
+                    left: 10,
+                    child: Container(
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration:
+                          BoxDecoration(
+                        color: Colors.black
+                            .withValues(
+                          alpha: .7,
+                        ),
+                        borderRadius:
+                            BorderRadius.circular(
+                          20,
+                        ),
+                      ),
+                      child: Text(
+                        _price(car.price),
+                        style:
+                            const TextStyle(
+                          color: Colors.white,
+                          fontWeight:
+                              FontWeight.w900,
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
 
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding:
+                  const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    CrossAxisAlignment.stretch,
                 children: [
                   Text(
                     '${car.brand} ${car.model}',
-                    maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight:
                           FontWeight.w900,
                     ),
                   ),
 
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 9),
 
-                  Row(
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
                     children: [
-                      const Icon(
-                        Icons.calendar_today_rounded,
-                        size: 12,
-                        color:
-                            Color(0xFFFF176F),
+                      _chip(
+                        Icons
+                            .calendar_month_rounded,
+                        car.year.toString(),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${car.year}',
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                        ),
+                      _chip(
+                        Icons
+                            .location_on_rounded,
+                        car.city,
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 13,
-                        color:
-                            Color(0xFFFF176F),
-                      ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          car.city,
-                          overflow:
-                              TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 10,
-                          ),
-                        ),
+                      _chip(
+                        Icons
+                            .speed_rounded,
+                        '${car.km} كم',
                       ),
                     ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    '${_formatPrice(car.price)} د.ع',
-                    style: const TextStyle(
-                      color: Color(0xFFFF176F),
-                      fontSize: 17,
-                      fontWeight:
-                          FontWeight.w900,
-                    ),
                   ),
                 ],
               ),
@@ -388,107 +408,40 @@ class _CarsScreenState extends State<CarsScreen> {
     );
   }
 
-  Widget _placeholder() {
+  Widget _chip(
+    IconData icon,
+    String text,
+  ) {
     return Container(
-      color: const Color(0xFF202027),
-      child: const Center(
-        child: Icon(
-          Icons.directions_car_filled_rounded,
-          color: Color(0xFFFF176F),
-          size: 55,
-        ),
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 6,
       ),
-    );
-  }
-
-  Widget _body() {
-    if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFFF176F),
-        ),
-      );
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.cloud_off_rounded,
-              color: Colors.white38,
-              size: 55,
+      decoration: BoxDecoration(
+        color: const Color(0xFF202027),
+        borderRadius:
+            BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize:
+            MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color:
+                const Color(0xFFFF176F),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11,
             ),
-            const SizedBox(height: 12),
-            Text(
-              _error!,
-              style: const TextStyle(
-                color: Colors.white70,
-              ),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _loadCars,
-              child: const Text(
-                'إعادة المحاولة',
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final cars = _filteredCars;
-
-    if (cars.isEmpty) {
-      return RefreshIndicator(
-        color: const Color(0xFFFF176F),
-        onRefresh: _loadCars,
-        child: ListView(
-          children: const [
-            SizedBox(height: 130),
-            Icon(
-              Icons.search_off_rounded,
-              color: Colors.white24,
-              size: 65,
-            ),
-            SizedBox(height: 15),
-            Center(
-              child: Text(
-                'لا توجد سيارات مطابقة',
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      color: const Color(0xFFFF176F),
-      onRefresh: _loadCars,
-      child: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          8,
-          16,
-          25,
-        ),
-        itemCount: cars.length,
-        gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: .70,
-        ),
-        itemBuilder: (_, index) {
-          return _carCard(cars[index]);
-        },
+          ),
+        ],
       ),
     );
   }
@@ -497,84 +450,113 @@ class _CarsScreenState extends State<CarsScreen> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor:
-            const Color(0xFF08080B),
-        appBar: AppBar(
-          title: const Text(
-            'السيارات',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              onPressed:
-                  _loading ? null : _loadCars,
-              icon: const Icon(
-                Icons.refresh_rounded,
+      child: _loading
+          ? const Center(
+              child:
+                  CircularProgressIndicator(
+                color: Color(0xFFFF176F),
               ),
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                16,
-                12,
-                16,
-                8,
-              ),
-              child: Column(
-                children: [
-                  _searchBox(),
-
-                  const SizedBox(height: 10),
-
-                  Row(
+            )
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisSize:
+                        MainAxisSize.min,
                     children: [
-                      _filter(
-                        value: _city,
-                        items: _cities,
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() {
-                            _city = value;
-                          });
-                        },
+                      const Icon(
+                        Icons
+                            .cloud_off_rounded,
+                        color:
+                            Colors.white38,
+                        size: 45,
                       ),
-                      const SizedBox(width: 8),
-                      _filter(
-                        value: _fuel,
-                        items: _fuels,
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() {
-                            _fuel = value;
-                          });
-                        },
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        _error!,
+                        style:
+                            const TextStyle(
+                          color:
+                              Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      ElevatedButton(
+                        onPressed:
+                            _loadCars,
+                        child:
+                            const Text(
+                          'إعادة المحاولة',
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: _body(),
-            ),
-          ],
-        ),
-      ),
+                )
+              : _cars.isEmpty
+                  ? RefreshIndicator(
+                      color: const Color(
+                        0xFFFF176F,
+                      ),
+                      onRefresh:
+                          _loadCars,
+                      child:
+                          ListView(
+                        physics:
+                            const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(
+                            height: 160,
+                          ),
+                          Icon(
+                            Icons
+                                .directions_car_outlined,
+                            color:
+                                Colors.white24,
+                            size: 60,
+                          ),
+                          SizedBox(
+                            height: 12,
+                          ),
+                          Center(
+                            child: Text(
+                              'ماكو سيارات منشورة حالياً',
+                              style:
+                                  TextStyle(
+                                color:
+                                    Colors.white54,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      color: const Color(
+                        0xFFFF176F,
+                      ),
+                      onRefresh:
+                          _loadCars,
+                      child:
+                          ListView.builder(
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        itemCount:
+                            _cars.length,
+                        itemBuilder:
+                            (_, index) {
+                          return _carCard(
+                            _cars[index],
+                          );
+                        },
+                      ),
+                    ),
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 }
