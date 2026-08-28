@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 class ApiException implements Exception {
   final String message;
 
-  ApiException(this.message);
+  const ApiException(this.message);
 
   @override
   String toString() => message;
@@ -18,9 +18,26 @@ class ApiService {
 
   static final ApiService instance = ApiService._();
 
-  // ضع رابط السيرفر الحقيقي هنا لاحقاً.
   static const String baseUrl =
       'https://YOUR-SERVER.com/api';
+
+  String? _token;
+
+  void setToken(String token) {
+    _token = token;
+  }
+
+  void clearToken() {
+    _token = null;
+  }
+
+  Map<String, String> get _headers {
+    return {
+      'Accept': 'application/json',
+      if (_token != null && _token!.isNotEmpty)
+        'Authorization': 'Bearer $_token',
+    };
+  }
 
   String imageUrl(String image) {
     if (image.startsWith('http://') ||
@@ -28,94 +45,185 @@ class ApiService {
       return image;
     }
 
-    return '$baseUrl/$image';
+    final cleanBase = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+
+    final cleanImage = image.startsWith('/')
+        ? image.substring(1)
+        : image;
+
+    return '$cleanBase/$cleanImage';
+  }
+
+  dynamic _decode(String body) {
+    if (body.trim().isEmpty) return null;
+
+    try {
+      return jsonDecode(body);
+    } catch (_) {
+      return body;
+    }
+  }
+
+  String _message(dynamic data) {
+    if (data is Map) {
+      final value =
+          data['message'] ?? data['error'];
+
+      if (value != null) {
+        return value.toString();
+      }
+    }
+
+    return 'حدث خطأ في السيرفر';
   }
 
   Future<dynamic> _request(
     String method,
     String path, {
     Map<String, dynamic>? body,
-    Map<String, String>? headers,
   }) async {
     final uri = Uri.parse('$baseUrl$path');
 
-    late http.Response response;
-
     try {
-      if (method == 'GET') {
-        response = await http.get(
-          uri,
-          headers: headers,
-        );
-      } else if (method == 'POST') {
-        response = await http.post(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            ...?headers,
-          },
-          body: jsonEncode(body ?? {}),
-        );
-      } else if (method == 'PUT') {
-        response = await http.put(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            ...?headers,
-          },
-          body: jsonEncode(body ?? {}),
-        );
-      } else if (method == 'DELETE') {
-        response = await http.delete(
-          uri,
-          headers: headers,
-        );
-      } else {
+      late http.Response response;
+
+      final headers = {
+        'Content-Type': 'application/json',
+        ..._headers,
+      };
+
+      switch (method) {
+        case 'GET':
+          response = await http.get(
+            uri,
+            headers: _headers,
+          );
+          break;
+
+        case 'POST':
+          response = await http.post(
+            uri,
+            headers: headers,
+            body: jsonEncode(body ?? {}),
+          );
+          break;
+
+        case 'PUT':
+          response = await http.put(
+            uri,
+            headers: headers,
+            body: jsonEncode(body ?? {}),
+          );
+          break;
+
+        case 'DELETE':
+          response = await http.delete(
+            uri,
+            headers: _headers,
+          );
+          break;
+
+        default:
+          throw const ApiException(
+            'طريقة الطلب غير مدعومة',
+          );
+      }
+
+      final data = _decode(response.body);
+
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300) {
         throw ApiException(
-          'طريقة الطلب غير مدعومة',
+          _message(data),
         );
       }
+
+      return data;
+    } on ApiException {
+      rethrow;
     } on SocketException {
-      throw ApiException(
-        'تعذر الاتصال بالسيرفر',
+      throw const ApiException(
+        'لا يوجد اتصال بالسيرفر',
       );
-    } catch (e) {
-      if (e is ApiException) rethrow;
-
-      throw ApiException(
-        'حدث خطأ في الاتصال بالسيرفر',
+    } on HttpException {
+      throw const ApiException(
+        'تعذر الوصول إلى السيرفر',
       );
-    }
-
-    dynamic data;
-
-    try {
-      data = response.body.isEmpty
-          ? null
-          : jsonDecode(response.body);
     } catch (_) {
-      data = response.body;
+      throw const ApiException(
+        'حدث خطأ أثناء الاتصال بالسيرفر',
+      );
     }
+  }
 
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
-      String message =
-          'حدث خطأ في السيرفر';
+  // =========================================================
+  // AUTH
+  // =========================================================
 
-      if (data is Map &&
-          data['message'] != null) {
-        message = data['message'].toString();
+  Future<dynamic> login({
+    required String phone,
+    required String password,
+  }) async {
+    final data = await _request(
+      'POST',
+      '/login',
+      body: {
+        'phone': phone,
+        'password': password,
+      },
+    );
+
+    if (data is Map) {
+      final token = data['token'] ??
+          data['access_token'];
+
+      if (token != null) {
+        setToken(token.toString());
       }
-
-      throw ApiException(message);
     }
 
     return data;
   }
 
-  // =========================
-  // السيارات
-  // =========================
+  Future<dynamic> register({
+    required String name,
+    required String phone,
+    required String password,
+  }) {
+    return _request(
+      'POST',
+      '/register',
+      body: {
+        'name': name,
+        'phone': phone,
+        'password': password,
+      },
+    );
+  }
+
+  Future<dynamic> me() {
+    return _request(
+      'GET',
+      '/me',
+    );
+  }
+
+  Future<void> logout() async {
+    try {
+      await _request(
+        'POST',
+        '/logout',
+      );
+    } finally {
+      clearToken();
+    }
+  }
+
+  // =========================================================
+  // CARS
+  // =========================================================
 
   Future<List<dynamic>> getCars() async {
     final data = await _request(
@@ -127,9 +235,24 @@ class ApiService {
       return data;
     }
 
-    if (data is Map &&
-        data['cars'] is List) {
-      return data['cars'];
+    if (data is Map) {
+      final cars = data['cars'];
+
+      if (cars is List) {
+        return cars;
+      }
+
+      final items = data['items'];
+
+      if (items is List) {
+        return items;
+      }
+
+      final results = data['results'];
+
+      if (results is List) {
+        return results;
+      }
     }
 
     return [];
@@ -155,26 +278,25 @@ class ApiService {
     required String plan,
     required List<XFile> images,
   }) async {
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$baseUrl/cars'),
-    );
+    final uri = Uri.parse('$baseUrl/cars');
 
-    request.fields['brand'] = brand;
-    request.fields['model'] = model;
-    request.fields['year'] =
-        year.toString();
-    request.fields['price'] =
-        price.toString();
-    request.fields['km'] =
-        km.toString();
-    request.fields['city'] = city;
-    request.fields['fuel'] = fuel;
-    request.fields['transmission'] =
-        transmission;
-    request.fields['description'] =
-        description;
-    request.fields['plan'] = plan;
+    final request =
+        http.MultipartRequest('POST', uri);
+
+    request.headers.addAll(_headers);
+
+    request.fields.addAll({
+      'brand': brand,
+      'model': model,
+      'year': year.toString(),
+      'price': price.toString(),
+      'km': km.toString(),
+      'city': city,
+      'fuel': fuel,
+      'transmission': transmission,
+      'description': description,
+      'plan': plan,
+    });
 
     for (final image in images) {
       request.files.add(
@@ -194,85 +316,50 @@ class ApiService {
         streamed,
       );
 
-      dynamic data;
-
-      try {
-        data = response.body.isEmpty
-            ? null
-            : jsonDecode(response.body);
-      } catch (_) {
-        data = response.body;
-      }
+      final data = _decode(response.body);
 
       if (response.statusCode < 200 ||
           response.statusCode >= 300) {
-        String message =
-            'تعذر إضافة السيارة';
-
-        if (data is Map &&
-            data['message'] != null) {
-          message =
-              data['message'].toString();
-        }
-
-        throw ApiException(message);
+        throw ApiException(
+          _message(data),
+        );
       }
 
       return data;
     } on ApiException {
       rethrow;
     } on SocketException {
-      throw ApiException(
-        'تعذر الاتصال بالسيرفر',
+      throw const ApiException(
+        'لا يوجد اتصال بالسيرفر',
       );
     } catch (_) {
-      throw ApiException(
-        'حدث خطأ أثناء إضافة السيارة',
+      throw const ApiException(
+        'حدث خطأ أثناء رفع السيارة',
       );
     }
   }
 
-  // =========================
-  // تسجيل الدخول
-  // =========================
-
-  Future<dynamic> login({
-    required String phone,
-    required String password,
+  Future<dynamic> updateCar({
+    required int id,
+    required Map<String, dynamic> data,
   }) {
     return _request(
-      'POST',
-      '/login',
-      body: {
-        'phone': phone,
-        'password': password,
-      },
+      'PUT',
+      '/cars/$id',
+      body: data,
     );
   }
 
-  // =========================
-  // التسجيل
-  // =========================
-
-  Future<dynamic> register({
-    required String name,
-    required String phone,
-    required String password,
-  }) {
+  Future<dynamic> deleteCar(int id) {
     return _request(
-      'POST',
-      '/register',
-      body: {
-        'name': name,
-        'phone': phone,
-        'password': password,
-      },
+      'DELETE',
+      '/cars/$id',
     );
   }
 
-  // =========================
-  // الإدارة
-  // =========================
+  // =========================================================
+  // ADMIN
+  // =========================================================
 
   Future<dynamic> getAdminData() {
     return _request(
@@ -309,14 +396,21 @@ class ApiService {
     );
   }
 
-  // =========================
-  // الطلبات
-  // =========================
+  // =========================================================
+  // الأقسام
+  // =========================================================
 
-  Future<dynamic> getPendingRequests() {
+  Future<dynamic> getPendingRequests({
+    String? section,
+  }) {
+    final path = section == null ||
+            section.isEmpty
+        ? '/admin/requests/pending'
+        : '/admin/requests/pending?section=$section';
+
     return _request(
       'GET',
-      '/admin/requests/pending',
+      path,
     );
   }
 
@@ -338,9 +432,43 @@ class ApiService {
     );
   }
 
-  // =========================
-  // إعدادات التحويل والاستلام
-  // =========================
+  // =========================================================
+  // الأدمن والمالك
+  // =========================================================
+
+  Future<dynamic> getAdmins() {
+    return _request(
+      'GET',
+      '/admin/admins',
+    );
+  }
+
+  Future<dynamic> addAdmin({
+    required String name,
+    required String phone,
+    required String password,
+  }) {
+    return _request(
+      'POST',
+      '/admin/admins',
+      body: {
+        'name': name,
+        'phone': phone,
+        'password': password,
+      },
+    );
+  }
+
+  Future<dynamic> removeAdmin(int id) {
+    return _request(
+      'DELETE',
+      '/admin/admins/$id',
+    );
+  }
+
+  // =========================================================
+  // إعدادات الاستلام والتحويل
+  // =========================================================
 
   Future<dynamic> getPaymentSettings() {
     return _request(
@@ -353,6 +481,7 @@ class ApiService {
     String? phone,
     String? cardNumber,
     String? accountName,
+    String? method,
   }) {
     return _request(
       'PUT',
@@ -364,6 +493,35 @@ class ApiService {
           'card_number': cardNumber,
         if (accountName != null)
           'account_name': accountName,
+        if (method != null)
+          'method': method,
+      },
+    );
+  }
+
+  // =========================================================
+  // أسعار الإعلانات
+  // =========================================================
+
+  Future<dynamic> getPlanPrices() {
+    return _request(
+      'GET',
+      '/admin/plan-prices',
+    );
+  }
+
+  Future<dynamic> updatePlanPrices({
+    required int normal,
+    required int featured,
+    required int vip,
+  }) {
+    return _request(
+      'PUT',
+      '/admin/plan-prices',
+      body: {
+        'normal': normal,
+        'featured': featured,
+        'vip': vip,
       },
     );
   }
