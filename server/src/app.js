@@ -4,18 +4,19 @@ const express = require('express');
 const cors = require('cors');
 
 const { testDatabase } = require('./db');
-
-const authRoutes = require('./routes/auth');
-const carRoutes = require('./routes/cars');
-const adminRoutes = require('./routes/admin');
-const paymentRoutes = require('./routes/payment');
+const routes = require('./routes');
 
 const app = express();
 
 app.use(cors());
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({
+  limit: '10mb',
+}));
+
+app.use(express.urlencoded({
+  extended: true,
+}));
 
 app.use(
   '/uploads',
@@ -25,7 +26,6 @@ app.use(
 app.get('/', (_, res) => {
   res.json({
     name: 'ZYOCAR',
-    message: 'ZYOCAR API is running',
     status: 'online',
   });
 });
@@ -39,10 +39,7 @@ app.get('/api/health', async (_, res) => {
       database: 'connected',
     });
   } catch (error) {
-    console.error(
-      'DATABASE HEALTH ERROR:',
-      error,
-    );
+    console.error(error);
 
     res.status(500).json({
       status: 'error',
@@ -51,25 +48,7 @@ app.get('/api/health', async (_, res) => {
   }
 });
 
-app.use(
-  '/api/auth',
-  authRoutes,
-);
-
-app.use(
-  '/api/cars',
-  carRoutes,
-);
-
-app.use(
-  '/api/admin',
-  adminRoutes,
-);
-
-app.use(
-  '/api/payment',
-  paymentRoutes,
-);
+app.use('/api', routes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -77,23 +56,17 @@ app.use((req, res) => {
   });
 });
 
-app.use(
-  (error, req, res, next) => {
-    console.error(
-      'SERVER ERROR:',
-      error,
-    );
+app.use((error, req, res, next) => {
+  console.error('SERVER ERROR:', error);
 
-    if (res.headersSent) {
-      return next(error);
-    }
+  if (res.headersSent) {
+    return next(error);
+  }
 
-    res.status(500).json({
-      message:
-        'حدث خطأ داخلي في السيرفر',
-    });
-  },
-);
+  res.status(500).json({
+    message: 'حدث خطأ داخلي في السيرفر',
+  });
+});
 
 const PORT = Number(
   process.env.PORT || 3000,
