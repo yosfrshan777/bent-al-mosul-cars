@@ -13,8 +13,8 @@ class CarDetailsScreen extends StatelessWidget {
   final Car car;
   final ApiService api;
 
-  String _formatPrice(int value) {
-    final text = value.toString();
+  String _formatPrice(int price) {
+    final text = price.toString();
     final buffer = StringBuffer();
 
     for (int i = 0; i < text.length; i++) {
@@ -36,7 +36,7 @@ class CarDetailsScreen extends StatelessWidget {
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: const Color(0xFF15151B),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: const Color(0xFF292932),
         ),
@@ -81,7 +81,6 @@ class CarDetailsScreen extends StatelessWidget {
     if (car.image == null ||
         car.image!.isEmpty) {
       return Container(
-        height: 280,
         color: const Color(0xFF202027),
         child: const Center(
           child: Icon(
@@ -95,18 +94,15 @@ class CarDetailsScreen extends StatelessWidget {
 
     return Image.network(
       api.imageUrl(car.image!),
-      height: 280,
-      width: double.infinity,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) {
         return Container(
-          height: 280,
           color: const Color(0xFF202027),
           child: const Center(
             child: Icon(
               Icons.broken_image_outlined,
               color: Colors.white38,
-              size: 65,
+              size: 60,
             ),
           ),
         );
@@ -119,8 +115,7 @@ class CarDetailsScreen extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            const Color(0xFF08080B),
+        backgroundColor: const Color(0xFF08080B),
         appBar: AppBar(
           title: const Text(
             'تفاصيل السيارة',
@@ -130,257 +125,250 @@ class CarDetailsScreen extends StatelessWidget {
           ),
           centerTitle: true,
         ),
-        body: ListView(
-          padding: const EdgeInsets.only(
-            bottom: 30,
-          ),
-          children: [
-            _image(),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.only(
+              bottom: 30,
+            ),
+            children: [
+              SizedBox(
+                height: 270,
+                width: double.infinity,
+                child: _image(),
+              ),
 
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${car.brand} ${car.model}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight:
-                                FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      if (car.isVip)
-                        Container(
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration:
-                              BoxDecoration(
-                            color:
-                                const Color(
-                              0xFFFF176F,
-                            ),
-                            borderRadius:
-                                BorderRadius.circular(
-                              10,
-                            ),
-                          ),
-                          child: const Text(
-                            'VIP',
-                            style: TextStyle(
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${car.brand} ${car.model}',
+                            style: const TextStyle(
                               color: Colors.white,
+                              fontSize: 26,
                               fontWeight:
-                                  FontWeight.bold,
+                                  FontWeight.w900,
                             ),
                           ),
                         ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    '${_formatPrice(car.price)} د.ع',
-                    style: const TextStyle(
-                      color: Color(0xFFFF176F),
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    'معلومات السيارة',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _info(
-                    Icons.calendar_today_rounded,
-                    'سنة الصنع',
-                    '${car.year}',
-                  ),
-
-                  const SizedBox(height: 9),
-
-                  _info(
-                    Icons.speed_rounded,
-                    'المسافة',
-                    '${_formatPrice(car.km)} كم',
-                  ),
-
-                  const SizedBox(height: 9),
-
-                  _info(
-                    Icons.location_on_outlined,
-                    'الموقع',
-                    car.city,
-                  ),
-
-                  const SizedBox(height: 9),
-
-                  _info(
-                    Icons.local_gas_station_rounded,
-                    'نوع الوقود',
-                    car.fuel,
-                  ),
-
-                  const SizedBox(height: 9),
-
-                  _info(
-                    Icons.settings_rounded,
-                    'ناقل الحركة',
-                    car.transmission,
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  const Text(
-                    'الوصف',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  Container(
-                    padding:
-                        const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color:
-                          const Color(0xFF15151B),
-                      borderRadius:
-                          BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      car.description.isEmpty
-                          ? 'لا يوجد وصف'
-                          : car.description,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        height: 1.8,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  if (car.sellerName != null ||
-                      car.sellerPhone != null) ...[
-                    const Text(
-                      'معلومات البائع',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight:
-                            FontWeight.w900,
-                      ),
+                        if (car.isVip)
+                          Container(
+                            padding:
+                                const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  const Color(0xFFFF176F),
+                              borderRadius:
+                                  BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'VIP',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight:
+                                    FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
 
                     const SizedBox(height: 10),
 
-                    Container(
-                      padding:
-                          const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color:
-                            const Color(0xFF15151B),
-                        borderRadius:
-                            BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        children: [
-                          if (car.sellerName != null)
-                            _info(
-                              Icons.person_rounded,
-                              'الاسم',
-                              car.sellerName!,
-                            ),
-                          if (car.sellerPhone != null) ...[
-                            const SizedBox(height: 9),
-                            _info(
-                              Icons.phone_rounded,
-                              'رقم الهاتف',
-                              car.sellerPhone!,
-                            ),
-                          ],
-                        ],
+                    Text(
+                      '${_formatPrice(car.price)} د.ع',
+                      style: const TextStyle(
+                        color: Color(0xFFFF176F),
+                        fontSize: 25,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                  ],
 
-                  const SizedBox(height: 25),
+                    const SizedBox(height: 20),
 
-                  SizedBox(
-                    height: 54,
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          car.sellerPhone == null
-                              ? null
-                              : () {
-                                  ScaffoldMessenger
-                                      .of(context)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'يمكن الاتصال بالبائع من خلال الرقم الظاهر أعلاه',
-                                      ),
-                                    ),
-                                  );
-                                },
-                      icon: const Icon(
-                        Icons.phone_rounded,
-                      ),
-                      label: const Text(
-                        'تواصل مع البائع',
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _info(
+                            Icons.calendar_today_rounded,
+                            'السنة',
+                            '${car.year}',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _info(
+                            Icons.speed_rounded,
+                            'الكيلومترات',
+                            '${car.km}',
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _info(
+                            Icons.location_on_outlined,
+                            'الموقع',
+                            car.city,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _info(
+                            Icons.local_gas_station_rounded,
+                            'الوقود',
+                            car.fuel,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    _info(
+                      Icons.settings_rounded,
+                      'ناقل الحركة',
+                      car.transmission,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    if (car.description.isNotEmpty) ...[
+                      const Text(
+                        'الوصف',
                         style: TextStyle(
-                          fontSize: 17,
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding:
+                            const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFF15151B),
+                          borderRadius:
+                              BorderRadius.circular(15),
+                        ),
+                        child: Text(
+                          car.description,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            height: 1.7,
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 20),
+
+                    if (car.sellerName != null ||
+                        car.sellerPhone != null) ...[
+                      const Text(
+                        'معلومات البائع',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
                           fontWeight:
                               FontWeight.w900,
                         ),
                       ),
-                      style:
-                          ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color(
-                          0xFFFF176F,
+                      const SizedBox(height: 10),
+
+                      if (car.sellerName != null)
+                        _info(
+                          Icons.person_rounded,
+                          'البائع',
+                          car.sellerName!,
                         ),
-                        foregroundColor:
-                            Colors.white,
-                        shape:
-                            RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(
-                            15,
+
+                      if (car.sellerPhone != null)
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(
+                            top: 10,
+                          ),
+                          child: _info(
+                            Icons.phone_rounded,
+                            'رقم الهاتف',
+                            car.sellerPhone!,
+                          ),
+                        ),
+                    ],
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          if (car.sellerPhone == null ||
+                              car.sellerPhone!.isEmpty) {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'رقم البائع غير متوفر',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'رقم البائع: ${car.sellerPhone}',
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.phone_rounded,
+                        ),
+                        label: const Text(
+                          'التواصل مع البائع',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight:
+                                FontWeight.w900,
+                          ),
+                        ),
+                        style:
+                            ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color(0xFFFF176F),
+                          foregroundColor:
+                              Colors.white,
+                          shape:
+                              RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(15),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
