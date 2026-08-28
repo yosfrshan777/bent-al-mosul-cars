@@ -15,7 +15,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool loggedIn = false;
+  bool _loggedIn = false;
+  bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +28,121 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: _header(),
+                child: _buildHeader(),
               ),
-              SliverToBoxAdapter(
-                child: _profileCard(),
-              ),
-              SliverToBoxAdapter(
-                child: _menu(),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  10,
+                  16,
+                  35,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    if (!_loggedIn) ...[
+                      _buildLoginCard(),
+                      const SizedBox(height: 18),
+                    ],
+
+                    _buildSectionTitle('الخدمات'),
+
+                    const SizedBox(height: 10),
+
+                    _menuTile(
+                      icon: Icons.directions_car_filled_rounded,
+                      title: 'إعلاناتي',
+                      subtitle: 'السيارات التي قمت بإضافتها',
+                      onTap: () {},
+                    ),
+
+                    _menuTile(
+                      icon: Icons.favorite_rounded,
+                      title: 'المفضلة',
+                      subtitle: 'السيارات التي حفظتها',
+                      onTap: () {},
+                    ),
+
+                    _menuTile(
+                      icon: Icons.storefront_rounded,
+                      title: 'المعارض',
+                      subtitle: 'تصفح معارض السيارات',
+                      onTap: () {},
+                    ),
+
+                    _menuTile(
+                      icon: Icons.build_circle_rounded,
+                      title: 'قطع الغيار',
+                      subtitle: 'شراء وبيع قطع غيار السيارات',
+                      onTap: () {},
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _buildSectionTitle('الحساب'),
+
+                    const SizedBox(height: 10),
+
+                    _menuTile(
+                      icon: Icons.person_outline_rounded,
+                      title: 'البيانات الشخصية',
+                      subtitle: 'إدارة معلومات حسابك',
+                      onTap: () {},
+                    ),
+
+                    _menuTile(
+                      icon: Icons.notifications_none_rounded,
+                      title: 'الإشعارات',
+                      subtitle: 'إدارة التنبيهات',
+                      onTap: () {},
+                    ),
+
+                    _menuTile(
+                      icon: Icons.settings_outlined,
+                      title: 'الإعدادات',
+                      subtitle: 'إعدادات التطبيق',
+                      onTap: () {},
+                    ),
+
+                    _menuTile(
+                      icon: Icons.help_outline_rounded,
+                      title: 'المساعدة والدعم',
+                      subtitle: 'تواصل معنا',
+                      onTap: () {},
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    if (_loggedIn)
+                      SizedBox(
+                        height: 52,
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              _loading ? null : _logout,
+                          icon: const Icon(
+                            Icons.logout_rounded,
+                          ),
+                          label: const Text(
+                            'تسجيل الخروج',
+                          ),
+                          style:
+                              OutlinedButton.styleFrom(
+                            foregroundColor:
+                                const Color(0xFFE83B63),
+                            side: const BorderSide(
+                              color: Color(0xFFE83B63),
+                            ),
+                            shape:
+                                RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(
+                                16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ]),
+                ),
               ),
             ],
           ),
@@ -42,48 +151,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        18,
-        18,
-        18,
-        14,
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              'حسابي',
-              style: TextStyle(
-                color: Color(0xFF171923),
-                fontSize: 27,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius:
-                  BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.settings_outlined,
-              color: Color(0xFF343744),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _profileCard() {
+  Widget _buildHeader() {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 16,
+      margin: const EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        8,
       ),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -91,254 +165,302 @@ class _ProfileScreenState extends State<ProfileScreen> {
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
           colors: [
-            Color(0xFFFF6FA8),
-            Color(0xFF718DFF),
+            Color(0xFF1D1F2C),
+            Color(0xFF111219),
           ],
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF4F91)
-                .withOpacity(.18),
-            blurRadius: 25,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(.12),
+            blurRadius: 22,
+            offset: const Offset(0, 9),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 67,
-            height: 67,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
-              color: Colors.white
-                  .withOpacity(.22),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white
-                    .withOpacity(.45),
-                width: 2,
+              gradient: const LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  Color(0xFFFF4F91),
+                  Color(0xFF7B61FF),
+                ],
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFFFF4F91,
+                  ).withOpacity(.25),
+                  blurRadius: 15,
+                ),
+              ],
             ),
             child: const Icon(
               Icons.person_rounded,
               color: Colors.white,
-              size: 36,
+              size: 34,
             ),
           ),
+
           const SizedBox(width: 15),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _loggedIn
+                      ? 'مرحباً بك'
+                      : 'أهلاً بك في ZYO Car',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                Text(
+                  _loggedIn
+                      ? 'إدارة حسابك وإعلاناتك'
+                      : 'سجّل دخولك للاستفادة من جميع المميزات',
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(.08),
+              borderRadius:
+                  BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white54,
+              size: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(
+          color: const Color(0xFFE9EAF0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFEFF5),
+              borderRadius:
+                  BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.login_rounded,
+              color: Color(0xFFFF4F91),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
           const Expanded(
             child: Column(
               crossAxisAlignment:
                   CrossAxisAlignment.start,
               children: [
                 Text(
-                  'مرحباً بك',
+                  'سجّل دخولك',
                   style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
+                    color: Color(0xFF20232F),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
                   ),
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'حساب ZYOCAR',
+                  'حتى تتمكن من إضافة وإدارة إعلاناتك',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'بيع • شراء • متابعة إعلاناتك',
-                  style: TextStyle(
-                    color: Colors.white70,
+                    color: Color(0xFF8B8F9B),
                     fontSize: 11,
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
 
-  Widget _menu() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        22,
-        16,
-        30,
-      ),
-      child: Column(
-        children: [
-          _sectionTitle('حسابك'),
-          const SizedBox(height: 10),
-
-          _item(
-            icon: Icons.person_outline_rounded,
-            title: 'الملف الشخصي',
-            subtitle: 'معلوماتك الشخصية',
-            onTap: () {},
-          ),
-
-          _item(
-            icon: Icons.directions_car_outlined,
-            title: 'إعلاناتي',
-            subtitle: 'السيارات التي نشرتها',
-            onTap: () {},
-          ),
-
-          _item(
-            icon: Icons.favorite_border_rounded,
-            title: 'المفضلة',
-            subtitle: 'السيارات التي حفظتها',
-            onTap: () {},
-          ),
-
-          const SizedBox(height: 20),
-
-          _sectionTitle('ZYOCAR'),
-          const SizedBox(height: 10),
-
-          _item(
-            icon: Icons.storefront_outlined,
-            title: 'المعارض',
-            subtitle: 'استكشف معارض السيارات',
-            onTap: () {},
-          ),
-
-          _item(
-            icon: Icons.build_outlined,
-            title: 'قطع الغيار',
-            subtitle: 'أصحاب محلات قطع الغيار',
-            onTap: () {},
-          ),
-
-          _item(
-            icon: Icons.help_outline_rounded,
-            title: 'المساعدة',
-            subtitle: 'الأسئلة والدعم',
-            onTap: () {},
-          ),
-
-          const SizedBox(height: 20),
-
-          if (!loggedIn)
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/login',
-                  );
-                },
-                icon: const Icon(
-                  Icons.login_rounded,
-                ),
-                label: const Text(
-                  'تسجيل الدخول',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                style:
-                    ElevatedButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFFFF4F91),
-                  foregroundColor: Colors.white,
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(17),
-                  ),
-                ),
+          TextButton(
+            onPressed: _login,
+            child: const Text(
+              'دخول',
+              style: TextStyle(
+                color: Color(0xFFFF4F91),
+                fontWeight: FontWeight.w900,
               ),
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerRight,
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 4,
+      ),
       child: Text(
         title,
         style: const TextStyle(
-          color: Color(0xFF858997),
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
+          color: Color(0xFF20232F),
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
 
-  Widget _item({
+  Widget _menuTile({
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 10,
-      ),
+      margin: const EdgeInsets.only(bottom: 9),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(17),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.045),
-            blurRadius: 14,
+            color: Colors.black.withOpacity(.035),
+            blurRadius: 12,
             offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding:
-            const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 5,
-        ),
-        leading: Container(
-          width: 45,
-          height: 45,
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFEFF5),
-            borderRadius:
-                BorderRadius.circular(14),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(17),
+          child: Padding(
+            padding: const EdgeInsets.all(13),
+            child: Row(
+              children: [
+                Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFEFF5),
+                    borderRadius:
+                        BorderRadius.circular(13),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: const Color(0xFFFF4F91),
+                    size: 21,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Color(0xFF292C38),
+                          fontSize: 14,
+                          fontWeight:
+                              FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF979BA6),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 14,
+                  color: Color(0xFFB5B8C2),
+                ),
+              ],
+            ),
           ),
-          child: Icon(
-            icon,
-            color: const Color(0xFFFF4F91),
-          ),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFF252735),
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(
-            color: Color(0xFF9296A3),
-            fontSize: 11,
-          ),
-        ),
-        trailing: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          size: 15,
-          color: Color(0xFFB1B4BE),
         ),
       ),
     );
+  }
+
+  Future<void> _login() async {
+    setState(() {
+      _loading = true;
+    });
+
+    await Future<void>.delayed(
+      const Duration(milliseconds: 300),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+      _loggedIn = true;
+    });
+  }
+
+  Future<void> _logout() async {
+    setState(() {
+      _loading = true;
+    });
+
+    await Future<void>.delayed(
+      const Duration(milliseconds: 300),
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+      _loggedIn = false;
+    });
   }
 }
