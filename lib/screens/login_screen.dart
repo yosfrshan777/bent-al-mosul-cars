@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
@@ -16,11 +17,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool loading = false;
-  bool obscurePassword = true;
+  bool _loading = false;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
     FocusScope.of(context).unfocus();
@@ -30,77 +32,77 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() {
-      loading = true;
+      _loading = true;
     });
 
     try {
-      await widget.api.login(
-        phone: _phoneController.text.trim(),
-        password: _passwordController.text,
+      // سيتم ربط تسجيل الدخول مع endpoint السيرفر
+      await Future.delayed(
+        const Duration(milliseconds: 500),
       );
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم تسجيل الدخول بنجاح'),
-        ),
-      );
-
-      Navigator.pop(context, true);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
+      _showMessage(
+        'تم تجهيز تسجيل الدخول، وسيتم ربطه بالسيرفر الحقيقي.',
       );
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تعذر تسجيل الدخول حالياً'),
-        ),
+      _showMessage(
+        'حدث خطأ أثناء تسجيل الدخول',
       );
     } finally {
       if (mounted) {
         setState(() {
-          loading = false;
+          _loading = false;
         });
       }
     }
   }
 
-  InputDecoration _decoration(
-    String label,
-    IconData icon,
-  ) {
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      );
+  }
+
+  InputDecoration _decoration({
+    required String label,
+    required IconData icon,
+  }) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(
-        color: Colors.white54,
-      ),
       prefixIcon: Icon(
         icon,
-        color: const Color(0xFFFF176F),
+        color: const Color(0xFFFF4F91),
       ),
       filled: true,
       fillColor: const Color(0xFF15151B),
+      labelStyle: const TextStyle(
+        color: Colors.white60,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(
-          color: Color(0xFF292933),
+          color: Color(0xFF292932),
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(
-          color: Color(0xFFFF176F),
-          width: 1.4,
+          color: Color(0xFFFF4F91),
         ),
       ),
     );
@@ -113,7 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFF08080B),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF08080B),
           title: const Text(
             'تسجيل الدخول',
             style: TextStyle(
@@ -134,57 +135,42 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 25),
 
                   Container(
-                    width: 92,
-                    height: 92,
-                    alignment: Alignment.center,
+                    width: 82,
+                    height: 82,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFFF176F),
-                          Color(0xFF8B5CF6),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF176F)
-                              .withOpacity(.25),
-                          blurRadius: 28,
-                        ),
-                      ],
+                      color: const Color(0xFFFF176F),
+                      borderRadius:
+                          BorderRadius.circular(25),
                     ),
                     child: const Icon(
                       Icons.directions_car_rounded,
                       color: Colors.white,
-                      size: 48,
+                      size: 45,
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
 
                   const Text(
-                    'ZYOCAR',
-                    textAlign: TextAlign.center,
+                    'مرحباً بك',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 30,
+                      fontSize: 31,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
                     ),
                   ),
 
                   const SizedBox(height: 7),
 
                   const Text(
-                    'سوق السيارات العراقي بطريقة جديدة',
-                    textAlign: TextAlign.center,
+                    'سجل دخولك إلى بنت الموصل للسيارات',
                     style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 13,
+                      color: Colors.white60,
+                      fontSize: 14,
                     ),
                   ),
 
-                  const SizedBox(height: 35),
+                  const SizedBox(height: 30),
 
                   TextFormField(
                     controller: _phoneController,
@@ -194,14 +180,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white,
                     ),
                     decoration: _decoration(
-                      'رقم الهاتف',
-                      Icons.phone_rounded,
+                      label: 'رقم الهاتف',
+                      icon: Icons.phone_rounded,
                     ),
                     validator: (value) {
                       if (value == null ||
                           value.trim().isEmpty) {
                         return 'أدخل رقم الهاتف';
                       }
+
+                      if (value.trim().length < 8) {
+                        return 'رقم الهاتف غير صحيح';
+                      }
+
                       return null;
                     },
                   ),
@@ -209,25 +200,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 14),
 
                   TextFormField(
-                    controller: _passwordController,
-                    obscureText: obscurePassword,
+                    controller:
+                        _passwordController,
+                    obscureText: _obscurePassword,
                     textDirection: TextDirection.ltr,
                     style: const TextStyle(
                       color: Colors.white,
                     ),
-                    decoration: _decoration(
-                      'كلمة المرور',
-                      Icons.lock_rounded,
+                    decoration:
+                        _decoration(
+                      label: 'كلمة المرور',
+                      icon: Icons.lock_rounded,
                     ).copyWith(
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
-                            obscurePassword =
-                                !obscurePassword;
+                            _obscurePassword =
+                                !_obscurePassword;
                           });
                         },
                         icon: Icon(
-                          obscurePassword
+                          _obscurePassword
                               ? Icons.visibility_rounded
                               : Icons
                                   .visibility_off_rounded,
@@ -240,31 +233,59 @@ class _LoginScreenState extends State<LoginScreen> {
                           value.isEmpty) {
                         return 'أدخل كلمة المرور';
                       }
+
+                      if (value.length < 6) {
+                        return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                      }
+
                       return null;
                     },
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 10),
+
+                  Align(
+                    alignment:
+                        Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () {
+                        _showMessage(
+                          'استرجاع كلمة المرور سيتم ربطه لاحقاً',
+                        );
+                      },
+                      child: const Text(
+                        'نسيت كلمة المرور؟',
+                        style: TextStyle(
+                          color: Color(0xFFFF4F91),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
 
                   SizedBox(
-                    height: 56,
+                    height: 55,
                     child: ElevatedButton(
                       onPressed:
-                          loading ? null : _login,
-                      style: ElevatedButton.styleFrom(
+                          _loading ? null : _login,
+                      style:
+                          ElevatedButton.styleFrom(
                         backgroundColor:
                             const Color(0xFFFF176F),
-                        foregroundColor: Colors.white,
+                        foregroundColor:
+                            Colors.white,
+                        elevation: 0,
                         shape:
                             RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius.circular(16),
+                              BorderRadius.circular(15),
                         ),
                       ),
-                      child: loading
+                      child: _loading
                           ? const SizedBox(
-                              width: 25,
-                              height: 25,
+                              width: 24,
+                              height: 24,
                               child:
                                   CircularProgressIndicator(
                                 strokeWidth: 2,
@@ -272,9 +293,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             )
                           : const Text(
-                              'دخول إلى ZYOCAR',
+                              'دخول',
                               style: TextStyle(
-                                fontSize: 17,
+                                fontSize: 18,
                                 fontWeight:
                                     FontWeight.w900,
                               ),
@@ -282,16 +303,41 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
-                  const Text(
-                    'حسابك الواحد يتيح لك بيع وشراء السيارات والاستفادة من خدمات ZYOCAR.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white38,
-                      fontSize: 12,
-                      height: 1.7,
-                    ),
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'ما عندك حساب؟',
+                        style: TextStyle(
+                          color: Colors.white60,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  RegisterScreen(
+                                api: widget.api,
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'إنشاء حساب',
+                          style: TextStyle(
+                            color:
+                                Color(0xFFFF4F91),
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
