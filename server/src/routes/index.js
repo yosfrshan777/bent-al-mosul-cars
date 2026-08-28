@@ -7,6 +7,7 @@ const paymentRoutes = require('./payment');
 const showroomRoutes = require('./showrooms');
 const partsRoutes = require('./parts');
 const messageRoutes = require('./messages');
+const uploadRoutes = require('./upload');
 
 const router = express.Router();
 
@@ -17,5 +18,6 @@ router.use('/payment', paymentRoutes);
 router.use('/showrooms', showroomRoutes);
 router.use('/parts', partsRoutes);
 router.use('/messages', messageRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router;
