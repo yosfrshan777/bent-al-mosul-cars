@@ -1,11 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 class ApiException implements Exception {
   final String message;
 
-  const ApiException(this.message);
+  ApiException(this.message);
 
   @override
   String toString() => message;
@@ -16,8 +18,9 @@ class ApiService {
 
   static final ApiService instance = ApiService._();
 
-  // غيّر هذا الرابط لاحقاً إلى رابط السيرفر الحقيقي
-  static const String baseUrl = 'https://YOUR-SERVER.com/api';
+  // ضع رابط السيرفر الحقيقي هنا لاحقاً.
+  static const String baseUrl =
+      'https://YOUR-SERVER.com/api';
 
   String imageUrl(String image) {
     if (image.startsWith('http://') ||
@@ -28,36 +31,115 @@ class ApiService {
     return '$baseUrl/$image';
   }
 
-  Future<List<dynamic>> getCars() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/cars'),
-      headers: {
-        'Accept': 'application/json',
-      },
-    );
+  Future<dynamic> _request(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+  }) async {
+    final uri = Uri.parse('$baseUrl$path');
 
-    final data = _decode(response);
+    late http.Response response;
+
+    try {
+      if (method == 'GET') {
+        response = await http.get(
+          uri,
+          headers: headers,
+        );
+      } else if (method == 'POST') {
+        response = await http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            ...?headers,
+          },
+          body: jsonEncode(body ?? {}),
+        );
+      } else if (method == 'PUT') {
+        response = await http.put(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            ...?headers,
+          },
+          body: jsonEncode(body ?? {}),
+        );
+      } else if (method == 'DELETE') {
+        response = await http.delete(
+          uri,
+          headers: headers,
+        );
+      } else {
+        throw ApiException(
+          'طريقة الطلب غير مدعومة',
+        );
+      }
+    } on SocketException {
+      throw ApiException(
+        'تعذر الاتصال بالسيرفر',
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+
+      throw ApiException(
+        'حدث خطأ في الاتصال بالسيرفر',
+      );
+    }
+
+    dynamic data;
+
+    try {
+      data = response.body.isEmpty
+          ? null
+          : jsonDecode(response.body);
+    } catch (_) {
+      data = response.body;
+    }
 
     if (response.statusCode < 200 ||
         response.statusCode >= 300) {
-      throw ApiException(
-        _message(data, 'تعذر تحميل السيارات'),
-      );
+      String message =
+          'حدث خطأ في السيرفر';
+
+      if (data is Map &&
+          data['message'] != null) {
+        message = data['message'].toString();
+      }
+
+      throw ApiException(message);
     }
+
+    return data;
+  }
+
+  // =========================
+  // السيارات
+  // =========================
+
+  Future<List<dynamic>> getCars() async {
+    final data = await _request(
+      'GET',
+      '/cars',
+    );
 
     if (data is List) {
       return data;
     }
 
-    if (data is Map && data['cars'] is List) {
+    if (data is Map &&
+        data['cars'] is List) {
       return data['cars'];
     }
 
-    if (data is Map && data['data'] is List) {
-      return data['data'];
-    }
-
     return [];
+  }
+
+  Future<dynamic> getCar(int id) {
+    return _request(
+      'GET',
+      '/cars/$id',
+    );
   }
 
   Future<dynamic> createCar({
@@ -78,83 +160,211 @@ class ApiService {
       Uri.parse('$baseUrl/cars'),
     );
 
-    request.fields.addAll({
-      'brand': brand,
-      'model': model,
-      'year': year.toString(),
-      'price': price.toString(),
-      'km': km.toString(),
-      'city': city,
-      'fuel': fuel,
-      'transmission': transmission,
-      'description': description,
-      'plan': _planToPrice(plan),
-    });
+    request.fields['brand'] = brand;
+    request.fields['model'] = model;
+    request.fields['year'] =
+        year.toString();
+    request.fields['price'] =
+        price.toString();
+    request.fields['km'] =
+        km.toString();
+    request.fields['city'] = city;
+    request.fields['fuel'] = fuel;
+    request.fields['transmission'] =
+        transmission;
+    request.fields['description'] =
+        description;
+    request.fields['plan'] = plan;
 
     for (final image in images) {
       request.files.add(
         await http.MultipartFile.fromPath(
-          'images[]',
+          'images',
           image.path,
         ),
       );
     }
 
-    final streamed = await request.send();
-    final response =
-        await http.Response.fromStream(streamed);
+    try {
+      final streamed =
+          await request.send();
 
-    final data = _decode(response);
+      final response =
+          await http.Response.fromStream(
+        streamed,
+      );
 
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
+      dynamic data;
+
+      try {
+        data = response.body.isEmpty
+            ? null
+            : jsonDecode(response.body);
+      } catch (_) {
+        data = response.body;
+      }
+
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300) {
+        String message =
+            'تعذر إضافة السيارة';
+
+        if (data is Map &&
+            data['message'] != null) {
+          message =
+              data['message'].toString();
+        }
+
+        throw ApiException(message);
+      }
+
+      return data;
+    } on ApiException {
+      rethrow;
+    } on SocketException {
       throw ApiException(
-        _message(data, 'تعذر إضافة السيارة'),
+        'تعذر الاتصال بالسيرفر',
+      );
+    } catch (_) {
+      throw ApiException(
+        'حدث خطأ أثناء إضافة السيارة',
       );
     }
-
-    return data;
   }
 
-  int _planToPrice(String plan) {
-    switch (plan) {
-      case 'VIP':
-        return 30000;
-      case 'مميز':
-        return 20000;
-      default:
-        return 10000;
-    }
+  // =========================
+  // تسجيل الدخول
+  // =========================
+
+  Future<dynamic> login({
+    required String phone,
+    required String password,
+  }) {
+    return _request(
+      'POST',
+      '/login',
+      body: {
+        'phone': phone,
+        'password': password,
+      },
+    );
   }
 
-  dynamic _decode(http.Response response) {
-    if (response.body.trim().isEmpty) {
-      return {};
-    }
+  // =========================
+  // التسجيل
+  // =========================
 
-    try {
-      return jsonDecode(response.body);
-    } catch (_) {
-      return {
-        'message': response.body,
-      };
-    }
+  Future<dynamic> register({
+    required String name,
+    required String phone,
+    required String password,
+  }) {
+    return _request(
+      'POST',
+      '/register',
+      body: {
+        'name': name,
+        'phone': phone,
+        'password': password,
+      },
+    );
   }
 
-  String _message(
-    dynamic data,
-    String fallback,
+  // =========================
+  // الإدارة
+  // =========================
+
+  Future<dynamic> getAdminData() {
+    return _request(
+      'GET',
+      '/admin',
+    );
+  }
+
+  Future<dynamic> getAdminUsers() {
+    return _request(
+      'GET',
+      '/admin/users',
+    );
+  }
+
+  Future<dynamic> getPendingCars() {
+    return _request(
+      'GET',
+      '/admin/cars/pending',
+    );
+  }
+
+  Future<dynamic> approveCar(int id) {
+    return _request(
+      'POST',
+      '/admin/cars/$id/approve',
+    );
+  }
+
+  Future<dynamic> rejectCar(int id) {
+    return _request(
+      'POST',
+      '/admin/cars/$id/reject',
+    );
+  }
+
+  // =========================
+  // الطلبات
+  // =========================
+
+  Future<dynamic> getPendingRequests() {
+    return _request(
+      'GET',
+      '/admin/requests/pending',
+    );
+  }
+
+  Future<dynamic> approveRequest(
+    int id,
   ) {
-    if (data is Map) {
-      final message =
-          data['message'] ?? data['error'];
+    return _request(
+      'POST',
+      '/admin/requests/$id/approve',
+    );
+  }
 
-      if (message != null &&
-          message.toString().trim().isNotEmpty) {
-        return message.toString();
-      }
-    }
+  Future<dynamic> rejectRequest(
+    int id,
+  ) {
+    return _request(
+      'POST',
+      '/admin/requests/$id/reject',
+    );
+  }
 
-    return fallback;
+  // =========================
+  // إعدادات التحويل والاستلام
+  // =========================
+
+  Future<dynamic> getPaymentSettings() {
+    return _request(
+      'GET',
+      '/admin/payment-settings',
+    );
+  }
+
+  Future<dynamic> updatePaymentSettings({
+    String? phone,
+    String? cardNumber,
+    String? accountName,
+  }) {
+    return _request(
+      'PUT',
+      '/admin/payment-settings',
+      body: {
+        if (phone != null)
+          'phone': phone,
+        if (cardNumber != null)
+          'card_number': cardNumber,
+        if (accountName != null)
+          'account_name': accountName,
+      },
+    );
   }
 }
