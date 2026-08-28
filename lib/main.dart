@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/cars_screen.dart';
 import 'screens/add_car_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/admin_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,24 +20,21 @@ class BentAlMosulApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'بنت الموصل للسيارات',
-
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF08080B),
-
+        scaffoldBackgroundColor:
+            const Color(0xFF08080B),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF176F),
           brightness: Brightness.dark,
         ),
-
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF111116),
           foregroundColor: Colors.white,
           elevation: 0,
         ),
       ),
-
       home: const MainNavigation(),
     );
   }
@@ -46,16 +44,23 @@ class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() =>
+      _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState
+    extends State<MainNavigation> {
   int currentIndex = 0;
 
-  // مهم جداً:
-  // لا تكتب ApiService()
-  // استخدم النسخة الجاهزة الموجودة في ApiService
   final ApiService api = ApiService.instance;
+
+  void _openPage(int index) {
+    if (index < 0 || index > 4) return;
+
+    setState(() {
+      currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,19 +68,13 @@ class _MainNavigationState extends State<MainNavigation> {
       HomeScreen(
         api: api,
         onOpenCars: () {
-          setState(() {
-            currentIndex = 1;
-          });
+          _openPage(1);
         },
         onAddCar: () {
-          setState(() {
-            currentIndex = 2;
-          });
+          _openPage(2);
         },
         onLogin: () {
-          setState(() {
-            currentIndex = 3;
-          });
+          _openPage(3);
         },
       ),
 
@@ -90,6 +89,10 @@ class _MainNavigationState extends State<MainNavigation> {
       ProfileScreen(
         api: api,
       ),
+
+      AdminScreen(
+        api: api,
+      ),
     ];
 
     return Directionality(
@@ -100,41 +103,63 @@ class _MainNavigationState extends State<MainNavigation> {
           children: pages,
         ),
 
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: currentIndex,
+        bottomNavigationBar:
+            NavigationBar(
+          selectedIndex:
+              currentIndex > 3
+                  ? 0
+                  : currentIndex,
 
           onDestinationSelected: (index) {
-            setState(() {
-              currentIndex = index;
-            });
+            _openPage(index);
           },
 
-          backgroundColor: const Color(0xFF111116),
+          backgroundColor:
+              const Color(0xFF111116),
 
-          indicatorColor: const Color(0x33FF176F),
+          indicatorColor:
+              const Color(0x33FF176F),
 
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
+              icon: Icon(
+                Icons.home_outlined,
+              ),
+              selectedIcon: Icon(
+                Icons.home_rounded,
+              ),
               label: 'الرئيسية',
             ),
 
             NavigationDestination(
-              icon: Icon(Icons.directions_car_outlined),
-              selectedIcon: Icon(Icons.directions_car_rounded),
+              icon: Icon(
+                Icons
+                    .directions_car_outlined,
+              ),
+              selectedIcon: Icon(
+                Icons
+                    .directions_car_rounded,
+              ),
               label: 'السيارات',
             ),
 
             NavigationDestination(
-              icon: Icon(Icons.add_circle_outline),
-              selectedIcon: Icon(Icons.add_circle_rounded),
+              icon: Icon(
+                Icons.add_circle_outline,
+              ),
+              selectedIcon: Icon(
+                Icons.add_circle_rounded,
+              ),
               label: 'أضف سيارة',
             ),
 
             NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person_rounded),
+              icon: Icon(
+                Icons.person_outline,
+              ),
+              selectedIcon: Icon(
+                Icons.person_rounded,
+              ),
               label: 'حسابي',
             ),
           ],
