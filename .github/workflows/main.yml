@@ -1,43 +1,37 @@
-name: Build Android APK
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
+}
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+android {
+    namespace = "com.example.bent_al_mosul_cars"
+    compileSdk = 35
 
-permissions:
-  contents: write
+    defaultConfig {
+        applicationId = "com.example.bent_al_mosul_cars"
+        minSdk = flutter.minSdkVersion
+        targetSdk = 35
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.5'
-          channel: stable
-          cache: true
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
 
-      - name: Generate Android files
-        run: flutter create --project-name bent_al_mosul_cars --platforms=android .
-
-      - name: Set Android SDK 35
-        run: sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/' android/app/build.gradle
-
-      - name: Get packages
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+flutter {
+    source = "../.."
+}
