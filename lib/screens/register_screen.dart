@@ -1,129 +1,121 @@
 import 'package:flutter/material.dart';
 
+import '../models/car.dart';
 import '../services/api_service.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({
+class CarDetailsScreen extends StatelessWidget {
+  const CarDetailsScreen({
     super.key,
+    required this.car,
     required this.api,
   });
 
+  final Car car;
   final ApiService api;
 
-  @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
-}
+  String _formatPrice(int price) {
+    final text = price.toString();
+    final buffer = StringBuffer();
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
+    for (int i = 0; i < text.length; i++) {
+      if (i > 0 && (text.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
 
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+      buffer.write(text[i]);
+    }
 
-  bool _loading = false;
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
+    return buffer.toString();
+  }
 
-  InputDecoration _decoration({
-    required String label,
+  Widget _infoItem({
     required IconData icon,
-    Widget? suffix,
+    required String title,
+    required String value,
   }) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(
-        color: Color(0xFF9296A3),
-      ),
-      prefixIcon: Icon(
-        icon,
-        color: const Color(0xFFFF4F91),
-      ),
-      suffixIcon: suffix,
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(17),
-        borderSide: const BorderSide(
-          color: Color(0xFFE8E9EF),
-        ),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(17),
-        borderSide: const BorderSide(
-          color: Color(0xFFE8E9EF),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(17),
-        borderSide: const BorderSide(
-          color: Color(0xFFFF4F91),
-          width: 1.5,
-        ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFEFF5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: const Color(0xFFFF4F91),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF979BA6),
+                    fontSize: 10,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF20232F),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _register() async {
-    FocusScope.of(context).unfocus();
-
-    if (!_formKey.currentState!.validate()) {
-      return;
+  Widget _image() {
+    if (car.image == null || car.image!.isEmpty) {
+      return Container(
+        color: const Color(0xFFE8EAF0),
+        child: const Center(
+          child: Icon(
+            Icons.directions_car_filled_rounded,
+            size: 90,
+            color: Color(0xFFB8BDC9),
+          ),
+        ),
+      );
     }
 
-    setState(() {
-      _loading = true;
-    });
-
-    try {
-      await widget.api.register(
-        name: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'تم إنشاء الحساب بنجاح',
-            textDirection: TextDirection.rtl,
+    return Image.network(
+      api.imageUrl(car.image!),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) {
+        return Container(
+          color: const Color(0xFFE8EAF0),
+          child: const Center(
+            child: Icon(
+              Icons.directions_car_filled_rounded,
+              size: 90,
+              color: Color(0xFFB8BDC9),
+            ),
           ),
-        ),
-      );
-
-      Navigator.pop(context, true);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.message,
-            textDirection: TextDirection.rtl,
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'حدث خطأ أثناء إنشاء الحساب',
-            textDirection: TextDirection.rtl,
-          ),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
-    }
+        );
+      },
+    );
   }
 
   @override
@@ -132,227 +124,323 @@ class _RegisterScreenState extends State<RegisterScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F8FC),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF7F8FC),
-          foregroundColor: const Color(0xFF20232F),
-          elevation: 0,
-          title: const Text(
-            'إنشاء حساب',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          centerTitle: true,
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 20),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 310,
+              pinned: true,
+              backgroundColor: const Color(0xFF15151B),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _image(),
 
-                  Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topRight,
-                        end: Alignment.bottomLeft,
-                        colors: [
-                          Color(0xFFFF4F91),
-                          Color(0xFF7B61FF),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(.75),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    Positioned(
+                      right: 18,
+                      left: 18,
+                      bottom: 20,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${car.brand} ${car.model}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 25,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding:
+                                const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF4F91),
+                              borderRadius:
+                                  BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              car.planName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(
+                    Icons.favorite_border_rounded,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(
+                    Icons.share_rounded,
+                  ),
+                ),
+              ],
+            ),
+
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                18,
+                16,
+                35,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
                       borderRadius:
-                          BorderRadius.circular(25),
+                          BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(
-                            0xFFFF4F91,
-                          ).withOpacity(.22),
-                          blurRadius: 22,
-                          offset: const Offset(0, 8),
+                          color: Colors.black.withOpacity(.04),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.person_add_alt_1_rounded,
-                      color: Colors.white,
-                      size: 40,
+                    child: Row(
+                      children: [
+                        const Text(
+                          'السعر',
+                          style: TextStyle(
+                            color: Color(0xFF8B8F9B),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${_formatPrice(car.price)} د.ع',
+                          style: const TextStyle(
+                            color: Color(0xFFFF4F91),
+                            fontSize: 23,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                   const Text(
-                    'انضم إلى ZYO Car',
-                    textAlign: TextAlign.center,
+                    'معلومات السيارة',
                     style: TextStyle(
                       color: Color(0xFF20232F),
-                      fontSize: 27,
+                      fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
 
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 12),
+
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics:
+                        const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.9,
+                    children: [
+                      _infoItem(
+                        icon: Icons.calendar_month_rounded,
+                        title: 'سنة الصنع',
+                        value: '${car.year}',
+                      ),
+                      _infoItem(
+                        icon: Icons.speed_rounded,
+                        title: 'المسافة',
+                        value: '${_formatPrice(car.km)} كم',
+                      ),
+                      _infoItem(
+                        icon: Icons.local_gas_station_rounded,
+                        title: 'الوقود',
+                        value: car.fuel,
+                      ),
+                      _infoItem(
+                        icon: Icons.settings_rounded,
+                        title: 'ناقل الحركة',
+                        value: car.transmission,
+                      ),
+                      _infoItem(
+                        icon: Icons.location_on_rounded,
+                        title: 'الموقع',
+                        value: car.city,
+                      ),
+                      _infoItem(
+                        icon: Icons.confirmation_number_outlined,
+                        title: 'رقم الإعلان',
+                        value: car.publicNo ??
+                            '#${car.id}',
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 22),
 
                   const Text(
-                    'أنشئ حسابك وابدأ البيع والشراء',
-                    textAlign: TextAlign.center,
+                    'الوصف',
                     style: TextStyle(
-                      color: Color(0xFF858995),
-                      fontSize: 13,
+                      color: Color(0xFF20232F),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 10),
 
-                  TextFormField(
-                    controller: _nameController,
-                    textDirection: TextDirection.rtl,
-                    style: const TextStyle(
-                      color: Color(0xFF20232F),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(17),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(19),
                     ),
-                    decoration: _decoration(
-                      label: 'الاسم الكامل',
-                      icon: Icons.person_outline_rounded,
-                    ),
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
-                        return 'أدخل الاسم';
-                      }
-
-                      if (value.trim().length < 3) {
-                        return 'الاسم قصير جداً';
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    textDirection: TextDirection.ltr,
-                    style: const TextStyle(
-                      color: Color(0xFF20232F),
-                    ),
-                    decoration: _decoration(
-                      label: 'رقم الهاتف',
-                      icon: Icons.phone_outlined,
-                    ),
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
-                        return 'أدخل رقم الهاتف';
-                      }
-
-                      if (value.trim().length < 7) {
-                        return 'رقم الهاتف غير صحيح';
-                      }
-
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textDirection: TextDirection.ltr,
-                    style: const TextStyle(
-                      color: Color(0xFF20232F),
-                    ),
-                    decoration: _decoration(
-                      label: 'كلمة المرور',
-                      icon: Icons.lock_outline_rounded,
-                      suffix: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword =
-                                !_obscurePassword;
-                          });
-                        },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: const Color(0xFF969AA6),
-                        ),
+                    child: Text(
+                      car.description.isEmpty
+                          ? 'لا يوجد وصف مضاف لهذا الإعلان.'
+                          : car.description,
+                      style: const TextStyle(
+                        color: Color(0xFF656976),
+                        fontSize: 13,
+                        height: 1.8,
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null ||
-                          value.isEmpty) {
-                        return 'أدخل كلمة المرور';
-                      }
-
-                      if (value.length < 6) {
-                        return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-                      }
-
-                      return null;
-                    },
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 22),
 
-                  TextFormField(
-                    controller:
-                        _confirmPasswordController,
-                    obscureText: _obscureConfirm,
-                    textDirection: TextDirection.ltr,
-                    style: const TextStyle(
+                  const Text(
+                    'البائع',
+                    style: TextStyle(
                       color: Color(0xFF20232F),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
                     ),
-                    decoration: _decoration(
-                      label: 'تأكيد كلمة المرور',
-                      icon: Icons.lock_reset_rounded,
-                      suffix: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirm =
-                                !_obscureConfirm;
-                          });
-                        },
-                        icon: Icon(
-                          _obscureConfirm
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: const Color(0xFF969AA6),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(19),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFEFF5),
+                            borderRadius:
+                                BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            color: Color(0xFFFF4F91),
+                          ),
                         ),
-                      ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                car.sellerName ??
+                                    'صاحب الإعلان',
+                                style: const TextStyle(
+                                  color: Color(0xFF20232F),
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                car.sellerPhone ??
+                                    'رقم الهاتف غير متوفر',
+                                style: const TextStyle(
+                                  color: Color(0xFF8B8F9B),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        if (car.sellerPhone != null)
+                          Container(
+                            width: 43,
+                            height: 43,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFF4F91),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.phone_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                      ],
                     ),
-                    validator: (value) {
-                      if (value == null ||
-                          value.isEmpty) {
-                        return 'أكد كلمة المرور';
-                      }
-
-                      if (value !=
-                          _passwordController.text) {
-                        return 'كلمتا المرور غير متطابقتين';
-                      }
-
-                      return null;
-                    },
                   ),
 
                   const SizedBox(height: 25),
 
                   SizedBox(
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed:
-                          _loading ? null : _register,
+                    height: 55,
+                    child: ElevatedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(
+                        Icons.phone_rounded,
+                      ),
+                      label: const Text(
+                        'تواصل مع البائع',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                       style:
                           ElevatedButton.styleFrom(
                         backgroundColor:
@@ -365,53 +453,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               BorderRadius.circular(17),
                         ),
                       ),
-                      child: _loading
-                          ? const SizedBox(
-                              width: 25,
-                              height: 25,
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'إنشاء الحساب',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight:
-                                    FontWeight.w900,
-                              ),
-                            ),
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    'بعد إنشاء الحساب يمكنك بيع سيارتك، شراء السيارات، والدخول إلى قسم قطع الغيار.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF979BA6),
-                      fontSize: 11,
-                      height: 1.6,
-                    ),
-                  ),
-                ],
+                ]),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
   }
 }
