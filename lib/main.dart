@@ -8,7 +8,6 @@ import 'screens/profile_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const ZyoCarApp());
 }
 
@@ -27,7 +26,7 @@ class _ZyoCarAppState extends State<ZyoCarApp> {
     super.initState();
 
     api = ApiService(
-      baseUrl: 'https://YOUR-SERVER-DOMAIN.com/api',
+      baseUrl: 'https://bent-al-mosul-cars.onrender.com/api',
     );
   }
 
@@ -38,8 +37,7 @@ class _ZyoCarAppState extends State<ZyoCarApp> {
       title: 'ZYOCAR',
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor:
-            const Color(0xFF08080B),
+        scaffoldBackgroundColor: const Color(0xFF08080B),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFFF176F),
           brightness: Brightness.dark,
@@ -64,8 +62,7 @@ class HomeScreen extends StatefulWidget {
   final ApiService api;
 
   @override
-  State<HomeScreen> createState() =>
-      _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -87,8 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: _pages,
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor:
-            const Color(0xFFFF176F),
+        backgroundColor: const Color(0xFFFF176F),
         foregroundColor: Colors.white,
         onPressed: () {
           Navigator.push(
@@ -105,62 +101,39 @@ class _HomeScreenState extends State<HomeScreen> {
           size: 30,
         ),
       ),
-      bottomNavigationBar:
-          NavigationBar(
+      bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) {
           setState(() {
             _index = value;
           });
         },
-        backgroundColor:
-            const Color(0xFF111116),
-        indicatorColor:
-            const Color(0xFF3A1425),
+        backgroundColor: const Color(0xFF111116),
+        indicatorColor: const Color(0xFF3A1425),
         destinations: const [
           NavigationDestination(
-            icon: Icon(
-              Icons.home_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.home_rounded,
-            ),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
             label: 'الرئيسية',
           ),
           NavigationDestination(
-            icon: Icon(
-              Icons.search_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.search_rounded,
-            ),
+            icon: Icon(Icons.search_outlined),
+            selectedIcon: Icon(Icons.search_rounded),
             label: 'بحث',
           ),
           NavigationDestination(
-            icon: Icon(
-              Icons.play_circle_outline,
-            ),
-            selectedIcon: Icon(
-              Icons.play_circle_fill,
-            ),
+            icon: Icon(Icons.play_circle_outline),
+            selectedIcon: Icon(Icons.play_circle_fill),
             label: 'Reels',
           ),
           NavigationDestination(
-            icon: Icon(
-              Icons.favorite_border_rounded,
-            ),
-            selectedIcon: Icon(
-              Icons.favorite_rounded,
-            ),
+            icon: Icon(Icons.favorite_border_rounded),
+            selectedIcon: Icon(Icons.favorite_rounded),
             label: 'مفضلة',
           ),
           NavigationDestination(
-            icon: Icon(
-              Icons.person_outline_rounded,
-            ),
-            selectedIcon: Icon(
-              Icons.person_rounded,
-            ),
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
             label: 'حسابي',
           ),
         ],
@@ -185,8 +158,7 @@ class _HomePage extends StatelessWidget {
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor:
-                  const Color(0xFF08080B),
+              backgroundColor: const Color(0xFF08080B),
               title: const Text(
                 'ZYOCAR',
                 style: TextStyle(
@@ -198,26 +170,20 @@ class _HomePage extends StatelessWidget {
               ),
               centerTitle: true,
             ),
-
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.stretch,
                   children: [
                     Container(
                       height: 170,
-                      padding:
-                          const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        gradient:
-                            const LinearGradient(
-                          begin:
-                              Alignment.topRight,
-                          end:
-                              Alignment.bottomLeft,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
                           colors: [
                             Color(0xFFFF176F),
                             Color(0xFF5B1838),
@@ -225,9 +191,7 @@ class _HomePage extends StatelessWidget {
                           ],
                         ),
                         borderRadius:
-                            BorderRadius.circular(
-                          24,
-                        ),
+                            BorderRadius.circular(24),
                       ),
                       child: const Column(
                         crossAxisAlignment:
@@ -255,37 +219,29 @@ class _HomePage extends StatelessWidget {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 18),
-
                     Row(
                       children: [
                         Expanded(
                           child: _QuickCard(
-                            icon:
-                                Icons.store_rounded,
+                            icon: Icons.store_rounded,
                             title: 'المعارض',
-                            subtitle:
-                                'معارض السيارات',
+                            subtitle: 'معارض السيارات',
                             onTap: () {},
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: _QuickCard(
-                            icon:
-                                Icons.build_rounded,
+                            icon: Icons.build_rounded,
                             title: 'قطع الغيار',
-                            subtitle:
-                                'قطع غيار السيارات',
+                            subtitle: 'قطع غيار السيارات',
                             onTap: () {},
                           ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 22),
-
                     Row(
                       children: [
                         const Expanded(
@@ -304,21 +260,16 @@ class _HomePage extends StatelessWidget {
                           child: const Text(
                             'عرض الكل',
                             style: TextStyle(
-                              color:
-                                  Color(0xFFFF176F),
+                              color: Color(0xFFFF176F),
                             ),
                           ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
                     SizedBox(
                       height: 330,
-                      child: CarsScreen(
-                        api: api,
-                      ),
+                      child: CarsScreen(api: api),
                     ),
                   ],
                 ),
@@ -349,12 +300,10 @@ class _QuickCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFF15151B),
-          borderRadius:
-              BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: const Color(0xFF292932),
           ),
@@ -363,8 +312,7 @@ class _QuickCard extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color:
-                  const Color(0xFFFF176F),
+              color: const Color(0xFFFF176F),
               size: 34,
             ),
             const SizedBox(height: 9),
@@ -372,8 +320,7 @@ class _QuickCard extends StatelessWidget {
               title,
               style: const TextStyle(
                 color: Colors.white,
-                fontWeight:
-                    FontWeight.w900,
+                fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 3),
