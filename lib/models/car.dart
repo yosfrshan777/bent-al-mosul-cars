@@ -39,29 +39,40 @@ class Car {
     this.createdAt,
   });
 
-  factory Car.fromJson(Map<String, dynamic> json) {
+  factory Car.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return Car(
       id: _toInt(json['id']),
       userId: _toInt(json['user_id']),
-      publicNo: json['public_no']?.toString(),
-      brand: json['brand']?.toString() ?? '',
-      model: json['model']?.toString() ?? '',
+      publicNo:
+          json['public_no']?.toString(),
+      brand:
+          json['brand']?.toString() ?? '',
+      model:
+          json['model']?.toString() ?? '',
       year: _toInt(json['year']),
       price: _toInt(json['price']),
       km: _toInt(json['km']),
-      city: json['city']?.toString() ?? '',
-      fuel: json['fuel']?.toString() ?? '',
+      city:
+          json['city']?.toString() ?? '',
+      fuel:
+          json['fuel']?.toString() ?? '',
       transmission:
-          json['transmission']?.toString() ?? '',
+          json['transmission']?.toString() ??
+              '',
       description:
-          json['description']?.toString() ?? '',
-      image: json['image']?.toString(),
+          json['description']?.toString() ??
+              '',
+      image:
+          json['image']?.toString(),
       plan: _toInt(
         json['plan'],
         fallback: 10000,
       ),
       status:
-          json['status']?.toString() ?? 'pending',
+          json['status']?.toString() ??
+              'pending',
       sellerName:
           json['seller_name']?.toString(),
       sellerPhone:
