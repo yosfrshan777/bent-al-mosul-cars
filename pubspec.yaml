@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  http: ^1.2.2
+  http: ^1.5.0
   image_picker: ^1.1.2
   shared_preferences: ^2.5.3
 
@@ -20,6 +20,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/icons/zyocar.png
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/zyocar.png"
+  adaptive_icon_background: "#08080B"
+  adaptive_icon_foreground: "assets/icons/zyocar.png"
