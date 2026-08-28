@@ -20,21 +20,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  bool loading = false;
-  bool obscurePassword = true;
-  bool obscureConfirm = true;
+  bool _loading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
-  InputDecoration _input(
-    String label,
-    IconData icon, {
+  InputDecoration _decoration({
+    required String label,
+    required IconData icon,
     Widget? suffix,
   }) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(
-        color: Colors.white54,
+        color: Color(0xFF9296A3),
       ),
       prefixIcon: Icon(
         icon,
@@ -42,22 +42,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       suffixIcon: suffix,
       filled: true,
-      fillColor: const Color(0xFF15151B),
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(17),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(
+          color: Color(0xFFE8E9EF),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(17),
         borderSide: const BorderSide(
-          color: Color(0xFF292933),
+          color: Color(0xFFE8E9EF),
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(17),
         borderSide: const BorderSide(
           color: Color(0xFFFF4F91),
-          width: 1.4,
+          width: 1.5,
         ),
       ),
     );
@@ -71,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     setState(() {
-      loading = true;
+      _loading = true;
     });
 
     try {
@@ -85,7 +87,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تم إنشاء الحساب بنجاح'),
+          content: Text(
+            'تم إنشاء الحساب بنجاح',
+            textDirection: TextDirection.rtl,
+          ),
         ),
       );
 
@@ -95,7 +100,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.message),
+          content: Text(
+            e.message,
+            textDirection: TextDirection.rtl,
+          ),
         ),
       );
     } catch (_) {
@@ -103,13 +111,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('تعذر إنشاء الحساب حالياً'),
+          content: Text(
+            'حدث خطأ أثناء إنشاء الحساب',
+            textDirection: TextDirection.rtl,
+          ),
         ),
       );
     } finally {
       if (mounted) {
         setState(() {
-          loading = false;
+          _loading = false;
         });
       }
     }
@@ -120,9 +131,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF08080B),
+        backgroundColor: const Color(0xFFF7F8FC),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF08080B),
+          backgroundColor: const Color(0xFFF7F8FC),
+          foregroundColor: const Color(0xFF20232F),
+          elevation: 0,
           title: const Text(
             'إنشاء حساب',
             style: TextStyle(
@@ -143,52 +156,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
 
                   Container(
-                    width: 86,
-                    height: 86,
-                    alignment: Alignment.center,
+                    width: 82,
+                    height: 82,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
                       gradient: const LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
                         colors: [
                           Color(0xFFFF4F91),
-                          Color(0xFF718DFF),
+                          Color(0xFF7B61FF),
                         ],
                       ),
+                      borderRadius:
+                          BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF4F91)
-                              .withOpacity(.25),
-                          blurRadius: 30,
+                          color: const Color(
+                            0xFFFF4F91,
+                          ).withOpacity(.22),
+                          blurRadius: 22,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
                     child: const Icon(
                       Icons.person_add_alt_1_rounded,
                       color: Colors.white,
-                      size: 39,
+                      size: 40,
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
                   const Text(
-                    'أنشئ حسابك في ZYOCAR',
+                    'انضم إلى ZYO Car',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 25,
+                      color: Color(0xFF20232F),
+                      fontSize: 27,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 7),
 
                   const Text(
-                    'حساب واحد للبيع والشراء والمعارض وقطع الغيار',
+                    'أنشئ حسابك وابدأ البيع والشراء',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 12,
+                      color: Color(0xFF858995),
+                      fontSize: 13,
                     ),
                   ),
 
@@ -198,11 +215,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _nameController,
                     textDirection: TextDirection.rtl,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF20232F),
                     ),
-                    decoration: _input(
-                      'الاسم',
-                      Icons.person_outline_rounded,
+                    decoration: _decoration(
+                      label: 'الاسم الكامل',
+                      icon: Icons.person_outline_rounded,
                     ),
                     validator: (value) {
                       if (value == null ||
@@ -210,7 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return 'أدخل الاسم';
                       }
 
-                      if (value.trim().length < 2) {
+                      if (value.trim().length < 3) {
                         return 'الاسم قصير جداً';
                       }
 
@@ -218,18 +235,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 13),
+                  const SizedBox(height: 14),
 
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textDirection: TextDirection.ltr,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF20232F),
                     ),
-                    decoration: _input(
-                      'رقم الهاتف',
-                      Icons.phone_rounded,
+                    decoration: _decoration(
+                      label: 'رقم الهاتف',
+                      icon: Icons.phone_outlined,
                     ),
                     validator: (value) {
                       if (value == null ||
@@ -245,30 +262,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 13),
+                  const SizedBox(height: 14),
 
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: obscurePassword,
+                    obscureText: _obscurePassword,
                     textDirection: TextDirection.ltr,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF20232F),
                     ),
-                    decoration: _input(
-                      'كلمة المرور',
-                      Icons.lock_outline_rounded,
+                    decoration: _decoration(
+                      label: 'كلمة المرور',
+                      icon: Icons.lock_outline_rounded,
                       suffix: IconButton(
                         onPressed: () {
                           setState(() {
-                            obscurePassword =
-                                !obscurePassword;
+                            _obscurePassword =
+                                !_obscurePassword;
                           });
                         },
                         icon: Icon(
-                          obscurePassword
-                              ? Icons.visibility_rounded
-                              : Icons.visibility_off_rounded,
-                          color: Colors.white54,
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: const Color(0xFF969AA6),
                         ),
                       ),
                     ),
@@ -286,30 +303,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 13),
+                  const SizedBox(height: 14),
 
                   TextFormField(
-                    controller: _confirmController,
-                    obscureText: obscureConfirm,
+                    controller:
+                        _confirmPasswordController,
+                    obscureText: _obscureConfirm,
                     textDirection: TextDirection.ltr,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF20232F),
                     ),
-                    decoration: _input(
-                      'تأكيد كلمة المرور',
-                      Icons.lock_reset_rounded,
+                    decoration: _decoration(
+                      label: 'تأكيد كلمة المرور',
+                      icon: Icons.lock_reset_rounded,
                       suffix: IconButton(
                         onPressed: () {
                           setState(() {
-                            obscureConfirm =
-                                !obscureConfirm;
+                            _obscureConfirm =
+                                !_obscureConfirm;
                           });
                         },
                         icon: Icon(
-                          obscureConfirm
-                              ? Icons.visibility_rounded
-                              : Icons.visibility_off_rounded,
-                          color: Colors.white54,
+                          _obscureConfirm
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: const Color(0xFF969AA6),
                         ),
                       ),
                     ),
@@ -334,17 +352,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed:
-                          loading ? null : _register,
-                      style: ElevatedButton.styleFrom(
+                          _loading ? null : _register,
+                      style:
+                          ElevatedButton.styleFrom(
                         backgroundColor:
                             const Color(0xFFFF4F91),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
+                        elevation: 0,
+                        shape:
+                            RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(17),
                         ),
                       ),
-                      child: loading
+                      child: _loading
                           ? const SizedBox(
                               width: 25,
                               height: 25,
@@ -368,11 +389,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
 
                   const Text(
-                    'بإنشاء الحساب يمكنك نشر إعلاناتك والتواصل مع البائعين.',
+                    'بعد إنشاء الحساب يمكنك بيع سيارتك، شراء السيارات، والدخول إلى قسم قطع الغيار.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white30,
+                      color: Color(0xFF979BA6),
                       fontSize: 11,
+                      height: 1.6,
                     ),
                   ),
                 ],
@@ -389,7 +411,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
-    _confirmController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 }
