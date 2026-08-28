@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -11,78 +12,167 @@ class ProfileScreen extends StatefulWidget {
   final ApiService api;
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() =>
+      _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool loading = false;
+  bool _loading = true;
+  bool _loggedIn = false;
 
-  Widget _menuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    bool danger = false,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Container(
-          width: 43,
-          height: 43,
-          decoration: BoxDecoration(
-            color: danger
-                ? const Color(0xFFFFEDEF)
-                : const Color(0xFFFFEFF5),
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: Icon(
-            icon,
-            color: danger
-                ? Colors.red
-                : const Color(0xFFFF4F91),
-          ),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: danger
-                ? Colors.red
-                : const Color(0xFF20232F),
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        trailing: Icon(
-          Icons.arrow_back_ios_new_rounded,
-          size: 16,
-          color: danger
-              ? Colors.red
-              : const Color(0xFF9DA1AC),
+  String _name = 'زائر';
+  String _phone = '';
+  String _role = 'user';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      final data = await widget.api.me();
+
+      if (!mounted) return;
+
+      if (data is Map) {
+        final user = data['user'] is Map
+            ? Map<String, dynamic>.from(data['user'])
+            : Map<String, dynamic>.from(data);
+
+        setState(() {
+          _loggedIn = true;
+          _name =
+              user['name']?.toString() ?? 'مستخدم';
+          _phone =
+              user['phone']?.toString() ?? '';
+          _role =
+              user['role']?.toString() ?? 'user';
+        });
+      }
+    } on ApiException {
+      if (mounted) {
+        setState(() {
+          _loggedIn = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loggedIn = false;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _login() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LoginScreen(
+          api: widget.api,
         ),
       ),
     );
+
+    if (result != null) {
+      await _loadProfile();
+    }
   }
 
-  Widget _loginCard() {
+  Future<void> _logout() async {
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      await widget.api.logout();
+    } catch (_) {
+      widget.api.clearToken();
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _loggedIn = false;
+      _name = 'زائر';
+      _phone = '';
+      _role = 'user';
+      _loading = false;
+    });
+  }
+
+  String get _roleName {
+    switch (_role) {
+      case 'owner':
+        return 'المالك';
+
+      case 'admin':
+        return 'أدمن';
+
+      case 'showroom':
+        return 'صاحب معرض';
+
+      case 'parts':
+        return 'قطع غيار';
+
+      case 'seller':
+        return 'بائع';
+
+      default:
+        return 'مستخدم';
+    }
+  }
+
+  void _message(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+  }
+
+  Widget _profileHeader() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181E),
-        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            Color(0xFF321222),
+            Color(0xFF17171D),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFF3A2631),
+        ),
       ),
-      child: Column(
+      child: Row(
         children: [
           Container(
-            width: 70,
-            height: 70,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFF4F91),
-              shape: BoxShape.circle,
+            width: 65,
+            height: 65,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF176F),
+              borderRadius:
+                  BorderRadius.circular(20),
             ),
             child: const Icon(
               Icons.person_rounded,
@@ -90,57 +180,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
               size: 35,
             ),
           ),
-
-          const SizedBox(height: 15),
-
-          const Text(
-            'أهلاً بك في بنت الموصل',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-
-          const SizedBox(height: 7),
-
-          const Text(
-            'سجل الدخول حتى تقدر تضيف إعلاناتك وتدير حسابك.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white60,
-              height: 1.6,
-              fontSize: 12,
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                _showMessage(
-                  'صفحة تسجيل الدخول قيد الربط',
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    const Color(0xFFFF4F91),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(15),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _name,
+                  maxLines: 1,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight:
+                        FontWeight.w900,
+                  ),
                 ),
-              ),
-              child: const Text(
-                'تسجيل الدخول',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
+                if (_phone.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _phone,
+                    style: const TextStyle(
+                      color: Colors.white60,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 7),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        const Color(0xFF28141F),
+                    borderRadius:
+                        BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _roleName,
+                    style: const TextStyle(
+                      color:
+                          Color(0xFFFF4F91),
+                      fontSize: 11,
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -148,17 +239,117 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            message,
-            textDirection: TextDirection.rtl,
+  Widget _menuItem({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    VoidCallback? onTap,
+    Color? iconColor,
+  }) {
+    return Container(
+      margin:
+          const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF15151B),
+        borderRadius:
+            BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF292932),
+        ),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: const Color(0xFF24141C),
+            borderRadius:
+                BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color:
+                iconColor ??
+                const Color(0xFFFF176F),
           ),
         ),
-      );
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: subtitle == null
+            ? null
+            : Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 11,
+                ),
+              ),
+        trailing: const Icon(
+          Icons.chevron_left_rounded,
+          color: Colors.white30,
+        ),
+      ),
+    );
+  }
+
+  Widget _guest() {
+    return Column(
+      children: [
+        const SizedBox(height: 30),
+        const Icon(
+          Icons.person_outline_rounded,
+          color: Colors.white24,
+          size: 80,
+        ),
+        const SizedBox(height: 15),
+        const Text(
+          'أنت غير مسجل دخول',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'سجل دخولك حتى تقدر تنشر وتدير إعلاناتك.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white54,
+          ),
+        ),
+        const SizedBox(height: 22),
+        SizedBox(
+          width: double.infinity,
+          height: 53,
+          child: ElevatedButton(
+            onPressed: _login,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  const Color(0xFFFF176F),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(15),
+              ),
+            ),
+            child: const Text(
+              'تسجيل الدخول',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -166,7 +357,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F8FC),
+        backgroundColor:
+            const Color(0xFF08080B),
         appBar: AppBar(
           title: const Text(
             'حسابي',
@@ -175,126 +367,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           centerTitle: true,
-          backgroundColor:
-              const Color(0xFFF7F8FC),
-          foregroundColor:
-              const Color(0xFF20232F),
+          actions: [
+            IconButton(
+              onPressed:
+                  _loading ? null : _loadProfile,
+              icon: const Icon(
+                Icons.refresh_rounded,
+              ),
+            ),
+          ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            16,
-            12,
-            16,
-            35,
-          ),
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch,
-            children: [
-              _loginCard(),
+        body: SafeArea(
+          child: _loading
+              ? const Center(
+                  child:
+                      CircularProgressIndicator(
+                    color:
+                        Color(0xFFFF176F),
+                  ),
+                )
+              : ListView(
+                  padding:
+                      const EdgeInsets.all(16),
+                  children: [
+                    if (!_loggedIn)
+                      _guest()
+                    else ...[
+                      _profileHeader(),
 
-              const SizedBox(height: 25),
+                      const SizedBox(height: 22),
 
-              const Text(
-                'الحساب',
-                style: TextStyle(
-                  color: Color(0xFF20232F),
-                  fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+                      const Text(
+                        'حسابك',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight:
+                              FontWeight.w900,
+                        ),
+                      ),
 
-              const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-              _menuItem(
-                icon: Icons.directions_car_rounded,
-                title: 'إعلاناتي',
-                onTap: () {
-                  _showMessage(
-                    'سيتم عرض إعلاناتك هنا',
-                  );
-                },
-              ),
+                      _menuItem(
+                        icon:
+                            Icons.directions_car_rounded,
+                        title: 'إعلاناتي',
+                        subtitle:
+                            'السيارات التي نشرتها',
+                        onTap: () {
+                          _message(
+                            'سيتم عرض إعلاناتك هنا',
+                          );
+                        },
+                      ),
 
-              _menuItem(
-                icon: Icons.favorite_rounded,
-                title: 'المفضلة',
-                onTap: () {
-                  _showMessage(
-                    'قائمة المفضلة',
-                  );
-                },
-              ),
+                      _menuItem(
+                        icon:
+                            Icons.favorite_rounded,
+                        title: 'المفضلة',
+                        subtitle:
+                            'السيارات المحفوظة',
+                        onTap: () {
+                          _message(
+                            'قسم المفضلة',
+                          );
+                        },
+                      ),
 
-              _menuItem(
-                icon: Icons.notifications_rounded,
-                title: 'الإشعارات',
-                onTap: () {
-                  _showMessage(
-                    'الإشعارات',
-                  );
-                },
-              ),
+                      _menuItem(
+                        icon:
+                            Icons.receipt_long_rounded,
+                        title: 'المدفوعات',
+                        subtitle:
+                            'عمليات الدفع والاشتراكات',
+                        onTap: () {
+                          _message(
+                            'قسم المدفوعات',
+                          );
+                        },
+                      ),
 
-              const SizedBox(height: 15),
+                      if (_role == 'owner' ||
+                          _role == 'admin') ...[
+                        const SizedBox(height: 12),
+                        const Text(
+                          'الإدارة',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight:
+                                FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _menuItem(
+                          icon:
+                              Icons.admin_panel_settings_rounded,
+                          title: 'لوحة الإدارة',
+                          subtitle:
+                              'إدارة المستخدمين والإعلانات والطلبات',
+                          onTap: () {
+                            _message(
+                              'افتح لوحة الإدارة من قسم الإدارة',
+                            );
+                          },
+                        ),
+                      ],
 
-              const Text(
-                'المساعدة',
-                style: TextStyle(
-                  color: Color(0xFF20232F),
-                  fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+                      const SizedBox(height: 12),
 
-              const SizedBox(height: 12),
-
-              _menuItem(
-                icon: Icons.support_agent_rounded,
-                title: 'الدعم والتواصل',
-                onTap: () {
-                  _showMessage(
-                    'سيتم إضافة الدعم والتواصل',
-                  );
-                },
-              ),
-
-              _menuItem(
-                icon: Icons.info_outline_rounded,
-                title: 'عن بنت الموصل',
-                onTap: () {
-                  showAboutDialog(
-                    context: context,
-                    applicationName:
-                        'بنت الموصل للسيارات',
-                    applicationVersion: '1.0.0',
-                    applicationIcon: const Icon(
-                      Icons.directions_car_rounded,
-                      color: Color(0xFFFF4F91),
-                    ),
-                    children: const [
-                      Text(
-                        'منصة عراقية لبيع وشراء السيارات وقطع الغيار.',
+                      _menuItem(
+                        icon:
+                            Icons.logout_rounded,
+                        title:
+                            'تسجيل الخروج',
+                        iconColor:
+                            Colors.redAccent,
+                        onTap: _logout,
                       ),
                     ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: 15),
-
-              _menuItem(
-                icon: Icons.logout_rounded,
-                title: 'تسجيل الخروج',
-                danger: true,
-                onTap: () {
-                  _showMessage(
-                    'سيتم ربط تسجيل الخروج مع السيرفر',
-                  );
-                },
-              ),
-            ],
-          ),
+                  ],
+                ),
         ),
       ),
     );
