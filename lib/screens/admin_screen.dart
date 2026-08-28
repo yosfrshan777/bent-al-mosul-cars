@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'admin_payment_screen.dart';
+import 'admin_requests_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({
@@ -15,173 +17,103 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  int _section = 0;
-  bool _loading = false;
+  bool _loading = true;
 
-  final _phoneController = TextEditingController();
-  final _cardController = TextEditingController();
-  final _accountController = TextEditingController();
+  int _cars = 0;
+  int _users = 0;
+  int _requests = 0;
 
-  final _normalController =
-      TextEditingController(text: '10000');
-  final _featuredController =
-      TextEditingController(text: '20000');
-  final _vipController =
-      TextEditingController(text: '30000');
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
 
-  final List<_Section> _sections = const [
-    _Section('المعارض', Icons.store_rounded),
-    _Section('قطع الغيار', Icons.build_rounded),
-    _Section('البيع والشراء', Icons.swap_horiz_rounded),
-  ];
-
-  Future<void> _loadPaymentSettings() async {
-    setState(() => _loading = true);
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _loading = true;
+    });
 
     try {
-      final data =
-          await widget.api.getPaymentSettings();
+      final data = await widget.api.getAdminData();
+
+      if (!mounted) return;
 
       if (data is Map) {
-        _phoneController.text =
-            data['phone']?.toString() ?? '';
-        _cardController.text =
-            data['card_number']?.toString() ?? '';
-        _accountController.text =
-            data['account_name']?.toString() ?? '';
+        setState(() {
+          _cars = _toInt(
+            data['cars_count'] ??
+                data['cars'] ??
+                0,
+          );
+
+          _users = _toInt(
+            data['users_count'] ??
+                data['users'] ??
+                0,
+          );
+
+          _requests = _toInt(
+            data['requests_count'] ??
+                data['pending_requests'] ??
+                0,
+          );
+        });
       }
     } catch (_) {
-      _message('تعذر تحميل إعدادات التحويل');
+      if (mounted) {
+        _message(
+          'تعذر تحميل بيانات الإدارة',
+        );
+      }
     } finally {
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() {
+          _loading = false;
+        });
       }
     }
   }
 
-  Future<void> _savePaymentSettings() async {
-    setState(() => _loading = true);
+  int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
 
-    try {
-      await widget.api.updatePaymentSettings(
-        phone: _phoneController.text.trim(),
-        cardNumber: _cardController.text.trim(),
-        accountName:
-            _accountController.text.trim(),
-      );
-
-      _message('تم حفظ طريقة الاستلام والتحويل');
-    } on ApiException catch (e) {
-      _message(e.message);
-    } catch (_) {
-      _message('حدث خطأ أثناء الحفظ');
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
+    return int.tryParse(
+          value?.toString() ?? '',
+        ) ??
+        0;
   }
 
-  Future<void> _savePrices() async {
-    final normal =
-        int.tryParse(_normalController.text) ?? 0;
-    final featured =
-        int.tryParse(_featuredController.text) ?? 0;
-    final vip =
-        int.tryParse(_vipController.text) ?? 0;
-
-    if (normal <= 0 ||
-        featured <= 0 ||
-        vip <= 0) {
-      _message('أدخل أسعار صحيحة');
-      return;
-    }
-
-    setState(() => _loading = true);
-
-    try {
-      await widget.api.updatePlanPrices(
-        normal: normal,
-        featured: featured,
-        vip: vip,
-      );
-
-      _message('تم حفظ أسعار الإعلانات');
-    } on ApiException catch (e) {
-      _message(e.message);
-    } catch (_) {
-      _message('حدث خطأ أثناء حفظ الأسعار');
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
-  void _message(String text) {
+  void _message(String message) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(
-            text,
-            textDirection: TextDirection.rtl,
-          ),
+          content: Text(message),
         ),
       );
   }
 
-  Widget _sectionButton(int index) {
-    final selected = _section == index;
-    final item = _sections[index];
+  void _openPayment() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminPaymentScreen(
+          api: widget.api,
+        ),
+      ),
+    );
+  }
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() => _section = index);
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(
-            horizontal: 3,
-          ),
-          padding: const EdgeInsets.symmetric(
-            vertical: 13,
-          ),
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFFFF176F)
-                : const Color(0xFF15151B),
-            borderRadius:
-                BorderRadius.circular(14),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFFFF176F)
-                  : const Color(0xFF292932),
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                item.icon,
-                color: Colors.white,
-                size: 23,
-              ),
-              const SizedBox(height: 5),
-              Text(
-                item.title,
-                maxLines: 1,
-                overflow:
-                    TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+  void _openRequests() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminRequestsScreen(
+          api: widget.api,
         ),
       ),
     );
@@ -190,15 +122,14 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget _stat(
     IconData icon,
     String title,
-    String value,
+    int value,
   ) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(13),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: const Color(0xFF15151B),
-          borderRadius:
-              BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(17),
           border: Border.all(
             color: const Color(0xFF292932),
           ),
@@ -208,14 +139,14 @@ class _AdminScreenState extends State<AdminScreen> {
             Icon(
               icon,
               color: const Color(0xFFFF176F),
-              size: 24,
+              size: 25,
             ),
             const SizedBox(height: 7),
             Text(
-              value,
+              '$value',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 19,
+                fontSize: 20,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -232,308 +163,57 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  Widget _textField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType? keyboardType,
+  Widget _menuCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
   }) {
-    return Padding(
-      padding:
-          const EdgeInsets.only(bottom: 12),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        textDirection: TextDirection.rtl,
-        style: const TextStyle(
-          color: Colors.white,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF15151B),
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(
+          color: const Color(0xFF292932),
         ),
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 4,
+        ),
+        leading: Container(
+          width: 45,
+          height: 45,
+          decoration: BoxDecoration(
+            color: const Color(0xFF28141F),
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Icon(
             icon,
             color: const Color(0xFFFF176F),
           ),
-          filled: true,
-          fillColor: const Color(0xFF15151B),
-          labelStyle: const TextStyle(
-            color: Colors.white54,
-          ),
-          border: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Color(0xFF292932),
-            ),
-          ),
         ),
-      ),
-    );
-  }
-
-  Widget _paymentSettings() {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'طريقة الاستلام والتحويل',
-          style: TextStyle(
+        title: Text(
+          title,
+          style: const TextStyle(
             color: Colors.white,
-            fontSize: 20,
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 7),
-        const Text(
-          'من هنا المالك يغير رقم الهاتف أو البطاقة التي يتم التحويل إليها.',
-          style: TextStyle(
-            color: Colors.white54,
-            fontSize: 12,
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            color: Colors.white38,
+            fontSize: 11,
           ),
         ),
-        const SizedBox(height: 16),
-
-        _textField(
-          _phoneController,
-          'رقم الهاتف للتحويل',
-          Icons.phone_rounded,
-          keyboardType: TextInputType.phone,
+        trailing: const Icon(
+          Icons.chevron_left_rounded,
+          color: Colors.white30,
         ),
-
-        _textField(
-          _cardController,
-          'رقم البطاقة',
-          Icons.credit_card_rounded,
-          keyboardType: TextInputType.number,
-        ),
-
-        _textField(
-          _accountController,
-          'اسم صاحب الحساب',
-          Icons.person_rounded,
-        ),
-
-        const SizedBox(height: 5),
-
-        SizedBox(
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed:
-                _loading
-                    ? null
-                    : _savePaymentSettings,
-            icon: const Icon(
-              Icons.save_rounded,
-            ),
-            label: const Text(
-              'حفظ بيانات التحويل',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            style:
-                ElevatedButton.styleFrom(
-              backgroundColor:
-                  const Color(0xFFFF176F),
-              foregroundColor: Colors.white,
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(14),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _prices() {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'أسعار الإعلانات',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 15),
-
-        _textField(
-          _normalController,
-          'الإعلان العادي',
-          Icons.sell_outlined,
-          keyboardType: TextInputType.number,
-        ),
-
-        _textField(
-          _featuredController,
-          'الإعلان المميز',
-          Icons.star_rounded,
-          keyboardType: TextInputType.number,
-        ),
-
-        _textField(
-          _vipController,
-          'إعلان VIP',
-          Icons.workspace_premium_rounded,
-          keyboardType: TextInputType.number,
-        ),
-
-        SizedBox(
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed:
-                _loading ? null : _savePrices,
-            icon: const Icon(
-              Icons.save_rounded,
-            ),
-            label: const Text(
-              'حفظ الأسعار',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            style:
-                ElevatedButton.styleFrom(
-              backgroundColor:
-                  const Color(0xFFFF176F),
-              foregroundColor: Colors.white,
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(14),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _requests() {
-    final section = _sections[_section];
-
-    return Container(
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius:
-            BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            section.icon,
-            color: const Color(0xFFFF176F),
-            size: 40,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'طلبات ${section.title}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 5),
-          const Text(
-            'الطلبات المعلقة تظهر هنا ليوافق عليها الأدمن أو المالك.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 15),
-          OutlinedButton.icon(
-            onPressed: () {
-              _message(
-                'سيتم تحميل طلبات هذا القسم من السيرفر',
-              );
-            },
-            icon: const Icon(
-              Icons.refresh_rounded,
-            ),
-            label: const Text(
-              'تحديث الطلبات',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _admins() {
-    return Container(
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius:
-            BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'الأدمنية والمالك',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'هذا القسم يظهر للمالك والأدمن المخول فقط.',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 15),
-          ListTile(
-            tileColor:
-                const Color(0xFF202027),
-            shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(14),
-            ),
-            leading: const Icon(
-              Icons.shield_rounded,
-              color: Color(0xFFFF176F),
-            ),
-            title: const Text(
-              'إدارة الصلاحيات',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            trailing: const Icon(
-              Icons.chevron_left_rounded,
-              color: Colors.white38,
-            ),
-            onTap: () {
-              _message(
-                'إدارة الأدمنية والصلاحيات',
-              );
-            },
-          ),
-        ],
       ),
     );
   }
@@ -543,102 +223,206 @@ class _AdminScreenState extends State<AdminScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-            const Color(0xFF08080B),
+        backgroundColor: const Color(0xFF08080B),
         appBar: AppBar(
           title: const Text(
-            'الإدارة',
+            'لوحة الإدارة',
             style: TextStyle(
               fontWeight: FontWeight.w900,
             ),
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              onPressed:
+                  _loading ? null : _loadDashboard,
+              icon: const Icon(
+                Icons.refresh_rounded,
+              ),
+            ),
+          ],
         ),
         body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Row(
-                children: [
-                  _stat(
-                    Icons.directions_car_rounded,
-                    'عدد السيارات',
-                    '0',
+          child: RefreshIndicator(
+            color: const Color(0xFFFF176F),
+            onRefresh: _loadDashboard,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                      colors: [
+                        Color(0xFF321222),
+                        Color(0xFF15151B),
+                      ],
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(21),
+                    border: Border.all(
+                      color: const Color(0xFF3A2631),
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _stat(
-                    Icons.people_rounded,
-                    'المستخدمون',
-                    '0',
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons
+                            .admin_panel_settings_rounded,
+                        color: Color(0xFFFF176F),
+                        size: 42,
+                      ),
+                      SizedBox(width: 13),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'إدارة ZYOCAR',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 21,
+                                fontWeight:
+                                    FontWeight.w900,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'إدارة الإعلانات والطلبات وطرق الاستلام',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  _stat(
-                    Icons.pending_actions_rounded,
-                    'الطلبات',
-                    '0',
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 22),
-
-              const Text(
-                'أقسام الموافقات',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
                 ),
-              ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
-              Row(
-                children: List.generate(
-                  _sections.length,
-                  _sectionButton,
+                Row(
+                  children: [
+                    _stat(
+                      Icons.directions_car_rounded,
+                      'السيارات',
+                      _cars,
+                    ),
+                    const SizedBox(width: 8),
+                    _stat(
+                      Icons.people_rounded,
+                      'المستخدمون',
+                      _users,
+                    ),
+                    const SizedBox(width: 8),
+                    _stat(
+                      Icons.pending_actions_rounded,
+                      'الطلبات',
+                      _requests,
+                    ),
+                  ],
                 ),
-              ),
 
-              const SizedBox(height: 15),
+                const SizedBox(height: 25),
 
-              _requests(),
+                const Text(
+                  'الإدارة',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
 
-              const SizedBox(height: 22),
+                const SizedBox(height: 12),
 
-              _paymentSettings(),
+                _menuCard(
+                  icon: Icons.payments_rounded,
+                  title: 'طريقة الاستلام والتحويل',
+                  subtitle:
+                      'تغيير رقم الهاتف أو رقم البطاقة',
+                  onTap: _openPayment,
+                ),
 
-              const SizedBox(height: 25),
+                _menuCard(
+                  icon: Icons.fact_check_rounded,
+                  title: 'طلبات الموافقة',
+                  subtitle:
+                      'المعارض وقطع الغيار والإعلانات',
+                  onTap: _openRequests,
+                ),
 
-              _prices(),
+                _menuCard(
+                  icon:
+                      Icons.directions_car_rounded,
+                  title: 'إدارة السيارات',
+                  subtitle:
+                      'مراجعة وإدارة إعلانات السيارات',
+                  onTap: () {
+                    _message(
+                      'إدارة السيارات مرتبطة بالسيرفر',
+                    );
+                  },
+                ),
 
-              const SizedBox(height: 25),
+                _menuCard(
+                  icon: Icons.people_rounded,
+                  title: 'المستخدمون',
+                  subtitle:
+                      'إدارة حسابات المستخدمين',
+                  onTap: () {
+                    _message(
+                      'إدارة المستخدمين مرتبطة بالسيرفر',
+                    );
+                  },
+                ),
 
-              _admins(),
+                const SizedBox(height: 20),
 
-              const SizedBox(height: 30),
-            ],
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF15151B),
+                    borderRadius:
+                        BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF292932),
+                    ),
+                  ),
+                  child: const Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.lock_rounded,
+                        color: Color(0xFFFF176F),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'لوحة الإدارة مخصصة للمالك والأدمن المخول فقط. تغيير بيانات التحويل يجب أن يتم من خلال صلاحية الإدارة.',
+                          style: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    _cardController.dispose();
-    _accountController.dispose();
-    _normalController.dispose();
-    _featuredController.dispose();
-    _vipController.dispose();
-    super.dispose();
-  }
-}
-
-class _Section {
-  final String title;
-  final IconData icon;
-
-  const _Section(this.title, this.icon);
 }
