@@ -17,20 +17,29 @@ class AdminPaymentScreen extends StatefulWidget {
 
 class _AdminPaymentScreenState
     extends State<AdminPaymentScreen> {
-  final _phoneController = TextEditingController();
-  final _cardController = TextEditingController();
-  final _accountController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  String _method = 'phone';
-  bool _loading = false;
+  final _phoneController =
+      TextEditingController();
+
+  final _cardController =
+      TextEditingController();
+
+  final _nameController =
+      TextEditingController();
+
+  String _method = 'card';
+
+  bool _loading = true;
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadSettings();
   }
 
-  Future<void> _load() async {
+  Future<void> _loadSettings() async {
     setState(() {
       _loading = true;
     });
@@ -39,6 +48,8 @@ class _AdminPaymentScreenState
       final data =
           await widget.api.getPaymentSettings();
 
+      if (!mounted) return;
+
       if (data is Map) {
         _phoneController.text =
             data['phone']?.toString() ?? '';
@@ -46,15 +57,20 @@ class _AdminPaymentScreenState
         _cardController.text =
             data['card_number']?.toString() ?? '';
 
-        _accountController.text =
+        _nameController.text =
             data['account_name']?.toString() ?? '';
 
         final method =
             data['method']?.toString();
 
-        if (method == 'phone' ||
-            method == 'card') {
-          _method = method!;
+        if (method != null &&
+            [
+              'card',
+              'qi',
+              'bank',
+              'cash',
+            ].contains(method)) {
+          _method = method;
         }
       }
     } on ApiException catch (e) {
@@ -73,68 +89,54 @@ class _AdminPaymentScreenState
   }
 
   Future<void> _save() async {
-    final phone =
-        _phoneController.text.trim();
-
-    final card =
-        _cardController.text.trim();
-
-    final account =
-        _accountController.text.trim();
-
-    if (_method == 'phone' && phone.isEmpty) {
-      _message('أدخل رقم الهاتف');
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    if (_method == 'card' && card.isEmpty) {
-      _message('أدخل رقم البطاقة');
-      return;
-    }
+    FocusScope.of(context).unfocus();
 
     setState(() {
-      _loading = true;
+      _saving = true;
     });
 
     try {
       await widget.api.updatePaymentSettings(
-        phone: phone,
-        cardNumber: card,
-        accountName: account,
+        phone: _phoneController.text.trim(),
+        cardNumber:
+            _cardController.text.trim(),
+        accountName:
+            _nameController.text.trim(),
         method: _method,
       );
 
       if (!mounted) return;
 
       _message(
-        'تم حفظ بيانات الاستلام بنجاح',
+        'تم حفظ بيانات الاستلام',
       );
     } on ApiException catch (e) {
       _message(e.message);
     } catch (_) {
       _message(
-        'حدث خطأ أثناء حفظ البيانات',
+        'تعذر حفظ البيانات',
       );
     } finally {
       if (mounted) {
         setState(() {
-          _loading = false;
+          _saving = false;
         });
       }
     }
   }
 
-  void _message(String message) {
+  void _message(String text) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(
-            message,
-            textDirection: TextDirection.rtl,
-          ),
+          content: Text(text),
         ),
       );
   }
@@ -166,90 +168,7 @@ class _AdminPaymentScreenState
             BorderRadius.circular(15),
         borderSide: const BorderSide(
           color: Color(0xFFFF176F),
-        ),
-      ),
-    );
-  }
-
-  Widget _methodCard({
-    required String value,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-  }) {
-    final selected = _method == value;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _method = value;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFF2A1420)
-              : const Color(0xFF15151B),
-          borderRadius:
-              BorderRadius.circular(17),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFFFF176F)
-                : const Color(0xFF292932),
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: selected
-                    ? const Color(0xFFFF176F)
-                    : const Color(0xFF222229),
-                borderRadius:
-                    BorderRadius.circular(14),
-              ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Colors.white54,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              selected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_off,
-              color: selected
-                  ? const Color(0xFFFF176F)
-                  : Colors.white30,
-            ),
-          ],
+          width: 1.5,
         ),
       ),
     );
@@ -264,179 +183,249 @@ class _AdminPaymentScreenState
             const Color(0xFF08080B),
         appBar: AppBar(
           title: const Text(
-            'طريقة الاستلام',
+            'بيانات الاستلام',
             style: TextStyle(
               fontWeight: FontWeight.w900,
             ),
           ),
           centerTitle: true,
         ),
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const Text(
-                'بيانات التحويل',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 23,
-                  fontWeight: FontWeight.w900,
+        body: _loading
+            ? const Center(
+                child:
+                    CircularProgressIndicator(
+                  color: Color(0xFFFF176F),
                 ),
-              ),
-
-              const SizedBox(height: 7),
-
-              const Text(
-                'المالك أو الأدمن المخول يقدر يغير وسيلة استلام المبالغ من هنا.',
-                style: TextStyle(
-                  color: Colors.white54,
-                  height: 1.6,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              _methodCard(
-                value: 'phone',
-                title: 'تحويل إلى رقم الهاتف',
-                subtitle:
-                    'المستخدم يحول الرصيد إلى رقم الهاتف المحدد',
-                icon: Icons.phone_rounded,
-              ),
-
-              const SizedBox(height: 10),
-
-              _methodCard(
-                value: 'card',
-                title: 'تحويل إلى رقم البطاقة',
-                subtitle:
-                    'المستخدم يحول المبلغ إلى البطاقة المحددة',
-                icon: Icons.credit_card_rounded,
-              ),
-
-              const SizedBox(height: 22),
-
-              TextField(
-                controller: _phoneController,
-                keyboardType:
-                    TextInputType.phone,
-                textDirection:
-                    TextDirection.ltr,
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
-                decoration: _decoration(
-                  label:
-                      'رقم الهاتف للتحويل',
-                  icon: Icons.phone_rounded,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              TextField(
-                controller: _cardController,
-                keyboardType:
-                    TextInputType.number,
-                textDirection:
-                    TextDirection.ltr,
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
-                decoration: _decoration(
-                  label: 'رقم البطاقة',
-                  icon:
-                      Icons.credit_card_rounded,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              TextField(
-                controller:
-                    _accountController,
-                textDirection:
-                    TextDirection.rtl,
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
-                decoration: _decoration(
-                  label: 'اسم صاحب الحساب',
-                  icon:
-                      Icons.person_rounded,
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              Container(
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF15151B),
-                  borderRadius:
-                      BorderRadius.circular(15),
-                ),
-                child: const Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+              )
+            : Form(
+                key: _formKey,
+                child: ListView(
+                  padding:
+                      const EdgeInsets.all(16),
                   children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color:
-                          Color(0xFFFF176F),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'غيّر البيانات من هنا فقط. التطبيق يستخدم البيانات المحفوظة من السيرفر عند عرض تعليمات الدفع.',
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 12,
-                          height: 1.6,
+                    Container(
+                      padding:
+                          const EdgeInsets.all(17),
+                      decoration:
+                          BoxDecoration(
+                        gradient:
+                            const LinearGradient(
+                          colors: [
+                            Color(0xFF321222),
+                            Color(0xFF15151B),
+                          ],
                         ),
+                        borderRadius:
+                            BorderRadius.circular(
+                          18,
+                        ),
+                        border: Border.all(
+                          color: const Color(
+                            0xFF3A2631,
+                          ),
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons
+                                .account_balance_wallet_rounded,
+                            color: Color(
+                              0xFFFF176F,
+                            ),
+                            size: 35,
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'من هنا تغيّر بيانات الحساب الذي يستلم الدفعات من المستخدمين.',
+                              style: TextStyle(
+                                color:
+                                    Colors.white70,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    DropdownButtonFormField<
+                        String>(
+                      value: _method,
+                      dropdownColor:
+                          const Color(
+                        0xFF15151B,
+                      ),
+                      decoration:
+                          _decoration(
+                        label:
+                            'طريقة الاستلام',
+                        icon: Icons
+                            .payments_rounded,
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'card',
+                          child: Text(
+                            'بطاقة',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'qi',
+                          child: Text(
+                            'Qi Card',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'bank',
+                          child: Text(
+                            'تحويل مصرفي',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'cash',
+                          child: Text(
+                            'نقدي',
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+
+                        setState(() {
+                          _method = value;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 13),
+
+                    TextFormField(
+                      controller:
+                          _nameController,
+                      style:
+                          const TextStyle(
+                        color: Colors.white,
+                      ),
+                      decoration:
+                          _decoration(
+                        label:
+                            'اسم صاحب الحساب',
+                        icon:
+                            Icons.person_rounded,
+                      ),
+                      validator: (value) {
+                        if (value == null ||
+                            value.trim().isEmpty) {
+                          return 'أدخل اسم صاحب الحساب';
+                        }
+
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 13),
+
+                    TextFormField(
+                      controller:
+                          _phoneController,
+                      keyboardType:
+                          TextInputType.phone,
+                      textDirection:
+                          TextDirection.ltr,
+                      style:
+                          const TextStyle(
+                        color: Colors.white,
+                      ),
+                      decoration:
+                          _decoration(
+                        label:
+                            'رقم الهاتف',
+                        icon:
+                            Icons.phone_rounded,
+                      ),
+                    ),
+
+                    const SizedBox(height: 13),
+
+                    TextFormField(
+                      controller:
+                          _cardController,
+                      keyboardType:
+                          TextInputType.number,
+                      textDirection:
+                          TextDirection.ltr,
+                      style:
+                          const TextStyle(
+                        color: Colors.white,
+                      ),
+                      decoration:
+                          _decoration(
+                        label:
+                            'رقم البطاقة / الحساب',
+                        icon:
+                            Icons.credit_card_rounded,
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    SizedBox(
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed:
+                            _saving
+                                ? null
+                                : _save,
+                        style:
+                            ElevatedButton
+                                .styleFrom(
+                          backgroundColor:
+                              const Color(
+                            0xFFFF176F,
+                          ),
+                          foregroundColor:
+                              Colors.white,
+                          shape:
+                              RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              15,
+                            ),
+                          ),
+                        ),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child:
+                                    CircularProgressIndicator(
+                                  color:
+                                      Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'حفظ البيانات',
+                                style:
+                                    TextStyle(
+                                  fontSize: 18,
+                                  fontWeight:
+                                      FontWeight
+                                          .w900,
+                                ),
+                              ),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                height: 55,
-                child: ElevatedButton.icon(
-                  onPressed:
-                      _loading ? null : _save,
-                  icon: const Icon(
-                    Icons.save_rounded,
-                  ),
-                  label: Text(
-                    _loading
-                        ? 'جاري الحفظ...'
-                        : 'حفظ التغييرات',
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight:
-                          FontWeight.w900,
-                    ),
-                  ),
-                  style:
-                      ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFFFF176F),
-                    foregroundColor:
-                        Colors.white,
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -445,7 +434,8 @@ class _AdminPaymentScreenState
   void dispose() {
     _phoneController.dispose();
     _cardController.dispose();
-    _accountController.dispose();
+    _nameController.dispose();
+
     super.dispose();
   }
 }
