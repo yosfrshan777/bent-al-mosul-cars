@@ -1,40 +1,51 @@
 class Message {
   final int id;
-  final int? carId;
   final int senderId;
   final int receiverId;
-  final String body;
+  final String text;
+  final bool isRead;
+  final String? senderName;
+  final String? receiverName;
   final String? createdAt;
 
   const Message({
     required this.id,
-    this.carId,
     required this.senderId,
     required this.receiverId,
-    required this.body,
+    required this.text,
+    required this.isRead,
+    this.senderName,
+    this.receiverName,
     this.createdAt,
   });
 
-  factory Message.fromJson(Map<String, dynamic> json) {
+  factory Message.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return Message(
       id: _toInt(json['id']),
-      carId: json['car_id'] == null
-          ? null
-          : _toInt(json['car_id']),
       senderId: _toInt(json['sender_id']),
       receiverId: _toInt(json['receiver_id']),
-      body: json['body']?.toString() ?? '',
-      createdAt: json['created_at']?.toString(),
+      text: json['text']?.toString() ?? '',
+      isRead: _toBool(json['is_read']),
+      senderName:
+          json['sender_name']?.toString(),
+      receiverName:
+          json['receiver_name']?.toString(),
+      createdAt:
+          json['created_at']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'car_id': carId,
       'sender_id': senderId,
       'receiver_id': receiverId,
-      'body': body,
+      'text': text,
+      'is_read': isRead,
+      'sender_name': senderName,
+      'receiver_name': receiverName,
       'created_at': createdAt,
     };
   }
@@ -47,5 +58,20 @@ class Message {
           value?.toString() ?? '',
         ) ??
         0;
+  }
+
+  static bool _toBool(dynamic value) {
+    if (value is bool) return value;
+
+    if (value is num) {
+      return value != 0;
+    }
+
+    final text =
+        value?.toString().toLowerCase();
+
+    return text == 'true' ||
+        text == '1' ||
+        text == 'yes';
   }
 }
