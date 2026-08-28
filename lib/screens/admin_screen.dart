@@ -11,89 +11,461 @@ class AdminScreen extends StatefulWidget {
   final ApiService api;
 
   @override
-  State<AdminScreen> createState() =>
-      _AdminScreenState();
+  State<AdminScreen> createState() => _AdminScreenState();
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  int _selectedSection = 0;
+  int _section = 0;
+  bool _loading = false;
 
-  final List<_AdminSection> _sections = const [
-    _AdminSection(
-      title: 'المعارض',
-      icon: Icons.store_rounded,
-    ),
-    _AdminSection(
-      title: 'قطع الغيار',
-      icon: Icons.build_rounded,
-    ),
-    _AdminSection(
-      title: 'البيع والشراء',
-      icon: Icons.swap_horiz_rounded,
-    ),
+  final _phoneController = TextEditingController();
+  final _cardController = TextEditingController();
+  final _accountController = TextEditingController();
+
+  final _normalController =
+      TextEditingController(text: '10000');
+  final _featuredController =
+      TextEditingController(text: '20000');
+  final _vipController =
+      TextEditingController(text: '30000');
+
+  final List<_Section> _sections = const [
+    _Section('المعارض', Icons.store_rounded),
+    _Section('قطع الغيار', Icons.build_rounded),
+    _Section('البيع والشراء', Icons.swap_horiz_rounded),
   ];
 
-  void _showMessage(String message) {
+  Future<void> _loadPaymentSettings() async {
+    setState(() => _loading = true);
+
+    try {
+      final data =
+          await widget.api.getPaymentSettings();
+
+      if (data is Map) {
+        _phoneController.text =
+            data['phone']?.toString() ?? '';
+        _cardController.text =
+            data['card_number']?.toString() ?? '';
+        _accountController.text =
+            data['account_name']?.toString() ?? '';
+      }
+    } catch (_) {
+      _message('تعذر تحميل إعدادات التحويل');
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _savePaymentSettings() async {
+    setState(() => _loading = true);
+
+    try {
+      await widget.api.updatePaymentSettings(
+        phone: _phoneController.text.trim(),
+        cardNumber: _cardController.text.trim(),
+        accountName:
+            _accountController.text.trim(),
+      );
+
+      _message('تم حفظ طريقة الاستلام والتحويل');
+    } on ApiException catch (e) {
+      _message(e.message);
+    } catch (_) {
+      _message('حدث خطأ أثناء الحفظ');
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _savePrices() async {
+    final normal =
+        int.tryParse(_normalController.text) ?? 0;
+    final featured =
+        int.tryParse(_featuredController.text) ?? 0;
+    final vip =
+        int.tryParse(_vipController.text) ?? 0;
+
+    if (normal <= 0 ||
+        featured <= 0 ||
+        vip <= 0) {
+      _message('أدخل أسعار صحيحة');
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      await widget.api.updatePlanPrices(
+        normal: normal,
+        featured: featured,
+        vip: vip,
+      );
+
+      _message('تم حفظ أسعار الإعلانات');
+    } on ApiException catch (e) {
+      _message(e.message);
+    } catch (_) {
+      _message('حدث خطأ أثناء حفظ الأسعار');
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  void _message(String text) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(
-            message,
+            text,
             textDirection: TextDirection.rtl,
           ),
         ),
       );
   }
 
-  Widget _buildHeader() {
+  Widget _sectionButton(int index) {
+    final selected = _section == index;
+    final item = _sections[index];
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() => _section = index);
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(
+            horizontal: 3,
+          ),
+          padding: const EdgeInsets.symmetric(
+            vertical: 13,
+          ),
+          decoration: BoxDecoration(
+            color: selected
+                ? const Color(0xFFFF176F)
+                : const Color(0xFF15151B),
+            borderRadius:
+                BorderRadius.circular(14),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFFFF176F)
+                  : const Color(0xFF292932),
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                item.icon,
+                color: Colors.white,
+                size: 23,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                item.title,
+                maxLines: 1,
+                overflow:
+                    TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _stat(
+    IconData icon,
+    String title,
+    String value,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: const Color(0xFF15151B),
+          borderRadius:
+              BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF292932),
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFFFF176F),
+              size: 24,
+            ),
+            const SizedBox(height: 7),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _textField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType? keyboardType,
+  }) {
+    return Padding(
+      padding:
+          const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        textDirection: TextDirection.rtl,
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(
+            icon,
+            color: const Color(0xFFFF176F),
+          ),
+          filled: true,
+          fillColor: const Color(0xFF15151B),
+          labelStyle: const TextStyle(
+            color: Colors.white54,
+          ),
+          border: OutlineInputBorder(
+            borderRadius:
+                BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Color(0xFF292932),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _paymentSettings() {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'طريقة الاستلام والتحويل',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 7),
+        const Text(
+          'من هنا المالك يغير رقم الهاتف أو البطاقة التي يتم التحويل إليها.',
+          style: TextStyle(
+            color: Colors.white54,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        _textField(
+          _phoneController,
+          'رقم الهاتف للتحويل',
+          Icons.phone_rounded,
+          keyboardType: TextInputType.phone,
+        ),
+
+        _textField(
+          _cardController,
+          'رقم البطاقة',
+          Icons.credit_card_rounded,
+          keyboardType: TextInputType.number,
+        ),
+
+        _textField(
+          _accountController,
+          'اسم صاحب الحساب',
+          Icons.person_rounded,
+        ),
+
+        const SizedBox(height: 5),
+
+        SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed:
+                _loading
+                    ? null
+                    : _savePaymentSettings,
+            icon: const Icon(
+              Icons.save_rounded,
+            ),
+            label: const Text(
+              'حفظ بيانات التحويل',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            style:
+                ElevatedButton.styleFrom(
+              backgroundColor:
+                  const Color(0xFFFF176F),
+              foregroundColor: Colors.white,
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _prices() {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'أسعار الإعلانات',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 15),
+
+        _textField(
+          _normalController,
+          'الإعلان العادي',
+          Icons.sell_outlined,
+          keyboardType: TextInputType.number,
+        ),
+
+        _textField(
+          _featuredController,
+          'الإعلان المميز',
+          Icons.star_rounded,
+          keyboardType: TextInputType.number,
+        ),
+
+        _textField(
+          _vipController,
+          'إعلان VIP',
+          Icons.workspace_premium_rounded,
+          keyboardType: TextInputType.number,
+        ),
+
+        SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed:
+                _loading ? null : _savePrices,
+            icon: const Icon(
+              Icons.save_rounded,
+            ),
+            label: const Text(
+              'حفظ الأسعار',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            style:
+                ElevatedButton.styleFrom(
+              backgroundColor:
+                  const Color(0xFFFF176F),
+              foregroundColor: Colors.white,
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _requests() {
+    final section = _sections[_section];
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: const Color(0xFF15151B),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius:
+            BorderRadius.circular(18),
         border: Border.all(
           color: const Color(0xFF292932),
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2A1420),
-              borderRadius: BorderRadius.circular(17),
-            ),
-            child: const Icon(
-              Icons.admin_panel_settings_rounded,
-              color: Color(0xFFFF176F),
-              size: 32,
+          Icon(
+            section.icon,
+            color: const Color(0xFFFF176F),
+            size: 40,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'طلبات ${section.title}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'لوحة الإدارة',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'إدارة الطلبات والإعلانات',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 5),
+          const Text(
+            'الطلبات المعلقة تظهر هنا ليوافق عليها الأدمن أو المالك.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 15),
+          OutlinedButton.icon(
+            onPressed: () {
+              _message(
+                'سيتم تحميل طلبات هذا القسم من السيرفر',
+              );
+            },
+            icon: const Icon(
+              Icons.refresh_rounded,
+            ),
+            label: const Text(
+              'تحديث الطلبات',
             ),
           ),
         ],
@@ -101,91 +473,13 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  Widget _buildSections() {
-    return Column(
-      children: List.generate(
-        _sections.length,
-        (index) {
-          final section = _sections[index];
-          final selected =
-              _selectedSection == index;
-
-          return Padding(
-            padding:
-                const EdgeInsets.only(bottom: 10),
-            child: Material(
-              color: selected
-                  ? const Color(0xFF2A1420)
-                  : const Color(0xFF15151B),
-              borderRadius:
-                  BorderRadius.circular(17),
-              child: InkWell(
-                borderRadius:
-                    BorderRadius.circular(17),
-                onTap: () {
-                  setState(() {
-                    _selectedSection = index;
-                  });
-                },
-                child: Padding(
-                  padding:
-                      const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? const Color(
-                                  0xFFFF176F,
-                                )
-                              : const Color(
-                                  0xFF222229,
-                                ),
-                          borderRadius:
-                              BorderRadius.circular(14),
-                        ),
-                        child: Icon(
-                          section.icon,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 13),
-                      Expanded(
-                        child: Text(
-                          section.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_left_rounded,
-                        color: Colors.white54,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildRequests() {
-    final section = _sections[_selectedSection];
-
+  Widget _admins() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: const Color(0xFF15151B),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius:
+            BorderRadius.circular(18),
         border: Border.all(
           color: const Color(0xFF292932),
         ),
@@ -194,243 +488,52 @@ class _AdminScreenState extends State<AdminScreen> {
         crossAxisAlignment:
             CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Icon(
-                section.icon,
-                color: const Color(0xFFFF176F),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  'طلبات ${section.title}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A1420),
-                  borderRadius:
-                      BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '0',
-                  style: TextStyle(
-                    color: Color(0xFFFF176F),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Icon(
-            Icons.inbox_rounded,
-            color: Colors.white24,
-            size: 52,
-          ),
-          const SizedBox(height: 10),
           const Text(
-            'لا توجد طلبات حالياً',
-            textAlign: TextAlign.center,
+            'الأدمنية والمالك',
             style: TextStyle(
-              color: Colors.white54,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStats() {
-    return Row(
-      children: [
-        Expanded(
-          child: _statCard(
-            Icons.directions_car_rounded,
-            'السيارات',
-            '0',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _statCard(
-            Icons.people_alt_rounded,
-            'المستخدمون',
-            '0',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _statCard(
-            Icons.pending_actions_rounded,
-            'طلبات',
-            '0',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statCard(
-    IconData icon,
-    String title,
-    String value,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 15,
-        horizontal: 8,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF15151B),
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(
-          color: const Color(0xFF292932),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            color: const Color(0xFFFF176F),
-            size: 24,
-          ),
-          const SizedBox(height: 7),
-          Text(
-            value,
-            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 3),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+          const SizedBox(height: 8),
+          const Text(
+            'هذا القسم يظهر للمالك والأدمن المخول فقط.',
+            style: TextStyle(
               color: Colors.white54,
-              fontSize: 10,
+              fontSize: 12,
             ),
           ),
+          const SizedBox(height: 15),
+          ListTile(
+            tileColor:
+                const Color(0xFF202027),
+            shape: RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(14),
+            ),
+            leading: const Icon(
+              Icons.shield_rounded,
+              color: Color(0xFFFF176F),
+            ),
+            title: const Text(
+              'إدارة الصلاحيات',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            trailing: const Icon(
+              Icons.chevron_left_rounded,
+              color: Colors.white38,
+            ),
+            onTap: () {
+              _message(
+                'إدارة الأدمنية والصلاحيات',
+              );
+            },
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAdminActions() {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'إدارة النظام',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 19,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _adminAction(
-          icon: Icons.account_balance_rounded,
-          title: 'طريقة الاستلام والتحويل',
-          subtitle:
-              'تغيير رقم الهاتف أو رقم البطاقة',
-          onTap: () {
-            _showMessage(
-              'إعدادات التحويل ستكون من هنا',
-            );
-          },
-        ),
-        const SizedBox(height: 10),
-        _adminAction(
-          icon: Icons.manage_accounts_rounded,
-          title: 'الأدمنية والمالك',
-          subtitle:
-              'إدارة صلاحيات المشرفين والمالك',
-          onTap: () {
-            _showMessage(
-              'إدارة الأدمنية والمالك',
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _adminAction({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: const Color(0xFF15151B),
-      borderRadius: BorderRadius.circular(17),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(17),
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF222229),
-                  borderRadius:
-                      BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFFFF176F),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.chevron_left_rounded,
-                color: Colors.white38,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -440,7 +543,8 @@ class _AdminScreenState extends State<AdminScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF08080B),
+        backgroundColor:
+            const Color(0xFF08080B),
         appBar: AppBar(
           title: const Text(
             'الإدارة',
@@ -454,24 +558,64 @@ class _AdminScreenState extends State<AdminScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _buildHeader(),
-              const SizedBox(height: 16),
-              _buildQuickStats(),
-              const SizedBox(height: 25),
+              Row(
+                children: [
+                  _stat(
+                    Icons.directions_car_rounded,
+                    'عدد السيارات',
+                    '0',
+                  ),
+                  const SizedBox(width: 8),
+                  _stat(
+                    Icons.people_rounded,
+                    'المستخدمون',
+                    '0',
+                  ),
+                  const SizedBox(width: 8),
+                  _stat(
+                    Icons.pending_actions_rounded,
+                    'الطلبات',
+                    '0',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 22),
+
               const Text(
-                'الأقسام',
+                'أقسام الموافقات',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 19,
+                  fontSize: 20,
                   fontWeight: FontWeight.w900,
                 ),
               ),
+
               const SizedBox(height: 12),
-              _buildSections(),
-              const SizedBox(height: 12),
-              _buildRequests(),
+
+              Row(
+                children: List.generate(
+                  _sections.length,
+                  _sectionButton,
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              _requests(),
+
+              const SizedBox(height: 22),
+
+              _paymentSettings(),
+
               const SizedBox(height: 25),
-              _buildAdminActions(),
+
+              _prices(),
+
+              const SizedBox(height: 25),
+
+              _admins(),
+
               const SizedBox(height: 30),
             ],
           ),
@@ -479,14 +623,22 @@ class _AdminScreenState extends State<AdminScreen> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _cardController.dispose();
+    _accountController.dispose();
+    _normalController.dispose();
+    _featuredController.dispose();
+    _vipController.dispose();
+    super.dispose();
+  }
 }
 
-class _AdminSection {
+class _Section {
   final String title;
   final IconData icon;
 
-  const _AdminSection({
-    required this.title,
-    required this.icon,
-  });
+  const _Section(this.title, this.icon);
 }
