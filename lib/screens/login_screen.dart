@@ -12,7 +12,8 @@ class LoginScreen extends StatefulWidget {
   final ApiService api;
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() =>
+      _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
@@ -22,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _loading = false;
-  bool _obscurePassword = true;
+  bool _hidePassword = true;
 
   Future<void> _login() async {
     FocusScope.of(context).unfocus();
@@ -43,19 +44,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      _showMessage(
-        result is Map && result['message'] != null
-            ? result['message'].toString()
-            : 'تم تسجيل الدخول بنجاح',
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'تم تسجيل الدخول بنجاح',
+          ),
+        ),
       );
 
       Navigator.pop(context, result);
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showMessage(e.message);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
-      _showMessage('حدث خطأ أثناء تسجيل الدخول');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'حدث خطأ أثناء تسجيل الدخول',
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -65,35 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _openRegister() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RegisterScreen(
-          api: widget.api,
-        ),
-      ),
-    );
-
-    if (!mounted || result == null) return;
-
-    _showMessage('تم إنشاء الحساب');
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            message,
-            textDirection: TextDirection.rtl,
-          ),
-        ),
-      );
-  }
-
-  InputDecoration _inputDecoration({
+  InputDecoration _decoration({
     required String label,
     required IconData icon,
   }) {
@@ -110,10 +97,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(
           color: Color(0xFF292932),
         ),
@@ -122,6 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(
           color: Color(0xFFFF176F),
+          width: 1.5,
         ),
       ),
     );
@@ -148,49 +132,50 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 25),
 
-                  Center(
-                    child: Container(
-                      width: 85,
-                      height: 85,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF176F),
-                        borderRadius: BorderRadius.circular(26),
-                      ),
-                      child: const Icon(
-                        Icons.directions_car_filled_rounded,
-                        color: Colors.white,
-                        size: 45,
-                      ),
+                  Container(
+                    width: 85,
+                    height: 85,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF176F),
+                      borderRadius:
+                          BorderRadius.circular(25),
+                    ),
+                    child: const Icon(
+                      Icons.directions_car_rounded,
+                      color: Colors.white,
+                      size: 43,
                     ),
                   ),
 
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 20),
 
                   const Text(
-                    'أهلاً بك',
+                    'ZYOCAR',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 31,
+                      fontSize: 30,
                       fontWeight: FontWeight.w900,
+                      letterSpacing: 2,
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
                   const Text(
-                    'سجل دخولك إلى بنت الموصل للسيارات',
+                    'سجّل دخولك إلى حسابك',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white60,
+                      color: Colors.white54,
                     ),
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 32),
 
                   TextFormField(
                     controller: _phoneController,
@@ -199,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                     ),
-                    decoration: _inputDecoration(
+                    decoration: _decoration(
                       label: 'رقم الهاتف',
                       icon: Icons.phone_rounded,
                     ),
@@ -217,28 +202,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 14),
 
                   TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textDirection: TextDirection.ltr,
+                    controller:
+                        _passwordController,
+                    obscureText: _hidePassword,
                     style: const TextStyle(
                       color: Colors.white,
                     ),
-                    decoration: _inputDecoration(
+                    decoration: _decoration(
                       label: 'كلمة المرور',
                       icon: Icons.lock_rounded,
                     ).copyWith(
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
-                            _obscurePassword =
-                                !_obscurePassword;
+                            _hidePassword =
+                                !_hidePassword;
                           });
                         },
                         icon: Icon(
-                          _obscurePassword
+                          _hidePassword
                               ? Icons.visibility_rounded
                               : Icons.visibility_off_rounded,
                           color: Colors.white54,
@@ -246,7 +231,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null ||
+                          value.isEmpty) {
                         return 'أدخل كلمة المرور';
                       }
 
@@ -259,45 +245,76 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: _loading ? null : _login,
+                      onPressed:
+                          _loading ? null : _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF176F),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                        backgroundColor:
+                            const Color(0xFFFF176F),
+                        foregroundColor:
+                            Colors.white,
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(15),
                         ),
                       ),
                       child: _loading
                           ? const SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                              child:
+                                  CircularProgressIndicator(
                                 color: Colors.white,
+                                strokeWidth: 2,
                               ),
                             )
                           : const Text(
                               'دخول',
                               style: TextStyle(
                                 fontSize: 18,
-                                fontWeight: FontWeight.w900,
+                                fontWeight:
+                                    FontWeight.w900,
                               ),
                             ),
                     ),
                   ),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 15),
 
                   TextButton(
-                    onPressed: _openRegister,
+                    onPressed: _loading
+                        ? null
+                        : () async {
+                            final result =
+                                await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    RegisterScreen(
+                                  api: widget.api,
+                                ),
+                              ),
+                            );
+
+                            if (result != null &&
+                                mounted) {
+                              Navigator.pop(
+                                context,
+                                result,
+                              );
+                            }
+                          },
                     child: const Text(
-                      'إنشاء حساب جديد',
+                      'ما عندك حساب؟ إنشاء حساب جديد',
                       style: TextStyle(
                         color: Color(0xFFFF4F91),
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                            FontWeight.bold,
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
