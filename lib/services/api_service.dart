@@ -24,7 +24,7 @@ class ApiService {
             .replaceFirst(RegExp(r'/$'), '');
 
   static const String _defaultBaseUrl =
-      'https://YOUR-SERVER-DOMAIN.com/api';
+      'https://bent-al-mosul-cars.onrender.com/api';
 
   final String baseUrl;
 
@@ -44,8 +44,7 @@ class ApiService {
     };
 
     if (_token != null && _token!.isNotEmpty) {
-      headers['Authorization'] =
-          'Bearer $_token';
+      headers['Authorization'] = 'Bearer $_token';
     }
 
     return headers;
@@ -115,13 +114,10 @@ class ApiService {
 
       if (response.statusCode < 200 ||
           response.statusCode >= 300) {
-        String message =
-            'حدث خطأ في السيرفر';
+        String message = 'حدث خطأ في السيرفر';
 
         if (data is Map) {
-          final value =
-              data['message'] ??
-              data['error'];
+          final value = data['message'] ?? data['error'];
 
           if (value != null) {
             message = value.toString();
@@ -167,8 +163,7 @@ class ApiService {
 
     if (data is Map) {
       final token =
-          data['token'] ??
-          data['access_token'];
+          data['token'] ?? data['access_token'];
 
       if (token != null) {
         setToken(token.toString());
@@ -195,8 +190,7 @@ class ApiService {
 
     if (data is Map) {
       final token =
-          data['token'] ??
-          data['access_token'];
+          data['token'] ?? data['access_token'];
 
       if (token != null) {
         setToken(token.toString());
@@ -234,8 +228,7 @@ class ApiService {
       return data;
     }
 
-    if (data is Map &&
-        data['cars'] is List) {
+    if (data is Map && data['cars'] is List) {
       return data['cars'];
     }
 
@@ -292,13 +285,10 @@ class ApiService {
     }
 
     try {
-      final streamed =
-          await request.send();
+      final streamed = await request.send();
 
       final response =
-          await http.Response.fromStream(
-        streamed,
-      );
+          await http.Response.fromStream(streamed);
 
       dynamic data;
 
@@ -310,19 +300,16 @@ class ApiService {
 
       if (response.statusCode < 200 ||
           response.statusCode >= 300) {
-        String message =
-            'تعذر نشر السيارة';
+        String message = 'تعذر نشر السيارة';
 
         if (data is Map &&
             data['message'] != null) {
-          message =
-              data['message'].toString();
+          message = data['message'].toString();
         }
 
         throw ApiException(
           message,
-          statusCode:
-              response.statusCode,
+          statusCode: response.statusCode,
         );
       }
 
@@ -538,17 +525,9 @@ class ApiService {
     }
 
     if (path.startsWith('/')) {
-      return baseUrl.replaceFirst(
-            '/api',
-            '',
-          ) +
-          path;
+      return baseUrl.replaceFirst('/api', '') + path;
     }
 
-    return baseUrl.replaceFirst(
-          '/api',
-          '',
-        ) +
-        '/$path';
+    return baseUrl.replaceFirst('/api', '') + '/$path';
   }
 }
