@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace 'com.example.bent_al_mosul_cars'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId 'com.example.bent_al_mosul_cars'
