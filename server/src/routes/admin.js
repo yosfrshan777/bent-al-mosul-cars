@@ -1,8 +1,6 @@
 const express = require('express');
-
 const { pool } = require('../db');
 const { auth, admin } = require('../middleware/auth');
-
 const router = express.Router();
 router.use(auth, admin);
 
@@ -10,52 +8,18 @@ router.get('/dashboard', async (_, res) => {
   try {
     const [[cars]] = await pool.query(`SELECT COUNT(*) AS count FROM cars`);
     const [[users]] = await pool.query(`SELECT COUNT(*) AS count FROM users`);
-    const [[requests]] = await pool.query(`SELECT COUNT(*) AS count FROM cars WHERE status = 'pending'`);
-    const [[payments]] = await pool.query(`SELECT COUNT(*) AS count FROM payments WHERE status = 'pending'`);
-    res.json({ cars_count: Number(cars.count), users_count: Number(users.count), requests_count: Number(requests.count), pending_payments: Number(payments.count) });
-  } catch (error) {
-    console.error('ADMIN DASHBOARD:', error);
-    res.status(500).json({ message: 'تعذر تحميل لوحة الإدارة' });
-  }
+    const [[requests]] = await pool.query(`SELECT COUNT(*) AS count FROM cars WHERE status='pending'`);
+    const [[payments]] = await pool.query(`SELECT COUNT(*) AS count FROM payments WHERE status='pending'`);
+    const [[showrooms]] = await pool.query(`SELECT COUNT(*) AS count FROM showroom_requests WHERE status='pending'`);
+    res.json({cars_count:Number(cars.count),users_count:Number(users.count),requests_count:Number(requests.count)+Number(showrooms.count),pending_payments:Number(payments.count),pending_showrooms:Number(showrooms.count)});
+  } catch(error){console.error('ADMIN DASHBOARD:',error);res.status(500).json({message:'تعذر تحميل لوحة الإدارة'});}
 });
-
-router.get('/users', async (_, res) => {
-  try {
-    const [rows] = await pool.execute(`SELECT id,name,phone,role,created_at FROM users ORDER BY id DESC`);
-    res.json(rows);
-  } catch (error) {
-    console.error('ADMIN USERS:', error);
-    res.status(500).json({ message: 'تعذر تحميل المستخدمين' });
-  }
-});
-
-// تعيين أدمن بالرقم مسموح للمالك فقط.
-router.put('/users/role-by-phone', async (req, res) => {
-  try {
-    if (req.user?.role !== 'owner') return res.status(403).json({ message: 'هذه العملية للمالك فقط' });
-    const phone = String(req.body.phone || '').trim();
-    if (!phone) return res.status(400).json({ message: 'أدخل رقم الهاتف' });
-    const [users] = await pool.execute(`SELECT id,name,phone,role FROM users WHERE phone = ? LIMIT 1`, [phone]);
-    if (!users.length) return res.status(404).json({ message: 'لا يوجد حساب بهذا الرقم' });
-    await pool.execute(`UPDATE users SET role = 'admin' WHERE id = ? AND role <> 'owner'`, [users[0].id]);
-    res.json({ message: 'تم تعيين المستخدم كأدمن', user: { ...users[0], role: 'admin' } });
-  } catch (error) {
-    console.error('ROLE BY PHONE:', error);
-    res.status(500).json({ message: 'تعذر تحديث الصلاحية' });
-  }
-});
-
-router.delete('/users/admin-by-phone', async (req, res) => {
-  try {
-    if (req.user?.role !== 'owner') return res.status(403).json({ message: 'هذه العملية للمالك فقط' });
-    const phone = String(req.body.phone || '').trim();
-    const [result] = await pool.execute(`UPDATE users SET role = 'user' WHERE phone = ? AND role = 'admin'`, [phone]);
-    if (!result.affectedRows) return res.status(404).json({ message: 'الأدمن غير موجود' });
-    res.json({ message: 'تم إلغاء صلاحية الأدمن' });
-  } catch (error) {
-    console.error('REMOVE ADMIN:', error);
-    res.status(500).json({ message: 'تعذر إلغاء الصلاحية' });
-  }
-});
-
-module.exports = router;
+router.get('/users', async (_,res)=>{try{const [rows]=await pool.execute(`SELECT id,name,phone,role,created_at FROM users ORDER BY id DESC`);res.json(rows);}catch(error){console.error(error);res.status(500).json({message:'تعذر تحميل المستخدمين'});}});
+router.get('/requests/pending', async (_,res)=>{try{const [cars]=await pool.execute(`SELECT c.id,'car' AS request_type,c.brand,c.model,c.year,c.price,c.city,c.plan,c.status,u.name AS seller_name,u.phone AS seller_phone FROM cars c LEFT JOIN users u ON u.id=c.user_id WHERE c.status='pending' ORDER BY c.id DESC`);const [showrooms]=await pool.execute(`SELECT r.id,'showroom' AS request_type,r.name,r.phone,r.city,r.amount,r.status,u.name AS seller_name,u.phone AS seller_phone FROM showroom_requests r LEFT JOIN users u ON u.id=r.user_id WHERE r.status='pending' ORDER BY r.id DESC`);res.json([...cars,...showrooms]);}catch(error){console.error(error);res.status(500).json({message:'تعذر تحميل الطلبات'});}});
+router.post('/requests/:id/approve', async(req,res)=>{try{const id=Number(req.params.id);const [car]=await pool.execute(`UPDATE cars SET status='approved' WHERE id=? AND status='pending'`,[id]);if(car.affectedRows)return res.json({message:'تمت الموافقة على الإعلان'});const [s]=await pool.execute(`SELECT user_id FROM showroom_requests WHERE id=? AND status='pending' LIMIT 1`,[id]);if(s.length){await pool.execute(`UPDATE showroom_requests SET status='approved' WHERE id=?`,[id]);await pool.execute(`UPDATE users SET role='showroom' WHERE id=? AND role!='owner'`,[s[0].user_id]);return res.json({message:'تم اعتماد المعرض'});}res.status(404).json({message:'الطلب غير موجود أو تمت معالجته'});}catch(error){console.error(error);res.status(500).json({message:'تعذر تنفيذ الموافقة'});}});
+router.post('/requests/:id/reject', async(req,res)=>{try{const id=Number(req.params.id);const [car]=await pool.execute(`UPDATE cars SET status='rejected' WHERE id=? AND status='pending'`,[id]);if(car.affectedRows)return res.json({message:'تم رفض الإعلان'});const [s]=await pool.execute(`UPDATE showroom_requests SET status='rejected' WHERE id=? AND status='pending'`,[id]);if(s.affectedRows)return res.json({message:'تم رفض طلب المعرض'});res.status(404).json({message:'الطلب غير موجود أو تمت معالجته'});}catch(error){console.error(error);res.status(500).json({message:'تعذر تنفيذ الرفض'});}});
+router.get('/payment-settings', async(_,res)=>{try{const [rows]=await pool.execute(`SELECT phone,card_number,account_name,method,barcode_data FROM payment_settings ORDER BY id ASC LIMIT 1`);res.json(rows[0]||{});}catch(error){res.status(500).json({message:'تعذر تحميل بيانات الدفع'});}});
+router.put('/payment-settings', async(req,res)=>{try{const phone=String(req.body.phone||'').trim(),card=String(req.body.card_number||'').trim(),name=String(req.body.account_name||'').trim(),method=String(req.body.method||'card').trim(),barcode=String(req.body.barcode_data||'').trim();const [rows]=await pool.execute(`SELECT id FROM payment_settings ORDER BY id ASC LIMIT 1`);if(rows.length)await pool.execute(`UPDATE payment_settings SET phone=?,card_number=?,account_name=?,method=?,barcode_data=? WHERE id=?`,[phone||null,card||null,name||null,method||'card',barcode||null,rows[0].id]);else await pool.execute(`INSERT INTO payment_settings(phone,card_number,account_name,method,barcode_data) VALUES(?,?,?,?,?)`,[phone||null,card||null,name||null,method||'card',barcode||null]);res.json({message:'تم تحديث بيانات الدفع'});}catch(error){console.error(error);res.status(500).json({message:'تعذر تحديث بيانات الدفع'});}});
+router.put('/users/role-by-phone', async(req,res)=>{try{if(req.user?.role!=='owner')return res.status(403).json({message:'هذه العملية للمالك فقط'});const phone=String(req.body.phone||'').trim();if(!phone)return res.status(400).json({message:'أدخل رقم الهاتف'});const [users]=await pool.execute(`SELECT id,name,phone,role FROM users WHERE phone=? LIMIT 1`,[phone]);if(!users.length)return res.status(404).json({message:'لا يوجد حساب بهذا الرقم'});await pool.execute(`UPDATE users SET role='admin' WHERE id=? AND role<>'owner'`,[users[0].id]);res.json({message:'تم تعيين المستخدم كأدمن',user:{...users[0],role:'admin'}});}catch(error){console.error(error);res.status(500).json({message:'تعذر تحديث الصلاحية'});}});
+router.delete('/users/admin-by-phone', async(req,res)=>{try{if(req.user?.role!=='owner')return res.status(403).json({message:'هذه العملية للمالك فقط'});const phone=String(req.body.phone||'').trim();const [result]=await pool.execute(`UPDATE users SET role='user' WHERE phone=? AND role='admin'`,[phone]);if(!result.affectedRows)return res.status(404).json({message:'الأدمن غير موجود'});res.json({message:'تم إلغاء صلاحية الأدمن'});}catch(error){console.error(error);res.status(500).json({message:'تعذر إلغاء الصلاحية'});}});
+module.exports=router;
