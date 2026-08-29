@@ -1,106 +1,11 @@
 const express = require('express');
 const { pool } = require('../db');
 const { auth, admin } = require('../middleware/auth');
-
 const router = express.Router();
-
-router.get('/settings', async (_, res) => {
-  try {
-    const [rows] = await pool.execute(`SELECT phone,card_number,account_name,method FROM payment_settings ORDER BY id ASC LIMIT 1`);
-    res.json(rows[0] || { phone: null, card_number: null, account_name: null, method: 'card' });
-  } catch (error) {
-    console.error(error); res.status(500).json({ message: 'تعذر تحميل بيانات الدفع' });
-  }
-});
-
-router.post('/', auth, async (req, res) => {
-  const connection = await pool.getConnection();
-  try {
-    const { amount, method, phone, card_number, account_name, reference } = req.body;
-    const originalAmount = Math.round(Number(amount));
-    if (!Number.isFinite(originalAmount) || originalAmount <= 0) return res.status(400).json({ message: 'مبلغ الدفع غير صحيح' });
-
-    const methods = ['card', 'qi', 'bank', 'cash'];
-    const selectedMethod = methods.includes(method) ? method : 'card';
-    const code = String(req.body.discount_code || '').trim().toUpperCase();
-
-    await connection.beginTransaction();
-    let finalAmount = originalAmount;
-    let discountPercentage = 0;
-
-    if (code) {
-      const [rows] = await connection.execute(`
-        SELECT id, percentage, max_uses, used_count, expires_at
-        FROM discounts WHERE code = ? AND active = 1 FOR UPDATE
-      `, [code]);
-      if (!rows.length) {
-        await connection.rollback();
-        return res.status(400).json({ message: 'كود الخصم غير صحيح' });
-      }
-      const discount = rows[0];
-      if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
-        await connection.rollback();
-        return res.status(400).json({ message: 'انتهت صلاحية كود الخصم' });
-      }
-      if (discount.max_uses !== null && Number(discount.used_count) >= Number(discount.max_uses)) {
-        await connection.rollback();
-        return res.status(400).json({ message: 'تم استنفاد كود الخصم' });
-      }
-      discountPercentage = Number(discount.percentage);
-      finalAmount = Math.max(0, Math.round(originalAmount * (1 - discountPercentage / 100)));
-
-      await connection.execute('UPDATE discounts SET used_count = used_count + 1 WHERE id = ?', [discount.id]);
-    }
-
-    const [result] = await connection.execute(`
-      INSERT INTO payments (user_id,amount,method,status,phone,card_number,account_name,reference)
-      VALUES (?,? ,?,'pending',?,?,?,?)
-    `, [req.user.id, finalAmount, selectedMethod, phone || null, card_number || null, account_name || null, reference || null]);
-
-    await connection.commit();
-    res.status(201).json({
-      message: 'تم إرسال طلب الدفع للمراجعة', id: result.insertId, status: 'pending',
-      original_amount: originalAmount, amount: finalAmount, discount_applied: discountPercentage > 0,
-    });
-  } catch (error) {
-    try { await connection.rollback(); } catch (_) {}
-    console.error(error); res.status(500).json({ message: 'تعذر إنشاء طلب الدفع' });
-  } finally { connection.release(); }
-});
-
-router.get('/mine', auth, async (req, res) => {
-  try {
-    const [rows] = await pool.execute(`SELECT id,amount,method,status,phone,card_number,account_name,reference,created_at FROM payments WHERE user_id = ? ORDER BY id DESC`, [req.user.id]);
-    res.json(rows);
-  } catch (error) { console.error(error); res.status(500).json({ message: 'تعذر تحميل المدفوعات' }); }
-});
-
-router.get('/admin', auth, admin, async (_, res) => {
-  try {
-    const [rows] = await pool.execute(`
-      SELECT p.id,p.user_id,p.amount,p.method,p.status,p.phone,p.card_number,p.account_name,p.reference,p.created_at,u.name AS user_name,u.phone AS user_phone
-      FROM payments p LEFT JOIN users u ON u.id = p.user_id ORDER BY p.id DESC
-    `);
-    res.json(rows);
-  } catch (error) { console.error(error); res.status(500).json({ message: 'تعذر تحميل المدفوعات' }); }
-});
-
-router.post('/admin/:id/approve', auth, admin, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const [result] = await pool.execute(`UPDATE payments SET status='approved' WHERE id=? AND status='pending'`, [id]);
-    if (!result.affectedRows) return res.status(404).json({ message: 'عملية الدفع غير موجودة أو تمت معالجتها' });
-    res.json({ message: 'تمت الموافقة على الدفع' });
-  } catch (error) { console.error(error); res.status(500).json({ message: 'تعذر الموافقة على الدفع' }); }
-});
-
-router.post('/admin/:id/reject', auth, admin, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const [result] = await pool.execute(`UPDATE payments SET status='rejected' WHERE id=? AND status='pending'`, [id]);
-    if (!result.affectedRows) return res.status(404).json({ message: 'عملية الدفع غير موجودة أو تمت معالجتها' });
-    res.json({ message: 'تم رفض عملية الدفع' });
-  } catch (error) { console.error(error); res.status(500).json({ message: 'تعذر رفض عملية الدفع' }); }
-});
-
-module.exports = router;
+router.get('/settings',async(_,res)=>{try{const[rows]=await pool.execute(`SELECT phone,card_number,account_name,method,barcode_data FROM payment_settings ORDER BY id ASC LIMIT 1`);res.json(rows[0]||{phone:null,card_number:null,account_name:null,method:'card',barcode_data:null});}catch(e){console.error(e);res.status(500).json({message:'تعذر تحميل بيانات الدفع'});}});
+router.post('/',auth,async(req,res)=>{const connection=await pool.getConnection();try{const{amount,method,phone,card_number,account_name,reference}=req.body;const originalAmount=Math.round(Number(amount));if(!Number.isFinite(originalAmount)||originalAmount<=0)return res.status(400).json({message:'مبلغ الدفع غير صحيح'});const selectedMethod=['card','qi','bank','cash'].includes(method)?method:'card';const code=String(req.body.discount_code||'').trim().toUpperCase();await connection.beginTransaction();let finalAmount=originalAmount,discountPercentage=0;if(code){const[rows]=await connection.execute(`SELECT id,percentage,max_uses,used_count,expires_at FROM discounts WHERE code=? AND active=1 FOR UPDATE`,[code]);if(!rows.length){await connection.rollback();return res.status(400).json({message:'كود الخصم غير صحيح'});}const d=rows[0];if(d.expires_at&&new Date(d.expires_at)<new Date()){await connection.rollback();return res.status(400).json({message:'انتهت صلاحية كود الخصم'});}if(d.max_uses!==null&&Number(d.used_count)>=Number(d.max_uses)){await connection.rollback();return res.status(400).json({message:'تم استنفاد كود الخصم'});}discountPercentage=Number(d.percentage);finalAmount=Math.max(0,Math.round(originalAmount*(1-discountPercentage/100)));await connection.execute(`UPDATE discounts SET used_count=used_count+1 WHERE id=?`,[d.id]);}const[result]=await connection.execute(`INSERT INTO payments(user_id,amount,method,status,phone,card_number,account_name,reference) VALUES(?,?,?,'pending',?,?,?,?)`,[req.user.id,finalAmount,selectedMethod,phone||null,card_number||null,account_name||null,reference||null]);await connection.commit();res.status(201).json({message:'تم إرسال طلب الدفع للمراجعة',id:result.insertId,status:'pending',original_amount:originalAmount,amount:finalAmount,discount_applied:discountPercentage>0});}catch(e){try{await connection.rollback();}catch(_){}console.error(e);res.status(500).json({message:'تعذر إنشاء طلب الدفع'});}finally{connection.release();}});
+router.get('/mine',auth,async(req,res)=>{try{const[rows]=await pool.execute(`SELECT id,amount,method,status,phone,card_number,account_name,reference,created_at FROM payments WHERE user_id=? ORDER BY id DESC`,[req.user.id]);res.json(rows);}catch(e){console.error(e);res.status(500).json({message:'تعذر تحميل المدفوعات'});}});
+router.get('/admin',auth,admin,async(_,res)=>{try{const[rows]=await pool.execute(`SELECT p.id,p.user_id,p.amount,p.method,p.status,p.phone,p.card_number,p.account_name,p.reference,p.created_at,u.name AS user_name,u.phone AS user_phone FROM payments p LEFT JOIN users u ON u.id=p.user_id ORDER BY p.id DESC`);res.json(rows);}catch(e){console.error(e);res.status(500).json({message:'تعذر تحميل المدفوعات'});}});
+router.post('/admin/:id/approve',auth,admin,async(req,res)=>{try{const[result]=await pool.execute(`UPDATE payments SET status='approved' WHERE id=? AND status='pending'`,[Number(req.params.id)]);if(!result.affectedRows)return res.status(404).json({message:'عملية الدفع غير موجودة أو تمت معالجتها'});res.json({message:'تمت الموافقة على الدفع'});}catch(e){console.error(e);res.status(500).json({message:'تعذر الموافقة على الدفع'});}});
+router.post('/admin/:id/reject',auth,admin,async(req,res)=>{try{const[result]=await pool.execute(`UPDATE payments SET status='rejected' WHERE id=? AND status='pending'`,[Number(req.params.id)]);if(!result.affectedRows)return res.status(404).json({message:'عملية الدفع غير موجودة أو تمت معالجتها'});res.json({message:'تم رفض عملية الدفع'});}catch(e){console.error(e);res.status(500).json({message:'تعذر رفض عملية الدفع'});}});
+module.exports=router;
