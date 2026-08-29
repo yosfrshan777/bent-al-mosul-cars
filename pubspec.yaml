@@ -2,7 +2,7 @@ name: zyocar
 description: ZYOCAR - سيارات العراق
 publish_to: "none"
 
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -16,6 +16,7 @@ dependencies:
   shared_preferences: ^2.5.3
   simple_icons: ^16.23.0
   qr_flutter: ^4.1.0
+  video_player: ^2.10.0
 
 dev_dependencies:
   flutter_test:
