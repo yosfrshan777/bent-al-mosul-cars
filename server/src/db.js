@@ -12,7 +12,8 @@ const pool = mysql.createPool({
 });
 
 async function safeAlter(connection, sql) {
-  try { await connection.execute(sql); } catch (error) {
+  try { await connection.execute(sql); }
+  catch (error) {
     if (!['ER_DUP_FIELDNAME', 'ER_DUP_KEYNAME'].includes(error.code)) throw error;
   }
 }
@@ -26,6 +27,8 @@ async function testDatabase() {
     await connection.execute(`CREATE TABLE IF NOT EXISTS car_images (id INT NOT NULL AUTO_INCREMENT, car_id INT NOT NULL, image TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id), INDEX idx_car_images_car_id (car_id), CONSTRAINT fk_car_images_car FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE)`);
     await connection.execute(`CREATE TABLE IF NOT EXISTS discounts (id INT NOT NULL AUTO_INCREMENT, target VARCHAR(30) NOT NULL, percentage DECIMAL(5,2) NOT NULL DEFAULT 0, active TINYINT(1) NOT NULL DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id), INDEX idx_discounts_target_active (target, active))`);
 
+    // Existing databases may have been created before city was added to users.
+    await safeAlter(connection, `ALTER TABLE users ADD COLUMN city VARCHAR(100) NULL`);
     await safeAlter(connection, `ALTER TABLE cars ADD COLUMN body_type VARCHAR(50) NULL`);
     await safeAlter(connection, `ALTER TABLE cars ADD COLUMN category VARCHAR(50) NULL`);
     await safeAlter(connection, `ALTER TABLE discounts ADD COLUMN code VARCHAR(40) NULL`);
