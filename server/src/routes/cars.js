@@ -35,7 +35,6 @@ router.get('/', async (_, res) => {
   }
 });
 
-// يجب أن يسبق /:id حتى لا تُفسر mine كرقم سيارة.
 router.get('/mine/list', auth, async (req, res) => {
   try {
     const [rows] = await pool.execute(`SELECT c.id, c.brand, c.model, c.year, c.price, c.km, c.city, c.fuel, c.transmission, c.description, c.plan, c.status, c.created_at, (SELECT ci.image FROM car_images ci WHERE ci.car_id = c.id ORDER BY ci.id ASC LIMIT 1) AS image FROM cars c WHERE c.user_id = ? ORDER BY c.id DESC`, [req.user.id]);
@@ -79,9 +78,32 @@ router.post('/', auth, upload.array('images', 8), async (req, res) => {
       } catch (_) {}
     }
     if (uploadedFiles.length > 0) imageUrls = uploadedFiles.map(file => `/uploads/${file.filename}`);
+
+    // إذا لم يختر المستخدم صورة، اجلب صورة تلقائية للماركة/الموديل من Car Images API.
+    if (imageUrls.length === 0) {
+      const key = process.env.CARIMAGES_API_KEY;
+      if (key) {
+        try {
+          const params = new URLSearchParams({ api_key: key, make: String(brand).trim(), model: String(model).trim() });
+          if (year) params.set('year', String(year));
+          const imageResponse = await fetch(`https://carimagesapi.com/api/v1/signed-url?${params}`);
+          const imageText = await imageResponse.text();
+          if (imageResponse.ok) {
+            try {
+              const imageData = JSON.parse(imageText);
+              const generatedUrl = imageData?.url || imageData?.image_url || imageData?.signed_url;
+              if (generatedUrl) imageUrls.push(String(generatedUrl));
+            } catch (_) {}
+          }
+        } catch (error) {
+          console.error('AUTO CAR IMAGE ERROR:', error);
+        }
+      }
+    }
+
     if (imageUrls.length === 0) {
       connection.release();
-      return res.status(400).json({ message: 'أضف صورة واحدة على الأقل' });
+      return res.status(400).json({ message: 'أضف صورة للسيارة أو تأكد من تفعيل صور السيارات على السيرفر' });
     }
 
     const validPlans = ['عادي', 'مميز', 'VIP'];
