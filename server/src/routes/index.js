@@ -8,6 +8,7 @@ const showroomRoutes = require('./showrooms');
 const partsRoutes = require('./parts');
 const messageRoutes = require('./messages');
 const uploadRoutes = require('./upload');
+const plansRoutes = require('./plans');
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.use('/showrooms', showroomRoutes);
 router.use('/parts', partsRoutes);
 router.use('/messages', messageRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/plans', plansRoutes);
 
 module.exports = router;
