@@ -30,6 +30,8 @@ class ApiService {
 
   String? _token;
 
+  String get token => _token ?? '';
+
   void setToken(String token) {
     _token = token;
   }
@@ -117,7 +119,8 @@ class ApiService {
         String message = 'حدث خطأ في السيرفر';
 
         if (data is Map) {
-          final value = data['message'] ?? data['error'];
+          final value =
+              data['message'] ?? data['error'];
 
           if (value != null) {
             message = value.toString();
@@ -126,6 +129,8 @@ class ApiService {
 
         if (response.statusCode == 401) {
           clearToken();
+          message =
+              'رقم الهاتف أو كلمة المرور غير صحيحة';
         }
 
         throw ApiException(
@@ -138,6 +143,10 @@ class ApiService {
     } on SocketException {
       throw const ApiException(
         'لا يوجد اتصال بالسيرفر',
+      );
+    } on HttpException {
+      throw const ApiException(
+        'تعذر الاتصال بالسيرفر',
       );
     } on ApiException {
       rethrow;
@@ -156,7 +165,7 @@ class ApiService {
       'POST',
       '/auth/login',
       body: {
-        'phone': phone,
+        'phone': phone.trim(),
         'password': password,
       },
     );
@@ -182,8 +191,8 @@ class ApiService {
       'POST',
       '/auth/register',
       body: {
-        'name': name,
-        'phone': phone,
+        'name': name.trim(),
+        'phone': phone.trim(),
         'password': password,
       },
     );
@@ -286,7 +295,6 @@ class ApiService {
 
     try {
       final streamed = await request.send();
-
       final response =
           await http.Response.fromStream(streamed);
 
@@ -302,9 +310,13 @@ class ApiService {
           response.statusCode >= 300) {
         String message = 'تعذر نشر السيارة';
 
-        if (data is Map &&
-            data['message'] != null) {
-          message = data['message'].toString();
+        if (data is Map) {
+          final value =
+              data['message'] ?? data['error'];
+
+          if (value != null) {
+            message = value.toString();
+          }
         }
 
         throw ApiException(
@@ -358,7 +370,7 @@ class ApiService {
   Future<dynamic> getPaymentSettings() {
     return _request(
       'GET',
-      '/payment/settings',
+      '/admin/payment-settings',
     );
   }
 
@@ -376,6 +388,22 @@ class ApiService {
         'card_number': cardNumber,
         'account_name': accountName,
         'method': method ?? 'card',
+      },
+    );
+  }
+
+  Future<dynamic> updatePlanPrices({
+    required int normal,
+    required int featured,
+    required int vip,
+  }) {
+    return _request(
+      'PUT',
+      '/admin/plan-prices',
+      body: {
+        'normal': normal,
+        'featured': featured,
+        'vip': vip,
       },
     );
   }
