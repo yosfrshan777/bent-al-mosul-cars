@@ -49,7 +49,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late final AnimationController controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..forward();
   @override void initState() { super.initState(); Future.delayed(const Duration(milliseconds: 1800), () { if (!mounted) return; Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AuthGate(api: widget.api))); }); }
   @override void dispose() { controller.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) => Scaffold(backgroundColor: Colors.black, body: Center(child: FadeTransition(opacity: CurvedAnimation(parent: controller, curve: Curves.easeOut), child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [ZyoCarLogo(size: 96, showWordmark: true), SizedBox(height: 22), Text('بيع وشراء السيارات وقطع الغيار', style: TextStyle(color: Colors.white70, fontSize: 13)), SizedBox(height: 8), Text('IRAQ • CAR MARKET', style: TextStyle(color: kBlue, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 2.5))])));
+  @override Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    body: Center(
+      child: FadeTransition(
+        opacity: CurvedAnimation(parent: controller, curve: Curves.easeOut),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ZyoCarLogo(size: 96, showWordmark: true),
+            SizedBox(height: 22),
+            Text('بيع وشراء السيارات وقطع الغيار', style: TextStyle(color: Colors.white70, fontSize: 13)),
+            SizedBox(height: 8),
+            Text('IRAQ • CAR MARKET', style: TextStyle(color: kBlue, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 2.5)),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class AuthGate extends StatefulWidget {
@@ -70,7 +87,37 @@ class _AuthGateState extends State<AuthGate> {
 class LoginRequiredScreen extends StatelessWidget {
   const LoginRequiredScreen({super.key, required this.onLogin});
   final VoidCallback onLogin;
-  @override Widget build(BuildContext context) => Directionality(textDirection: TextDirection.rtl, child: Scaffold(backgroundColor: kBg, body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [const ZyoCarLogo(size: 82, showWordmark: false), const SizedBox(height: 22), const Text('تسجيل الدخول مطلوب', style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w900)), const SizedBox(height: 8), const Text('سجّل دخولك حتى تدخل إلى ZYOCAR', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)), const SizedBox(height: 24), SizedBox(width: double.infinity, height: 54, child: ElevatedButton(onPressed: onLogin, style: ElevatedButton.styleFrom(backgroundColor: kPink, foregroundColor: Colors.white), child: const Text('تسجيل الدخول', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))))]))));
+  @override Widget build(BuildContext context) => Directionality(
+    textDirection: TextDirection.rtl,
+    child: Scaffold(
+      backgroundColor: kBg,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const ZyoCarLogo(size: 82, showWordmark: false),
+              const SizedBox(height: 22),
+              const Text('تسجيل الدخول مطلوب', style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              const Text('سجّل دخولك حتى تدخل إلى ZYOCAR', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: onLogin,
+                  style: ElevatedButton.styleFrom(backgroundColor: kPink, foregroundColor: Colors.white),
+                  child: const Text('تسجيل الدخول', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class MainShell extends StatefulWidget {
@@ -97,13 +144,19 @@ class _MainShellState extends State<MainShell> {
       body: IndexedStack(index: index, children: pages),
       floatingActionButton: FloatingActionButton(onPressed: addCar, backgroundColor: kPink, foregroundColor: Colors.white, child: const Icon(Icons.add_rounded)),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      bottomNavigationBar: NavigationBar(selectedIndex: index, onDestinationSelected: (value) => setState(() => index = value), backgroundColor: const Color(0xFF0D1018), indicatorColor: kPink.withOpacity(.20), destinations: const [
-        NavigationDestination(icon: Icon(Icons.home_outlined), label: 'الرئيسية'),
-        NavigationDestination(icon: Icon(Icons.search_outlined), label: 'السيارات'),
-        NavigationDestination(icon: Icon(Icons.play_circle_outline), label: 'ريلز'),
-        NavigationDestination(icon: Icon(Icons.favorite_border), label: 'المفضلة'),
-        NavigationDestination(icon: Icon(Icons.person_outline), label: 'حسابي'),
-      ]),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (value) => setState(() => index = value),
+        backgroundColor: const Color(0xFF0D1018),
+        indicatorColor: kPink.withOpacity(.20),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'الرئيسية'),
+          NavigationDestination(icon: Icon(Icons.search_outlined), label: 'السيارات'),
+          NavigationDestination(icon: Icon(Icons.play_circle_outline), label: 'ريلز'),
+          NavigationDestination(icon: Icon(Icons.favorite_border), label: 'المفضلة'),
+          NavigationDestination(icon: Icon(Icons.person_outline), label: 'حسابي'),
+        ],
+      ),
     );
   }
 }
