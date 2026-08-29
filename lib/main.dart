@@ -107,57 +107,55 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('ZYOCAR', style: TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w900, letterSpacing: 5)),
-                    const SizedBox(height: 10),
-                    const Text('بيع وشراء السيارات وقطع الغيار', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                    const SizedBox(height: 55),
-                    SizedBox(
-                      height: 150,
-                      width: 330,
-                      child: Stack(
-                        children: [
-                          Positioned(left: 20 + (1 - v) * 120, bottom: 20, child: _SplashCar(color: kPink, letter: 'Z')),
-                          Positioned(right: 20 + (1 - v) * 120, bottom: 20, child: _SplashCar(color: kBlue, letter: 'Y')),
-                        ],
+                    Transform.scale(
+                      scale: .88 + (v.clamp(0.0, 1.0) * .12),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [kPink, Colors.white, kBlue],
+                        ).createShader(bounds),
+                        child: const Text(
+                          'ZYOCAR',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 42,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 5,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'بيع وشراء السيارات وقطع الغيار',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 38),
+                    SizedBox(
+                      height: 220,
+                      width: 340,
+                      child: AnimatedOpacity(
+                        opacity: v.clamp(0.0, 1.0),
+                        duration: const Duration(milliseconds: 250),
+                        child: Image.asset(
+                          'assets/icons/zyocar.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                     Opacity(
                       opacity: v.clamp(0.0, 1.0),
-                      child: const Text('اكتشف سيارتك القادمة', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                      child: const Text(
+                        'اكتشف سيارتك القادمة',
+                        style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ],
                 );
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SplashCar extends StatelessWidget {
-  const _SplashCar({required this.color, required this.letter});
-  final Color color;
-  final String letter;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 135,
-      height: 92,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color.withOpacity(.95), color.withOpacity(.25)]),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: color.withOpacity(.85), width: 2),
-        boxShadow: [BoxShadow(color: color.withOpacity(.35), blurRadius: 28)],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Icon(Icons.directions_car_filled_rounded, color: Colors.white, size: 48),
-          Positioned(top: 8, right: 10, child: Text(letter, style: TextStyle(color: color, fontSize: 23, fontWeight: FontWeight.w900))),
         ],
       ),
     );
