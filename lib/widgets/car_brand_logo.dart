@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:simple_icons/simple_icons.dart';
 
 class CarBrandLogo extends StatelessWidget {
   const CarBrandLogo({
@@ -15,53 +14,53 @@ class CarBrandLogo extends StatelessWidget {
   final Color background;
   final bool showName;
 
-  static final Map<String, IconData> _logos = {
-    'toyota': SimpleIcons.toyota, 'تويوتا': SimpleIcons.toyota,
-    'hyundai': SimpleIcons.hyundai, 'هيونداي': SimpleIcons.hyundai,
-    'bmw': SimpleIcons.bmw, 'بي ام دبليو': SimpleIcons.bmw, 'بي إم دبليو': SimpleIcons.bmw,
-    'mercedes': SimpleIcons.mercedes, 'mercedes-benz': SimpleIcons.mercedes, 'مرسيدس': SimpleIcons.mercedes,
-    'kia': SimpleIcons.kia, 'كيا': SimpleIcons.kia,
-    'audi': SimpleIcons.audi, 'أودي': SimpleIcons.audi,
-    'ford': SimpleIcons.ford, 'فورد': SimpleIcons.ford,
-    'chevrolet': SimpleIcons.chevrolet, 'شيفروليه': SimpleIcons.chevrolet,
-    'mazda': SimpleIcons.mazda, 'مازدا': SimpleIcons.mazda,
-    'honda': SimpleIcons.honda, 'هوندا': SimpleIcons.honda,
-    'nissan': SimpleIcons.nissan, 'نيسان': SimpleIcons.nissan,
-    'volvo': SimpleIcons.volvo, 'فولفو': SimpleIcons.volvo,
-    'volkswagen': SimpleIcons.volkswagen, 'فولكس فاجن': SimpleIcons.volkswagen,
-    'porsche': SimpleIcons.porsche, 'بورشه': SimpleIcons.porsche,
-    'jaguar': SimpleIcons.jaguar, 'جاكوار': SimpleIcons.jaguar,
-    'land rover': SimpleIcons.landrover, 'landrover': SimpleIcons.landrover, 'لاند روفر': SimpleIcons.landrover,
-    'jeep': SimpleIcons.jeep, 'جيب': SimpleIcons.jeep,
-    'tesla': SimpleIcons.tesla, 'تسلا': SimpleIcons.tesla,
-    'mitsubishi': SimpleIcons.mitsubishi, 'ميتسوبيشي': SimpleIcons.mitsubishi,
-    'suzuki': SimpleIcons.suzuki, 'سوزوكي': SimpleIcons.suzuki,
-    'subaru': SimpleIcons.subaru, 'سوبارو': SimpleIcons.subaru,
-    'renault': SimpleIcons.renault, 'رينو': SimpleIcons.renault,
-    'peugeot': SimpleIcons.peugeot, 'بيجو': SimpleIcons.peugeot,
-    'citroen': SimpleIcons.citroen, 'سيتروين': SimpleIcons.citroen,
-    'fiat': SimpleIcons.fiat, 'فيات': SimpleIcons.fiat,
-    'alfaromeo': SimpleIcons.alfaromeo, 'alfa romeo': SimpleIcons.alfaromeo, 'الفا روميو': SimpleIcons.alfaromeo,
-    'astonmartin': SimpleIcons.astonmartin, 'aston martin': SimpleIcons.astonmartin, 'استون مارتن': SimpleIcons.astonmartin,
-    'bentley': SimpleIcons.bentley, 'بنتلي': SimpleIcons.bentley,
-    'lamborghini': SimpleIcons.lamborghini, 'لامبورغيني': SimpleIcons.lamborghini,
-    'mclaren': SimpleIcons.mclaren, 'ماكلارين': SimpleIcons.mclaren,
-    'maserati': SimpleIcons.maserati, 'مازيراتي': SimpleIcons.maserati,
-    'chrysler': SimpleIcons.chrysler, 'كرايسلر': SimpleIcons.chrysler,
-    'ram': SimpleIcons.ram, 'رام': SimpleIcons.ram,
-    'acura': SimpleIcons.acura, 'اكورا': SimpleIcons.acura,
-    'infiniti': SimpleIcons.infiniti, 'انفينيتي': SimpleIcons.infiniti,
-    'skoda': SimpleIcons.skoda, 'سكودا': SimpleIcons.skoda,
-    'seat': SimpleIcons.seat, 'سيات': SimpleIcons.seat,
-    'lada': SimpleIcons.lada, 'لادا': SimpleIcons.lada,
+  static final Map<String, String> _slugs = {
+    'toyota': 'toyota', 'تويوتا': 'toyota',
+    'hyundai': 'hyundai', 'هيونداي': 'hyundai',
+    'bmw': 'bmw', 'بي ام دبليو': 'bmw', 'بي إم دبليو': 'bmw',
+    'mercedes': 'mercedes', 'mercedes-benz': 'mercedes', 'مرسيدس': 'mercedes',
+    'kia': 'kia', 'كيا': 'kia',
+    'audi': 'audi', 'أودي': 'audi',
+    'ford': 'ford', 'فورد': 'ford',
+    'chevrolet': 'chevrolet', 'شيفروليه': 'chevrolet',
+    'mazda': 'mazda', 'مازدا': 'mazda',
+    'honda': 'honda', 'هوندا': 'honda',
+    'nissan': 'nissan', 'نيسان': 'nissan',
+    'volvo': 'volvo', 'فولفو': 'volvo',
+    'volkswagen': 'volkswagen', 'فولكس فاجن': 'volkswagen',
+    'porsche': 'porsche', 'بورشه': 'porsche',
+    'jaguar': 'jaguar', 'جاكوار': 'jaguar',
+    'land rover': 'landrover', 'landrover': 'landrover', 'لاند روفر': 'landrover',
+    'jeep': 'jeep', 'جيب': 'jeep',
+    'tesla': 'tesla', 'تسلا': 'tesla',
+    'mitsubishi': 'mitsubishi', 'ميتسوبيشي': 'mitsubishi',
+    'suzuki': 'suzuki', 'سوزوكي': 'suzuki',
+    'subaru': 'subaru', 'سوبارو': 'subaru',
+    'renault': 'renault', 'رينو': 'renault',
+    'peugeot': 'peugeot', 'بيجو': 'peugeot',
+    'citroen': 'citroen', 'سيتروين': 'citroen',
+    'fiat': 'fiat', 'فيات': 'fiat',
+    'alfaromeo': 'alfaromeo', 'alfa romeo': 'alfaromeo', 'الفا روميو': 'alfaromeo',
+    'astonmartin': 'astonmartin', 'aston martin': 'astonmartin', 'استون مارتن': 'astonmartin',
+    'bentley': 'bentley', 'بنتلي': 'bentley',
+    'lamborghini': 'lamborghini', 'لامبورغيني': 'lamborghini',
+    'mclaren': 'mclaren', 'ماكلارين': 'mclaren',
+    'maserati': 'maserati', 'مازيراتي': 'maserati',
+    'chrysler': 'chrysler', 'كرايسلر': 'chrysler',
+    'ram': 'ram', 'رام': 'ram',
+    'acura': 'acura', 'اكورا': 'acura',
+    'infiniti': 'infiniti', 'انفينيتي': 'infiniti',
+    'skoda': 'skoda', 'سكودا': 'skoda',
+    'seat': 'seat', 'سيات': 'seat',
+    'lada': 'lada', 'لادا': 'lada',
   };
 
-  IconData? get _icon => _logos[brand.trim().toLowerCase()];
+  String get _slug => _slugs[brand.trim().toLowerCase()] ?? brand.trim().toLowerCase().replaceAll(' ', '-');
 
-  @override
-  Widget build(BuildContext context) {
-    final icon = _icon;
-    final box = Container(
+  Widget _box() {
+    final clean = brand.trim();
+    final logoUrl = 'https://cdn.simpleicons.org/$_slug/FFFFFF';
+    return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
@@ -70,19 +69,27 @@ class CarBrandLogo extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(.10)),
       ),
       alignment: Alignment.center,
-      child: icon == null
-          ? Text(
-              brand.trim().isEmpty ? '?' : brand.trim().substring(0, 1).toUpperCase(),
-              style: TextStyle(color: Colors.white70, fontSize: size * .34, fontWeight: FontWeight.w900),
-            )
-          : Icon(icon, size: size * .58, color: Colors.white),
+      padding: EdgeInsets.all(size * .18),
+      child: clean.isEmpty
+          ? const Text('?', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900))
+          : Image.network(
+              logoUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Text(
+                clean.substring(0, 1).toUpperCase(),
+                style: TextStyle(color: Colors.white70, fontSize: size * .34, fontWeight: FontWeight.w900),
+              ),
+            ),
     );
+  }
 
-    if (!showName) return box;
+  @override
+  Widget build(BuildContext context) {
+    if (!showName) return _box();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        box,
+        _box(),
         const SizedBox(height: 5),
         Text(brand, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w800)),
       ],
