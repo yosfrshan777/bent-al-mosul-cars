@@ -4,22 +4,32 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- ZYOCAR launcher icon: custom car mark, not the Flutter/default icon. -->
     <path
         android:fillColor="#08080B"
-        android:pathData="M12,0 L96,0 Q108,0 108,12 L108,96 Q108,108 96,108 L12,108 Q0,108 0,96 L0,12 Q0,0 12,0 Z" />
+        android:pathData="M14,0 L94,0 Q108,0 108,14 L108,94 Q108,108 94,108 L14,108 Q0,108 0,94 L0,14 Q0,0 14,0 Z" />
 
+    <!-- ZY mark inspired by the approved ZYOCAR artwork. -->
     <path
         android:fillColor="#FF176F"
-        android:pathData="M21,30 L87,30 L76,41 L42,41 L69,52 L87,52 L87,63 L21,63 L32,52 L60,52 L33,41 L21,41 Z" />
-
+        android:pathData="M19,27 L59,27 L59,35 L37,52 L61,52 L61,61 L19,61 L19,53 L41,36 L19,36 Z" />
     <path
         android:fillColor="#1597FF"
-        android:pathData="M27,67 L81,67 L88,77 L88,88 L82,88 L82,93 L74,93 L72,88 L36,88 L34,93 L26,93 L26,88 L20,88 L20,77 Z" />
+        android:pathData="M65,27 L89,27 L89,36 L76,36 L89,50 L89,61 L65,61 L65,52 L78,52 L65,38 Z" />
+
+    <!-- CAR silhouette. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M35,71 L73,71 L79,79 L29,79 Z" />
+        android:pathData="M25,69 L31,60 L77,60 L84,69 L91,72 L91,88 L84,88 L82,93 L73,93 L71,88 L37,88 L35,93 L26,93 L24,88 L17,88 L17,72 Z" />
     <path
         android:fillColor="#08080B"
-        android:pathData="M34,81 L42,81 L42,87 L34,87 Z M66,81 L74,81 L74,87 L66,87 Z" />
+        android:pathData="M34,64 L74,64 L79,71 L29,71 Z" />
+    <path
+        android:fillColor="#FF176F"
+        android:pathData="M21,74 L32,74 L32,79 L21,79 Z" />
+    <path
+        android:fillColor="#1597FF"
+        android:pathData="M76,74 L87,74 L87,79 L76,79 Z" />
+    <path
+        android:fillColor="#08080B"
+        android:pathData="M31,80 L42,80 L42,89 L31,89 Z M66,80 L77,80 L77,89 L66,89 Z" />
 </vector>
