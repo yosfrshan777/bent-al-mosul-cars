@@ -2,7 +2,7 @@ name: zyocar
 description: ZYOCAR - سيارات العراق
 publish_to: "none"
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -25,13 +25,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  assets:
-    - assets/icons/zyocar.png
-
-flutter_launcher_icons:
-  android: true
-  ios: false
-  image_path: "assets/icons/zyocar.png"
-  adaptive_icon_background: "#08080B"
-  adaptive_icon_foreground: "assets/icons/zyocar.png"
