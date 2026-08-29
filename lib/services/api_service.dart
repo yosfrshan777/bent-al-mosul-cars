@@ -54,7 +54,11 @@ class ApiService {
     catch (_) { throw const ApiException('حدث خطأ أثناء الاتصال بالسيرفر'); }
   }
 
-  Future<dynamic> login({required String phone, required String password}) async { final data=await _request('POST','/auth/login',body:{'phone':phone.trim(),'password':password}); if(data is Map){final token=data['token']??data['access_token']; if(token!=null) await setToken(token.toString());} return data; }
+  Future<dynamic> login({required String username, required String phone, required String password}) async {
+    final data=await _request('POST','/auth/login',body:{'username':username.trim(),'phone':phone.trim(),'password':password});
+    if(data is Map){final token=data['token']??data['access_token']; if(token!=null) await setToken(token.toString());}
+    return data;
+  }
   Future<dynamic> register({required String name,required String phone,required String password}) async { final data=await _request('POST','/auth/register',body:{'name':name.trim(),'phone':phone.trim(),'password':password}); if(data is Map){final token=data['token']??data['access_token']; if(token!=null) await setToken(token.toString());} return data; }
   Future<dynamic> me()=>_request('GET','/auth/me');
   Future<void> logout() async { try { await _request('POST','/auth/logout'); } finally { await clearToken(); } }
