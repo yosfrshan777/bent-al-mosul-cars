@@ -11,70 +11,71 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+async function safeAlter(connection, sql) {
+  try { await connection.execute(sql); } catch (error) {
+    if (!['ER_DUP_FIELDNAME', 'ER_DUP_KEYNAME'].includes(error.code)) throw error;
+  }
+}
+
 async function testDatabase() {
   const connection = await pool.getConnection();
-
   try {
     await connection.ping();
 
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
-        id INT NOT NULL AUTO_INCREMENT,
-        name VARCHAR(150) NOT NULL,
-        phone VARCHAR(50) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        role VARCHAR(30) NOT NULL DEFAULT 'user',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id)
+        id INT NOT NULL AUTO_INCREMENT, name VARCHAR(150) NOT NULL, phone VARCHAR(50) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL, role VARCHAR(30) NOT NULL DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id)
       )
     `);
-
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS cars (
-        id INT NOT NULL AUTO_INCREMENT,
-        user_id INT NOT NULL,
-        brand VARCHAR(100) NOT NULL,
-        model VARCHAR(100) NOT NULL,
-        year INT NOT NULL,
-        price INT NOT NULL,
-        km INT DEFAULT 0,
-        city VARCHAR(100) NOT NULL,
-        fuel VARCHAR(50) DEFAULT 'بنزين',
-        transmission VARCHAR(50) DEFAULT 'أوتوماتيك',
-        description TEXT,
-        plan VARCHAR(30) DEFAULT 'عادي',
-        status VARCHAR(30) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        INDEX idx_cars_user_id (user_id),
-        INDEX idx_cars_status (status),
+        id INT NOT NULL AUTO_INCREMENT, user_id INT NOT NULL, brand VARCHAR(100) NOT NULL, model VARCHAR(100) NOT NULL,
+        year INT NOT NULL, price INT NOT NULL, km INT DEFAULT 0, city VARCHAR(100) NOT NULL,
+        fuel VARCHAR(50) DEFAULT 'بنزين', transmission VARCHAR(50) DEFAULT 'أوتوماتيك', description TEXT,
+        plan VARCHAR(30) DEFAULT 'عادي', status VARCHAR(30) DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id), INDEX idx_cars_user_id (user_id), INDEX idx_cars_status (status),
         CONSTRAINT fk_cars_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
-
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS car_images (
-        id INT NOT NULL AUTO_INCREMENT,
-        car_id INT NOT NULL,
-        image TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        INDEX idx_car_images_car_id (car_id),
+        id INT NOT NULL AUTO_INCREMENT, car_id INT NOT NULL, image TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id), INDEX idx_car_images_car_id (car_id),
         CONSTRAINT fk_car_images_car FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
       )
     `);
-
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS discounts (
-        id INT NOT NULL AUTO_INCREMENT,
-        target VARCHAR(30) NOT NULL,
-        percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
-        active TINYINT(1) NOT NULL DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
+        id INT NOT NULL AUTO_INCREMENT, target VARCHAR(30) NOT NULL, percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
+        active TINYINT(1) NOT NULL DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id),
         INDEX idx_discounts_target_active (target, active)
       )
     `);
+
+    // Migration for existing installations.
+    await safeAlter(connection, `ALTER TABLE discounts ADD COLUMN code VARCHAR(40) NULL`);
+    await safeAlter(connection, `ALTER TABLE discounts ADD COLUMN max_uses INT NULL`);
+    await safeAlter(connection, `ALTER TABLE discounts ADD COLUMN used_count INT NOT NULL DEFAULT 0`);
+    await safeAlter(connection, `ALTER TABLE discounts ADD COLUMN expires_at DATETIME NULL`);
+    await safeAlter(connection, `ALTER TABLE discounts ADD UNIQUE KEY uq_discounts_code (code)`);
+
+    const seedCodes = [
+      ['ZYO8K2',20],['ZYO4M7',15],['ZYO9P3',20],['ZYO2R8',15],['ZYO6T4',20],
+      ['ZYO1V9',15],['ZYO7X5',20],['ZYO3B6',15],['ZYO5D1',20],['ZYO9F8',15],
+      ['ZYO2H4',20],['ZYO6J7',15],['ZYO1L5',20],['ZYO8N3',15],['ZYO4Q9',20],
+      ['ZYO7S2',15],['ZYO3U6',20],['ZYO5W8',15],['ZYO9Y1',20],['ZYO2A7',15],
+      ['ZYO6C4',20],['ZYO1E9',15],['ZYO8G5',20],['ZYO4I2',15],['ZYO7K6',20],
+    ];
+    for (const [code, percentage] of seedCodes) {
+      await connection.execute(
+        `INSERT INTO discounts (code,target,percentage,active,max_uses,used_count)
+         VALUES (?, 'all', ?, 1, NULL, 0)
+         ON DUPLICATE KEY UPDATE code=VALUES(code)`,
+        [code, percentage],
+      );
+    }
 
     console.log('ZYOCAR database connected');
     console.log('ZYOCAR tables ready');
@@ -83,7 +84,4 @@ async function testDatabase() {
   }
 }
 
-module.exports = {
-  pool,
-  testDatabase,
-};
+module.exports = { pool, testDatabase };
