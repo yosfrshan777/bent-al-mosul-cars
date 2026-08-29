@@ -7,7 +7,6 @@ const { pool } = require('../db');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
-
 const uploadDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -15,8 +14,7 @@ const storage = multer.diskStorage({
   destination: (_, __, callback) => callback(null, uploadDir),
   filename: (_, file, callback) => {
     const extension = path.extname(file.originalname).toLowerCase();
-    const name = `${Date.now()}-${Math.round(Math.random() * 1000000000)}${extension}`;
-    callback(null, name);
+    callback(null, `${Date.now()}-${Math.round(Math.random() * 1000000000)}${extension}`);
   },
 });
 
@@ -24,10 +22,7 @@ const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 const upload = multer({
   storage,
   limits: { files: 8, fileSize: 10 * 1024 * 1024 },
-  fileFilter: (_, file, callback) => {
-    if (allowedTypes.includes(file.mimetype)) callback(null, true);
-    else callback(new Error('يسمح فقط بصور JPG و PNG و WEBP'));
-  },
+  fileFilter: (_, file, callback) => callback(null, allowedTypes.includes(file.mimetype)),
 });
 
 router.get('/', async (_, res) => {
@@ -40,20 +35,7 @@ router.get('/', async (_, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ message: 'رقم السيارة غير صحيح' });
-    const [cars] = await pool.execute(`SELECT c.id, c.user_id, c.brand, c.model, c.year, c.price, c.km, c.city, c.fuel, c.transmission, c.description, c.plan, c.status, c.created_at, u.name AS seller_name, u.phone AS seller_phone FROM cars c LEFT JOIN users u ON u.id = c.user_id WHERE c.id = ? AND c.status = 'approved' LIMIT 1`, [id]);
-    if (cars.length === 0) return res.status(404).json({ message: 'السيارة غير موجودة' });
-    const [images] = await pool.execute(`SELECT id, image FROM car_images WHERE car_id = ? ORDER BY id ASC`, [id]);
-    res.json({ ...cars[0], images });
-  } catch (error) {
-    console.error('GET CAR ERROR:', error);
-    res.status(500).json({ message: 'تعذر تحميل السيارة' });
-  }
-});
-
+// يجب أن يسبق /:id حتى لا تُفسر mine كرقم سيارة.
 router.get('/mine/list', auth, async (req, res) => {
   try {
     const [rows] = await pool.execute(`SELECT c.id, c.brand, c.model, c.year, c.price, c.km, c.city, c.fuel, c.transmission, c.description, c.plan, c.status, c.created_at, (SELECT ci.image FROM car_images ci WHERE ci.car_id = c.id ORDER BY ci.id ASC LIMIT 1) AS image FROM cars c WHERE c.user_id = ? ORDER BY c.id DESC`, [req.user.id]);
@@ -64,7 +46,20 @@ router.get('/mine/list', auth, async (req, res) => {
   }
 });
 
-// إنشاء الإعلان: يقبل الملفات مباشرة أو روابط الصور المرفوعة مسبقاً من التطبيق.
+router.get('/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ message: 'رقم السيارة غير صحيح' });
+    const [cars] = await pool.execute(`SELECT c.id, c.user_id, c.brand, c.model, c.year, c.price, c.km, c.city, c.fuel, c.transmission, c.description, c.plan, c.status, c.created_at, u.name AS seller_name, u.phone AS seller_phone FROM cars c LEFT JOIN users u ON u.id = c.user_id WHERE c.id = ? AND c.status = 'approved' LIMIT 1`, [id]);
+    if (!cars.length) return res.status(404).json({ message: 'السيارة غير موجودة' });
+    const [images] = await pool.execute(`SELECT id, image FROM car_images WHERE car_id = ? ORDER BY id ASC`, [id]);
+    res.json({ ...cars[0], images });
+  } catch (error) {
+    console.error('GET CAR ERROR:', error);
+    res.status(500).json({ message: 'تعذر تحميل السيارة' });
+  }
+});
+
 router.post('/', auth, upload.array('images', 8), async (req, res) => {
   const connection = await pool.getConnection();
   const uploadedFiles = Array.isArray(req.files) ? req.files : [];
@@ -84,7 +79,6 @@ router.post('/', auth, upload.array('images', 8), async (req, res) => {
       } catch (_) {}
     }
     if (uploadedFiles.length > 0) imageUrls = uploadedFiles.map(file => `/uploads/${file.filename}`);
-
     if (imageUrls.length === 0) {
       connection.release();
       return res.status(400).json({ message: 'أضف صورة واحدة على الأقل' });
@@ -101,7 +95,7 @@ router.post('/', auth, upload.array('images', 8), async (req, res) => {
 
     await connection.commit();
     connection.release();
-    res.status(201).json({ message: 'تم إرسال السيارة للمراجعة', id: carId, status: 'pending', images: imageUrls });
+    res.status(201).json({ message: 'تم إرسال السيارة للمراجعة', id: carId, status: 'pending', plan: selectedPlan, images: imageUrls });
   } catch (error) {
     try { await connection.rollback(); } catch (_) {}
     connection.release();
