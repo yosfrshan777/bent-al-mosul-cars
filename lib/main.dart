@@ -10,26 +10,24 @@ const Color kPink = Color(0xFFFF176F);
 const Color kBlue = Color(0xFF1597FF);
 const Color kBg = Color(0xFF07090F);
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ZyoCarApp());
+
+  final api = ApiService();
+  await api.initAuth();
+
+  runApp(ZyoCarApp(api: api));
 }
 
 class ZyoCarApp extends StatefulWidget {
-  const ZyoCarApp({super.key});
+  const ZyoCarApp({super.key, required this.api});
+  final ApiService api;
+
   @override
   State<ZyoCarApp> createState() => _ZyoCarAppState();
 }
 
 class _ZyoCarAppState extends State<ZyoCarApp> {
-  late final ApiService api;
-
-  @override
-  void initState() {
-    super.initState();
-    api = ApiService();
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -42,7 +40,7 @@ class _ZyoCarAppState extends State<ZyoCarApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: kPink, brightness: Brightness.dark),
         appBarTheme: const AppBarTheme(backgroundColor: kBg, elevation: 0, centerTitle: true),
       ),
-      home: SplashScreen(api: api),
+      home: SplashScreen(api: widget.api),
     );
   }
 }
@@ -118,16 +116,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       width: 330,
                       child: Stack(
                         children: [
-                          Positioned(
-                            left: 20 + (1 - v) * 120,
-                            bottom: 20,
-                            child: _SplashCar(color: kPink, letter: 'Z'),
-                          ),
-                          Positioned(
-                            right: 20 + (1 - v) * 120,
-                            bottom: 20,
-                            child: _SplashCar(color: kBlue, letter: 'Y'),
-                          ),
+                          Positioned(left: 20 + (1 - v) * 120, bottom: 20, child: _SplashCar(color: kPink, letter: 'Z')),
+                          Positioned(right: 20 + (1 - v) * 120, bottom: 20, child: _SplashCar(color: kBlue, letter: 'Y')),
                         ],
                       ),
                     ),
