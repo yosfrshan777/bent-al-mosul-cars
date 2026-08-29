@@ -7,7 +7,6 @@ class PaymentBarcodeScreen extends StatelessWidget {
   final ApiService api;
   final int? amount;
 
-  // الباركود المعتمد من المستخدم — لا توجد بوابة دفع أخرى.
   static const String paymentQrData = '28101501202608286476647925';
 
   @override
@@ -42,8 +41,6 @@ class PaymentBarcodeScreen extends StatelessWidget {
               const SizedBox(height: 18),
               if (amount != null)
                 Text('المبلغ: $amount د.ع', style: const TextStyle(color: Color(0xFFFF176F), fontSize: 18, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 6),
-              const Text('زينب خالد', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               const Text('بعد التحويل، احتفظ بإيصال الدفع وأرسله حسب تعليمات الإدارة.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white38, fontSize: 12)),
             ]),
