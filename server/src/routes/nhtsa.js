@@ -8,10 +8,7 @@ async function getJson(url) {
   const text = await response.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) {}
-  if (!response.ok) {
-    const message = data?.message || `NHTSA request failed (${response.status})`;
-    throw new Error(message);
-  }
+  if (!response.ok) throw new Error(data?.message || `NHTSA request failed (${response.status})`);
   return data;
 }
 
@@ -26,23 +23,31 @@ router.get('/vehicle', async (req, res) => {
 
     const encodedMake = encodeURIComponent(make);
     const encodedModel = encodeURIComponent(model);
+    const variantsUrl = `${NHTSA}/SafetyRatings/modelyear/${year}/make/${encodedMake}/model/${encodedModel}`;
+    const recallsUrl = `${NHTSA}/recalls/recallsByVehicle?make=${encodedMake}&model=${encodedModel}&modelYear=${year}`;
 
-    const [ratingsResult, recallsResult] = await Promise.allSettled([
-      getJson(`${NHTSA}/SafetyRatings/modelyear/${year}/make/${encodedMake}/model/${encodedModel}`),
-      getJson(`${NHTSA}/recalls/recallsByVehicle?make=${encodedMake}&model=${encodedModel}&modelYear=${year}`),
+    const [variantsResult, recallsResult] = await Promise.allSettled([
+      getJson(variantsUrl),
+      getJson(recallsUrl),
     ]);
 
-    const ratings = ratingsResult.status === 'fulfilled' ? ratingsResult.value : null;
+    const variants = variantsResult.status === 'fulfilled' ? variantsResult.value : null;
     const recalls = recallsResult.status === 'fulfilled' ? recallsResult.value : null;
+    const firstVariant = Array.isArray(variants?.Results) ? variants.Results[0] : null;
+    const vehicleId = firstVariant?.VehicleId || firstVariant?.VehicleID || null;
+
+    let ratingsDetail = null;
+    if (vehicleId) {
+      try { ratingsDetail = await getJson(`${NHTSA}/SafetyRatings/VehicleId/${vehicleId}`); } catch (_) {}
+    }
 
     res.json({
-      source: 'NHTSA',
-      year,
-      make,
-      model,
-      ratings,
+      source: 'NHTSA', year, make, model,
+      vehicle_id: vehicleId,
+      variants,
+      ratings: ratingsDetail,
       recalls,
-      ratings_available: ratings != null,
+      ratings_available: ratingsDetail != null,
       recalls_available: recalls != null,
     });
   } catch (error) {
