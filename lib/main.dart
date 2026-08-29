@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'screens/add_car_screen.dart';
 import 'screens/cars_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'services/api_service.dart';
 
@@ -12,22 +13,15 @@ const Color kBg = Color(0xFF07090F);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   final api = ApiService();
   await api.initAuth();
-
   runApp(ZyoCarApp(api: api));
 }
 
-class ZyoCarApp extends StatefulWidget {
+class ZyoCarApp extends StatelessWidget {
   const ZyoCarApp({super.key, required this.api});
   final ApiService api;
 
-  @override
-  State<ZyoCarApp> createState() => _ZyoCarAppState();
-}
-
-class _ZyoCarAppState extends State<ZyoCarApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -40,7 +34,7 @@ class _ZyoCarAppState extends State<ZyoCarApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: kPink, brightness: Brightness.dark),
         appBarTheme: const AppBarTheme(backgroundColor: kBg, elevation: 0, centerTitle: true),
       ),
-      home: SplashScreen(api: widget.api),
+      home: SplashScreen(api: api),
     );
   }
 }
@@ -62,9 +56,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..forward();
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
-    Future.delayed(const Duration(milliseconds: 2400), () {
+    Future.delayed(const Duration(milliseconds: 4200), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => MainShell(api: widget.api)));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => AuthGate(api: widget.api)),
+      );
     });
   }
 
@@ -113,22 +109,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         shaderCallback: (bounds) => const LinearGradient(
                           colors: [kPink, Colors.white, kBlue],
                         ).createShader(bounds),
-                        child: const Text(
-                          'ZYOCAR',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 42,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 5,
-                          ),
-                        ),
+                        child: const Text('ZYOCAR', style: TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w900, letterSpacing: 5)),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'بيع وشراء السيارات وقطع الغيار',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
+                    const Text('بيع وشراء السيارات وقطع الغيار', style: TextStyle(color: Colors.white70, fontSize: 13)),
                     const SizedBox(height: 38),
                     SizedBox(
                       height: 220,
@@ -136,20 +121,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       child: AnimatedOpacity(
                         opacity: v.clamp(0.0, 1.0),
                         duration: const Duration(milliseconds: 250),
-                        child: Image.asset(
-                          'assets/icons/zyocar.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                        ),
+                        child: Image.asset('assets/icons/zyocar.png', fit: BoxFit.contain, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
                       ),
                     ),
                     const SizedBox(height: 18),
                     Opacity(
                       opacity: v.clamp(0.0, 1.0),
-                      child: const Text(
-                        'اكتشف سيارتك القادمة',
-                        style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
-                      ),
+                      child: const Text('اكتشف سيارتك القادمة', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
                     ),
                   ],
                 );
@@ -157,6 +135,90 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key, required this.api});
+  final ApiService api;
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _checking = true;
+  bool _loggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    var valid = widget.api.isLoggedIn;
+    if (valid) {
+      try {
+        await widget.api.me();
+      } catch (_) {
+        valid = false;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _loggedIn = valid;
+      _checking = false;
+    });
+  }
+
+  Future<void> _openLogin() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => LoginScreen(api: widget.api)),
+    );
+    if (result != null && mounted) {
+      setState(() => _loggedIn = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_checking) return const Scaffold(body: Center(child: CircularProgressIndicator(color: kPink)));
+    if (_loggedIn) return MainShell(api: widget.api);
+    return LoginRequiredScreen(onLogin: _openLogin);
+  }
+}
+
+class LoginRequiredScreen extends StatelessWidget {
+  const LoginRequiredScreen({super.key, required this.onLogin});
+  final VoidCallback onLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: kBg,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_person_rounded, color: kPink, size: 72),
+                const SizedBox(height: 18),
+                const Text('تسجيل الدخول مطلوب', style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 8),
+                const Text('سجّل دخولك حتى تدخل إلى ZYOCAR', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)),
+                const SizedBox(height: 24),
+                SizedBox(width: double.infinity, height: 54, child: ElevatedButton(onPressed: onLogin, style: ElevatedButton.styleFrom(backgroundColor: kPink, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))), child: const Text('تسجيل الدخول', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)))),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -190,12 +252,7 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       backgroundColor: kBg,
       body: IndexedStack(index: _index, children: pages),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addCar,
-        backgroundColor: kPink,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add_rounded, size: 31),
-      ),
+      floatingActionButton: FloatingActionButton(onPressed: _addCar, backgroundColor: kPink, foregroundColor: Colors.white, child: const Icon(Icons.add_rounded, size: 31)),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
