@@ -1,0 +1,18 @@
+import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+
+class AdminCarsScreen extends StatefulWidget {
+  const AdminCarsScreen({super.key, required this.api});
+  final ApiService api;
+  @override State<AdminCarsScreen> createState()=>_AdminCarsScreenState();
+}
+class _AdminCarsScreenState extends State<AdminCarsScreen>{
+  bool _loading=true; List<dynamic> _cars=[];
+  @override void initState(){super.initState();_load();}
+  Future<void> _load() async {setState(()=>_loading=true);try{final d=await widget.api.getAdminCars();if(mounted)setState(()=>_cars=d is List?d:[]);}on ApiException catch(e){_msg(e.message);}finally{if(mounted)setState(()=>_loading=false);}}
+  Future<void> _delete(Map car) async {final ok=await showDialog<bool>(context:context,builder:(_)=>AlertDialog(title:const Text('حذف الإعلان؟'),content:Text('${car['brand']??''} ${car['model']??''}'),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('إلغاء')),TextButton(onPressed:()=>Navigator.pop(context,true),child:const Text('حذف'))]))??false;if(!ok)return;try{await widget.api.deleteAdminCar(int.parse(car['id'].toString()));_msg('تم حذف السيارة');await _load();}on ApiException catch(e){_msg(e.message);}}
+  void _msg(String s){if(!mounted)return;ScaffoldMessenger.of(context)..hideCurrentSnackBar()..showSnackBar(SnackBar(content:Text(s)));}
+  String _status(String s)=>s=='approved'?'مقبولة':s=='rejected'?'مرفوضة':'قيد المراجعة';
+  Color _statusColor(String s)=>s=='approved'?Colors.green:s=='rejected'?Colors.red:Colors.orange;
+  @override Widget build(BuildContext context)=>Directionality(textDirection:TextDirection.rtl,child:Scaffold(backgroundColor:const Color(0xFF08080B),appBar:AppBar(title:const Text('إدارة السيارات',style:TextStyle(fontWeight:FontWeight.w900)),centerTitle:true,actions:[IconButton(onPressed:_loading?null:_load,icon:const Icon(Icons.refresh_rounded))]),body:_loading?const Center(child:CircularProgressIndicator(color:Color(0xFFFF176F))):RefreshIndicator(color:const Color(0xFFFF176F),onRefresh:_load,child:_cars.isEmpty?ListView(children:[const SizedBox(height:160),Center(child:Text('لا توجد سيارات',style:TextStyle(color:Colors.white54)))]):ListView.builder(padding:const EdgeInsets.all(14),itemCount:_cars.length,itemBuilder:(_,i){final c=Map<String,dynamic>.from(_cars[i] as Map);final image=c['image']?.toString();final status=c['status']?.toString()??'';return Container(margin:const EdgeInsets.only(bottom:10),decoration:BoxDecoration(color:const Color(0xFF15151B),borderRadius:BorderRadius.circular(17),border:Border.all(color:const Color(0xFF292932))),child:ListTile(contentPadding:const EdgeInsets.all(10),leading:ClipRRect(borderRadius:BorderRadius.circular(12),child:Container(width:65,height:65,color:const Color(0xFF22222A),child:image==null||image.isEmpty?const Icon(Icons.directions_car,color:Colors.white38):Image.network(widget.api.imageUrl(image),fit:BoxFit.cover,errorBuilder:(_,__,___)=>const Icon(Icons.directions_car,color:Colors.white38)))),title:Text('${c['brand']??''} ${c['model']??''}',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),subtitle:Text('${c['year']??'-'} • ${c['price']??'-'} $ • ${c['seller_name']??'بدون اسم'}',style:const TextStyle(color:Colors.white54,fontSize:11)),trailing:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(_status(status),style:TextStyle(color:_statusColor(status),fontSize:10,fontWeight:FontWeight.bold)),IconButton(onPressed:()=>_delete(c),icon:const Icon(Icons.delete_outline_rounded,color:Colors.redAccent))])) ;}))));
+}
