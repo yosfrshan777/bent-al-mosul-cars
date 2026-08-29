@@ -1,7 +1,4 @@
-CREATE DATABASE IF NOT EXISTS zyocar
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
+CREATE DATABASE IF NOT EXISTS zyocar CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE zyocar;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -9,17 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(120) NOT NULL,
   phone VARCHAR(30) NOT NULL,
   password VARCHAR(255) NOT NULL,
-  role ENUM(
-    'user',
-    'seller',
-    'showroom',
-    'parts',
-    'admin',
-    'owner'
-  ) NOT NULL DEFAULT 'user',
+  role ENUM('user','seller','showroom','parts','admin','owner') NOT NULL DEFAULT 'user',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  UNIQUE KEY uq_users_phone (phone)
+  PRIMARY KEY (id), UNIQUE KEY uq_users_phone (phone)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS cars (
@@ -35,23 +24,10 @@ CREATE TABLE IF NOT EXISTS cars (
   transmission VARCHAR(50) NOT NULL DEFAULT 'أوتوماتيك',
   description TEXT NULL,
   plan VARCHAR(30) NOT NULL DEFAULT 'عادي',
-  status ENUM(
-    'pending',
-    'approved',
-    'rejected'
-  ) NOT NULL DEFAULT 'pending',
+  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (id),
-
-  KEY idx_cars_user_id (user_id),
-  KEY idx_cars_status (status),
-  KEY idx_cars_created_at (created_at),
-
-  CONSTRAINT fk_cars_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE
+  PRIMARY KEY (id), KEY idx_cars_user_id (user_id), KEY idx_cars_status (status), KEY idx_cars_created_at (created_at),
+  CONSTRAINT fk_cars_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS car_images (
@@ -59,14 +35,8 @@ CREATE TABLE IF NOT EXISTS car_images (
   car_id INT UNSIGNED NOT NULL,
   image VARCHAR(500) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (id),
-  KEY idx_car_images_car_id (car_id),
-
-  CONSTRAINT fk_car_images_car
-    FOREIGN KEY (car_id)
-    REFERENCES cars(id)
-    ON DELETE CASCADE
+  PRIMARY KEY (id), KEY idx_car_images_car_id (car_id),
+  CONSTRAINT fk_car_images_car FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS payments (
@@ -74,26 +44,14 @@ CREATE TABLE IF NOT EXISTS payments (
   user_id INT UNSIGNED NOT NULL,
   amount INT UNSIGNED NOT NULL,
   method VARCHAR(50) NOT NULL,
-  status ENUM(
-    'pending',
-    'approved',
-    'rejected',
-    'completed'
-  ) NOT NULL DEFAULT 'pending',
+  status ENUM('pending','approved','rejected','completed') NOT NULL DEFAULT 'pending',
   phone VARCHAR(30) NULL,
   card_number VARCHAR(100) NULL,
   account_name VARCHAR(150) NULL,
   reference VARCHAR(150) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (id),
-  KEY idx_payments_user_id (user_id),
-  KEY idx_payments_status (status),
-
-  CONSTRAINT fk_payments_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE
+  PRIMARY KEY (id), KEY idx_payments_user_id (user_id), KEY idx_payments_status (status),
+  CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -103,20 +61,9 @@ CREATE TABLE IF NOT EXISTS messages (
   text TEXT NOT NULL,
   is_read TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (id),
-  KEY idx_messages_sender (sender_id),
-  KEY idx_messages_receiver (receiver_id),
-
-  CONSTRAINT fk_messages_sender
-    FOREIGN KEY (sender_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE,
-
-  CONSTRAINT fk_messages_receiver
-    FOREIGN KEY (receiver_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE
+  PRIMARY KEY (id), KEY idx_messages_sender (sender_id), KEY idx_messages_receiver (receiver_id),
+  CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_messages_receiver FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS payment_settings (
@@ -125,41 +72,20 @@ CREATE TABLE IF NOT EXISTS payment_settings (
   card_number VARCHAR(100) NULL,
   account_name VARCHAR(150) NULL,
   method VARCHAR(50) NOT NULL DEFAULT 'card',
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP,
-
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
-INSERT INTO payment_settings (
-  phone,
-  card_number,
-  account_name,
-  method
-)
-SELECT
-  NULL,
-  NULL,
-  NULL,
-  'card'
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM payment_settings
-);
+CREATE TABLE IF NOT EXISTS discounts (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  target ENUM('users','showrooms') NOT NULL,
+  percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_discounts_target_active (target, active)
+) ENGINE=InnoDB;
 
-INSERT INTO users (
-  name,
-  phone,
-  password,
-  role
-)
-SELECT
-  'ZYOCAR Owner',
-  '0000000000',
-  '$2a$12$REPLACE_THIS_PASSWORD_HASH',
-  'owner'
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM users
-  WHERE role = 'owner'
-);
+INSERT INTO payment_settings (phone,card_number,account_name,method)
+SELECT NULL,NULL,NULL,'card'
+WHERE NOT EXISTS (SELECT 1 FROM payment_settings);
