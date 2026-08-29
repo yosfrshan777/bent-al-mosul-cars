@@ -17,7 +17,6 @@ async function testDatabase() {
   try {
     await connection.ping();
 
-    // إنشاء جدول المستخدمين
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT NOT NULL AUTO_INCREMENT,
@@ -30,7 +29,6 @@ async function testDatabase() {
       )
     `);
 
-    // إنشاء جدول السيارات
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS cars (
         id INT NOT NULL AUTO_INCREMENT,
@@ -50,14 +48,10 @@ async function testDatabase() {
         PRIMARY KEY (id),
         INDEX idx_cars_user_id (user_id),
         INDEX idx_cars_status (status),
-        CONSTRAINT fk_cars_user
-          FOREIGN KEY (user_id)
-          REFERENCES users(id)
-          ON DELETE CASCADE
+        CONSTRAINT fk_cars_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
 
-    // صور السيارات
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS car_images (
         id INT NOT NULL AUTO_INCREMENT,
@@ -66,16 +60,24 @@ async function testDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         INDEX idx_car_images_car_id (car_id),
-        CONSTRAINT fk_car_images_car
-          FOREIGN KEY (car_id)
-          REFERENCES cars(id)
-          ON DELETE CASCADE
+        CONSTRAINT fk_car_images_car FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS discounts (
+        id INT NOT NULL AUTO_INCREMENT,
+        target VARCHAR(30) NOT NULL,
+        percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
+        active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        INDEX idx_discounts_target_active (target, active)
       )
     `);
 
     console.log('ZYOCAR database connected');
     console.log('ZYOCAR tables ready');
-
   } finally {
     connection.release();
   }
