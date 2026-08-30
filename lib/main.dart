@@ -87,16 +87,29 @@ class _AuthGateState extends State<AuthGate> {
   bool checking = true;
   bool loggedIn = false;
   @override void initState() { super.initState(); check(); }
+
   Future<void> check() async {
     var valid = widget.api.isLoggedIn;
-    if (valid) { try { await widget.api.me(); } catch (_) { valid = false; } }
+    if (valid) {
+      try {
+        await widget.api.me();
+      } on ApiException catch (e) {
+        // Only a real authentication failure invalidates the saved session.
+        // Temporary network/server failures should not force the user to log in again.
+        if (e.statusCode == 401) valid = false;
+      } catch (_) {
+        // Keep the cached session during transient connectivity failures.
+      }
+    }
     if (!mounted) return;
     setState(() { loggedIn = valid; checking = false; });
   }
+
   Future<void> login() async {
     final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(api: widget.api)));
     if (result != null && mounted) setState(() => loggedIn = true);
   }
+
   @override Widget build(BuildContext context) {
     if (checking) return const Scaffold(body: Center(child: CircularProgressIndicator(color: kPink)));
     if (loggedIn) return MainShell(api: widget.api);
