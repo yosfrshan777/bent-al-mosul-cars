@@ -12,7 +12,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _username = TextEditingController();
   final _phone = TextEditingController();
   final _password = TextEditingController();
   bool _loading = false;
@@ -24,7 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     try {
       final result = await widget.api.login(
-        username: _username.text.trim(),
         phone: _phone.text.trim(),
         password: _password.text,
       );
@@ -121,23 +119,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'أدخل بيانات حسابك للدخول',
+                    'أدخل رقم هاتفك وكلمة المرور للدخول',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white54),
                   ),
                   const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _username,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _decoration(
-                      'اسم المستخدم',
-                      Icons.person_rounded,
-                    ),
-                    validator: (v) => v == null || v.trim().isEmpty
-                        ? 'أدخل اسم المستخدم'
-                        : null,
-                  ),
-                  const SizedBox(height: 14),
                   TextFormField(
                     controller: _phone,
                     keyboardType: TextInputType.phone,
@@ -237,7 +223,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _username.dispose();
     _phone.dispose();
     _password.dispose();
     super.dispose();
