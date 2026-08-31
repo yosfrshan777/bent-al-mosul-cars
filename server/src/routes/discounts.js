@@ -25,7 +25,7 @@ router.post('/validate', auth, async (req, res) => {
       return res.status(400).json({ message: 'تم استنفاد كود الخصم' });
     }
 
-    res.json({ valid: true, code });
+    res.json({ valid: true, code, percentage: Number(discount.percentage) });
   } catch (error) {
     console.error('VALIDATE DISCOUNT:', error);
     res.status(500).json({ message: 'تعذر التحقق من كود الخصم' });
