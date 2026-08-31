@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, Session
 from .db import Base, get_db
 from .models import User, Car
 from .main import current_user
+from .pricing import calculate_seller_price
 
 router = APIRouter()
 
@@ -23,17 +24,21 @@ class Payment(Base):
 
 class PaymentIn(BaseModel):
     plan: str = Field(min_length=2)
-    amount: int = Field(gt=0)
     receipt_number: str = Field(min_length=2, max_length=120)
     receipt_image: str = ''
     car_id: int | None = None
 
 @router.post('/payments')
 def submit_payment(data: PaymentIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    payment = Payment(user_id=user.id, car_id=data.car_id, plan=data.plan, amount=data.amount,
-                      receipt_number=data.receipt_number, receipt_image=data.receipt_image, status='pending')
+    quote = calculate_seller_price(data.plan, user)
+    if not quote['payment_required']:
+        if data.car_id:
+            car = db.get(Car, data.car_id)
+            if car and car.owner_id == user.id: car.status = 'approved'
+        return {'status': 'approved', 'amount': 0, 'message': 'الباقة مجانية وتم اعتمادها'}
+    payment = Payment(user_id=user.id, car_id=data.car_id, plan=data.plan, amount=quote['final_price'], receipt_number=data.receipt_number, receipt_image=data.receipt_image, status='pending')
     db.add(payment); db.commit(); db.refresh(payment)
-    return {'id': payment.id, 'status': payment.status, 'message': 'تم إرسال الإيصال بانتظار موافقة الإدارة'}
+    return {'id': payment.id, 'status': payment.status, 'amount': quote['final_price'], 'message': 'تم إرسال الإيصال بانتظار موافقة الإدارة'}
 
 @router.get('/payments/mine')
 def my_payments(user: User = Depends(current_user), db: Session = Depends(get_db)):
@@ -55,13 +60,11 @@ def approve_payment(payment_id: int, user: User = Depends(current_user), db: Ses
     if p.car_id:
         car = db.get(Car, p.car_id)
         if car: car.status = 'approved'
-    db.commit()
-    return {'ok': True, 'status': p.status}
+    db.commit(); return {'ok': True, 'status': p.status}
 
 @router.post('/admin/payments/{payment_id}/reject')
 def reject_payment(payment_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     if user.role not in ('owner', 'admin'): raise HTTPException(403, 'غير مصرح')
     p = db.get(Payment, payment_id)
     if not p: raise HTTPException(404, 'عملية الدفع غير موجودة')
-    p.status = 'rejected'; db.commit()
-    return {'ok': True, 'status': p.status}
+    p.status = 'rejected'; db.commit(); return {'ok': True, 'status': p.status}
