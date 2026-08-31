@@ -4,22 +4,129 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ApiException implements Exception {final String message;final int? statusCode;const ApiException(this.message,{this.statusCode});@override String toString()=>message;}
+class ApiException implements Exception {
+  final String message;
+  final int? statusCode;
+  const ApiException(this.message, {this.statusCode});
+  @override String toString() => message;
+}
+
 class ApiService {
-  ApiService({String? baseUrl}):baseUrl=(baseUrl??_defaultBaseUrl).replaceFirst(RegExp(r'/$'), '');
-  static const String _defaultBaseUrl='https://bent-al-mosul-cars.onrender.com/api';static const String _tokenKey='zyocar_auth_token';final String baseUrl;String? _token;
-  bool get isLoggedIn=>_token!=null&&_token!.isNotEmpty;Future<void> initAuth()async{final p=await SharedPreferences.getInstance();_token=p.getString(_tokenKey);}Future<void> setToken(String token)async{_token=token;final p=await SharedPreferences.getInstance();await p.setString(_tokenKey,token);}Future<void> clearToken()async{_token=null;final p=await SharedPreferences.getInstance();await p.remove(_tokenKey);}
-  Map<String,String> get _headers{final h=<String,String>{'Accept':'application/json'};if(isLoggedIn)h['Authorization']='Bearer $_token';return h;}
-  Future<dynamic> _request(String method,String path,{Map<String,dynamic>? body})async{try{final u=Uri.parse('$baseUrl$path');final h={..._headers,'Content-Type':'application/json'};late http.Response r;switch(method){case'GET':r=await http.get(u,headers:h);break;case'POST':r=await http.post(u,headers:h,body:jsonEncode(body??{}));break;case'PUT':r=await http.put(u,headers:h,body:jsonEncode(body??{}));break;case'DELETE':r=await http.delete(u,headers:h);break;default:throw const ApiException('طريقة الطلب غير مدعومة');}dynamic d;if(r.body.trim().isNotEmpty){try{d=jsonDecode(r.body);}catch(_){}}if(r.statusCode<200||r.statusCode>=300){var m='حدث خطأ في السيرفر';if(d is Map&&(d['message']??d['error'])!=null)m=(d['message']??d['error']).toString();if(r.statusCode==401){await clearToken();m='انتهت جلسة الدخول، يرجى تسجيل الدخول مرة أخرى';}throw ApiException(m,statusCode:r.statusCode);}return d;}on SocketException{throw const ApiException('لا يوجد اتصال بالسيرفر');}on ApiException{rethrow;}catch(_){throw const ApiException('حدث خطأ أثناء الاتصال بالسيرفر');}}
-  Future<dynamic> login({required String phone,required String password})async{final d=await _request('POST','/auth/login',body:{'phone':phone.trim(),'password':password});if(d is Map&&(d['token']??d['access_token'])!=null)await setToken((d['token']??d['access_token']).toString());return d;}Future<dynamic> register({required String name,required String phone,required String password})async{final d=await _request('POST','/auth/register',body:{'name':name.trim(),'phone':phone.trim(),'password':password});if(d is Map&&(d['token']??d['access_token'])!=null)await setToken((d['token']??d['access_token']).toString());return d;}Future<dynamic> me()=>_request('GET','/auth/me');Future<void> logout()async{try{await _request('POST','/auth/logout');}finally{await clearToken();}}
-  Future<List<dynamic>> getCars()async{final d=await _request('GET','/cars');if(d is List)return d;if(d is Map&&d['cars'] is List)return d['cars'];return[];}Future<dynamic> getMyCars()=>_request('GET','/cars/mine/list');Future<dynamic> deleteMyCar(int id)=>_request('DELETE','/cars/$id');
-  Future<dynamic> getNhtsaVehicle({required String make,required String model,required int year})=>_request('GET','/nhtsa/vehicle?${Uri(queryParameters:{'make':make,'model':model,'year':'$year'}).query}');
-  Future<dynamic> carImage({required String make,required String model,int? year})async{final q=<String,String>{'make':make,'model':model};if(year!=null)q['year']='$year';final u=Uri.parse('$baseUrl/carimages/image').replace(queryParameters:q);try{final r=await http.get(u,headers:_headers);final d=r.body.trim().isEmpty?null:jsonDecode(r.body);if(r.statusCode<200||r.statusCode>=300)throw ApiException(d is Map&&d['message']!=null?d['message'].toString():'تعذر جلب صورة السيارة',statusCode:r.statusCode);return d;}catch(e){if(e is ApiException)rethrow;throw const ApiException('تعذر جلب صورة السيارة');}}
-  Future<dynamic> createCar({required String brand,required String model,required int year,required int price,required int km,required String city,required String fuel,required String transmission,required String description,required String plan,required List<XFile> images,String phone='',String? bodyType})async{if(!isLoggedIn)throw const ApiException('يجب تسجيل الدخول أولاً');if(images.isEmpty||images.length>8)throw const ApiException('اختر من صورة إلى 8 صور للسيارة');try{final q=http.MultipartRequest('POST',Uri.parse('$baseUrl/upload/car-images'));q.headers.addAll(_headers);for(final x in images){q.files.add(await http.MultipartFile.fromPath('images',x.path,filename:x.name));}final rr=await q.send();final r=await http.Response.fromStream(rr);dynamic d;if(r.body.trim().isNotEmpty){try{d=jsonDecode(r.body);}catch(_){}}if(r.statusCode<200||r.statusCode>=300)throw ApiException(d is Map?(d['message']??d['error']??'تعذر رفع الصور').toString():'تعذر رفع الصور',statusCode:r.statusCode);final urls=<String>[];if(d is Map&&d['images'] is List){for(final x in d['images'])if(x is Map&&x['url']!=null)urls.add(x['url'].toString());}if(urls.isEmpty)throw const ApiException('تعذر رفع صور السيارة بشكل كامل');return _request('POST','/cars',body:{'brand':brand,'model':model,'year':year,'price':price,'km':km,'city':city,'fuel':fuel,'transmission':transmission,'description':description,'plan':plan,'images':urls,'phone':phone,'body_type':bodyType??'سيارة'});}on ApiException{rethrow;}catch(_){throw const ApiException('حدث خطأ أثناء نشر السيارة');}}
-  Future<dynamic> getShowrooms()=>_request('GET','/showrooms');Future<dynamic> getShowroom(int id)=>_request('GET','/showrooms/$id');Future<dynamic> requestShowroom({required String name,required String phone,required String city})=>_request('POST','/showrooms/request',body:{'name':name,'phone':phone,'city':city});Future<dynamic> getParts()=>_request('GET','/parts');Future<dynamic> getPartStore(int id)=>_request('GET','/parts/$id');Future<dynamic> requestParts({required String name,required String phone,required String city})=>_request('POST','/parts/request',body:{'name':name,'phone':phone,'city':city});
-  Future<dynamic> getReels()async{final d=await _request('GET','/reels');if(d is List)return d;if(d is Map&&d['reels'] is List)return d['reels'];return[];}
-  Future<dynamic> analyzeCarImage(XFile image)async{if(!isLoggedIn)throw const ApiException('يجب تسجيل الدخول أولاً');try{final q=http.MultipartRequest('POST',Uri.parse('$baseUrl/upload/analyze-car'));q.headers.addAll(_headers);q.files.add(await http.MultipartFile.fromPath('image',image.path,filename:image.name));final rr=await q.send();final r=await http.Response.fromStream(rr);dynamic d;if(r.body.trim().isNotEmpty){try{d=jsonDecode(r.body);}catch(_){}}if(r.statusCode<200||r.statusCode>=300)throw ApiException(d is Map?(d['message']??d['error']??'تعذر تحليل الصورة').toString():'تعذر تحليل الصورة',statusCode:r.statusCode);return d;}on ApiException{rethrow;}catch(_){throw const ApiException('حدث خطأ أثناء تحليل الصورة');}}
-  Future<dynamic> getAdminData()=>_request('GET','/admin/dashboard');Future<dynamic> getAdminCars()=>_request('GET','/admin/cars');Future<dynamic> deleteAdminCar(int id)=>_request('DELETE','/admin/cars/$id');Future<dynamic> getAdminUsers()=>_request('GET','/admin/users');Future<dynamic> getAdmins()=>_request('GET','/admin/admins');Future<dynamic> makeAdmin(String phone)=>_request('PUT','/admin/users/role-by-phone',body:{'phone':phone});Future<dynamic> removeAdmin(String phone)=>_request('DELETE','/admin/users/admin-by-phone?phone=${Uri.encodeComponent(phone)}');Future<dynamic> getPendingRequests()=>_request('GET','/admin/requests/pending');Future<dynamic> approveRequest(int id)=>_request('POST','/admin/requests/$id/approve');Future<dynamic> rejectRequest(int id)=>_request('POST','/admin/requests/$id/reject');
-  Future<dynamic> getPaymentSettings()=>_request('GET','/admin/payment-settings');Future<dynamic> updatePaymentSettings({required String phone,required String cardNumber,required String accountName,String? method})=>_request('PUT','/admin/payment-settings',body:{'phone':phone,'card_number':cardNumber,'account_name':accountName,'method':method??'card'});Future<dynamic> createPayment({required int amount,required String method,String? phone,String? cardNumber,String? accountName,String? reference,String? discountCode})=>_request('POST','/payment',body:{'amount':amount,'method':method,'phone':phone,'card_number':cardNumber,'account_name':accountName,'reference':reference,'discount_code':discountCode});Future<dynamic> getMyPayments()=>_request('GET','/payment/mine');Future<dynamic> getAdminPayments()=>_request('GET','/payment/admin');Future<dynamic> approvePayment(int id)=>_request('POST','/payment/admin/$id/approve');Future<dynamic> rejectPayment(int id)=>_request('POST','/payment/admin/$id/reject');
-  String imageUrl(String path){if(path.startsWith('http://')||path.startsWith('https://'))return path;if(path.startsWith('/'))return baseUrl.replaceFirst('/api','')+path;return baseUrl.replaceFirst('/api','')+'/$path';}
+  ApiService({String? baseUrl}) : baseUrl = (baseUrl ?? _defaultBaseUrl).replaceFirst(RegExp(r'/$'), '');
+  static const String _defaultBaseUrl = 'https://bent-al-mosul-cars.onrender.com/api';
+  static const String _tokenKey = 'zyocar_auth_token';
+  final String baseUrl;
+  String? _token;
+
+  bool get isLoggedIn => _token != null && _token!.isNotEmpty;
+  Future<void> initAuth() async { final p = await SharedPreferences.getInstance(); _token = p.getString(_tokenKey); }
+  Future<void> setToken(String token) async { _token = token; final p = await SharedPreferences.getInstance(); await p.setString(_tokenKey, token); }
+  Future<void> clearToken() async { _token = null; final p = await SharedPreferences.getInstance(); await p.remove(_tokenKey); }
+
+  Map<String, String> get _headers {
+    final h = <String, String>{'Accept': 'application/json'};
+    if (isLoggedIn) h['Authorization'] = 'Bearer $_token';
+    return h;
+  }
+
+  Future<dynamic> _request(String method, String path, {Map<String, dynamic>? body}) async {
+    try {
+      final u = Uri.parse('$baseUrl$path');
+      final h = {..._headers, 'Content-Type': 'application/json'};
+      late http.Response r;
+      switch (method) {
+        case 'GET': r = await http.get(u, headers: h); break;
+        case 'POST': r = await http.post(u, headers: h, body: jsonEncode(body ?? {})); break;
+        case 'PUT': r = await http.put(u, headers: h, body: jsonEncode(body ?? {})); break;
+        case 'DELETE': r = await http.delete(u, headers: h); break;
+        default: throw const ApiException('طريقة الطلب غير مدعومة');
+      }
+      dynamic d;
+      if (r.body.trim().isNotEmpty) { try { d = jsonDecode(r.body); } catch (_) {} }
+      if (r.statusCode < 200 || r.statusCode >= 300) {
+        var m = 'حدث خطأ في السيرفر';
+        if (d is Map && (d['message'] ?? d['error']) != null) m = (d['message'] ?? d['error']).toString();
+        if (r.statusCode == 401) { await clearToken(); m = 'انتهت جلسة الدخول، يرجى تسجيل الدخول مرة أخرى'; }
+        throw ApiException(m, statusCode: r.statusCode);
+      }
+      return d;
+    } on SocketException { throw const ApiException('لا يوجد اتصال بالسيرفر'); }
+      on ApiException { rethrow; }
+      catch (_) { throw const ApiException('حدث خطأ أثناء الاتصال بالسيرفر'); }
+  }
+
+  Future<dynamic> login({required String phone, required String password}) async { final d = await _request('POST', '/auth/login', body: {'phone': phone.trim(), 'password': password}); if (d is Map && (d['token'] ?? d['access_token']) != null) await setToken((d['token'] ?? d['access_token']).toString()); return d; }
+  Future<dynamic> register({required String name, required String phone, required String password}) async { final d = await _request('POST', '/auth/register', body: {'name': name.trim(), 'phone': phone.trim(), 'password': password}); if (d is Map && (d['token'] ?? d['access_token']) != null) await setToken((d['token'] ?? d['access_token']).toString()); return d; }
+  Future<dynamic> me() => _request('GET', '/auth/me');
+  Future<void> logout() async { try { await _request('POST', '/auth/logout'); } finally { await clearToken(); } }
+
+  Future<List<dynamic>> getCars() async { final d = await _request('GET', '/cars'); if (d is List) return d; if (d is Map && d['cars'] is List) return d['cars']; return []; }
+  Future<dynamic> getMyCars() => _request('GET', '/cars/mine/list');
+  Future<dynamic> deleteMyCar(int id) => _request('DELETE', '/cars/$id');
+  Future<dynamic> getNhtsaVehicle({required String make, required String model, required int year}) => _request('GET', '/nhtsa/vehicle?${Uri(queryParameters: {'make': make, 'model': model, 'year': '$year'}).query}');
+
+  Future<dynamic> carImage({required String make, required String model, int? year}) async {
+    final q = <String, String>{'make': make, 'model': model}; if (year != null) q['year'] = '$year';
+    final u = Uri.parse('$baseUrl/carimages/image').replace(queryParameters: q);
+    try { final r = await http.get(u, headers: _headers); final d = r.body.trim().isEmpty ? null : jsonDecode(r.body); if (r.statusCode < 200 || r.statusCode >= 300) throw ApiException(d is Map && d['message'] != null ? d['message'].toString() : 'تعذر جلب صورة السيارة', statusCode: r.statusCode); return d; }
+    catch (e) { if (e is ApiException) rethrow; throw const ApiException('تعذر جلب صورة السيارة'); }
+  }
+
+  Future<dynamic> createCar({required String brand, required String model, required int year, required int price, required int km, required String city, required String fuel, required String transmission, required String description, required String plan, required List<XFile> images, String phone = '', String? bodyType}) async {
+    if (!isLoggedIn) throw const ApiException('يجب تسجيل الدخول أولاً');
+    if (images.isEmpty || images.length > 8) throw const ApiException('اختر من صورة إلى 8 صور للسيارة');
+    try {
+      final q = http.MultipartRequest('POST', Uri.parse('$baseUrl/upload/car-images'));
+      q.headers.addAll(_headers);
+      for (final x in images) q.files.add(await http.MultipartFile.fromPath('images', x.path, filename: x.name));
+      final rr = await q.send(); final r = await http.Response.fromStream(rr); dynamic d;
+      if (r.body.trim().isNotEmpty) { try { d = jsonDecode(r.body); } catch (_) {} }
+      if (r.statusCode < 200 || r.statusCode >= 300) throw ApiException(d is Map ? (d['message'] ?? d['error'] ?? 'تعذر رفع الصور').toString() : 'تعذر رفع الصور', statusCode: r.statusCode);
+      final urls = <String>[];
+      if (d is Map && d['images'] is List) for (final x in d['images']) if (x is Map && x['url'] != null) urls.add(x['url'].toString());
+      if (urls.isEmpty) throw const ApiException('تعذر رفع صور السيارة بشكل كامل');
+      return _request('POST', '/cars', body: {'brand': brand, 'model': model, 'year': year, 'price': price, 'km': km, 'city': city, 'fuel': fuel, 'transmission': transmission, 'description': description, 'plan': plan, 'images': urls, 'phone': phone, 'body_type': bodyType ?? 'سيارة'});
+    } on ApiException { rethrow; } catch (_) { throw const ApiException('حدث خطأ أثناء نشر السيارة'); }
+  }
+
+  Future<dynamic> getShowrooms() => _request('GET', '/showrooms');
+  Future<dynamic> getShowroom(int id) => _request('GET', '/showrooms/$id');
+  Future<dynamic> requestShowroom({required String name, required String phone, required String city}) => _request('POST', '/showrooms/request', body: {'name': name, 'phone': phone, 'city': city});
+  Future<dynamic> getParts() => _request('GET', '/parts');
+  Future<dynamic> getPartStore(int id) => _request('GET', '/parts/$id');
+  Future<dynamic> requestParts({required String name, required String phone, required String city}) => _request('POST', '/parts/request', body: {'name': name, 'phone': phone, 'city': city});
+  Future<dynamic> getReels() async { final d = await _request('GET', '/reels'); if (d is List) return d; if (d is Map && d['reels'] is List) return d['reels']; return []; }
+
+  Future<dynamic> analyzeCarImage(XFile image) async {
+    if (!isLoggedIn) throw const ApiException('يجب تسجيل الدخول أولاً');
+    try {
+      final q = http.MultipartRequest('POST', Uri.parse('$baseUrl/upload/analyze-car')); q.headers.addAll(_headers); q.files.add(await http.MultipartFile.fromPath('image', image.path, filename: image.name));
+      final rr = await q.send(); final r = await http.Response.fromStream(rr); dynamic d; if (r.body.trim().isNotEmpty) { try { d = jsonDecode(r.body); } catch (_) {} }
+      if (r.statusCode < 200 || r.statusCode >= 300) throw ApiException(d is Map ? (d['message'] ?? d['error'] ?? 'تعذر تحليل الصورة').toString() : 'تعذر تحليل الصورة', statusCode: r.statusCode);
+      return d;
+    } on ApiException { rethrow; } catch (_) { throw const ApiException('حدث خطأ أثناء تحليل الصورة'); }
+  }
+
+  Future<dynamic> getAdminData() => _request('GET', '/admin/dashboard');
+  Future<dynamic> getAdminCars() => _request('GET', '/admin/cars');
+  Future<dynamic> deleteAdminCar(int id) => _request('DELETE', '/admin/cars/$id');
+  Future<dynamic> getAdminUsers() => _request('GET', '/admin/users');
+  Future<dynamic> getAdmins() => _request('GET', '/admin/admins');
+  Future<dynamic> makeAdmin(String phone) => _request('PUT', '/admin/users/role-by-phone', body: {'phone': phone});
+  Future<dynamic> removeAdmin(String phone) => _request('DELETE', '/admin/users/admin-by-phone?phone=${Uri.encodeComponent(phone)}');
+  Future<dynamic> getPendingRequests() => _request('GET', '/admin/requests/pending');
+  Future<dynamic> approveRequest(int id) => _request('POST', '/admin/requests/$id/approve');
+  Future<dynamic> rejectRequest(int id) => _request('POST', '/admin/requests/$id/reject');
+
+  // الدفع والخصومات
+  Future<dynamic> getPaymentSettings() => _request('GET', '/payment/settings');
+  Future<dynamic> validateDiscount(String code) => _request('POST', '/discounts/validate', body: {'code': code.trim().toUpperCase()});
+  Future<dynamic> updatePaymentSettings({required String phone, required String cardNumber, required String accountName, String? method}) => _request('PUT', '/admin/payment-settings', body: {'phone': phone, 'card_number': cardNumber, 'account_name': accountName, 'method': method ?? 'card'});
+  Future<dynamic> createPayment({required int amount, required String method, String? phone, String? cardNumber, String? accountName, String? reference, String? discountCode}) => _request('POST', '/payment', body: {'amount': amount, 'method': method, 'phone': phone, 'card_number': cardNumber, 'account_name': accountName, 'reference': reference, 'discount_code': discountCode});
+  Future<dynamic> getMyPayments() => _request('GET', '/payment/mine');
+  Future<dynamic> getAdminPayments() => _request('GET', '/payment/admin');
+  Future<dynamic> approvePayment(int id) => _request('POST', '/payment/admin/$id/approve');
+  Future<dynamic> rejectPayment(int id) => _request('POST', '/payment/admin/$id/reject');
+
+  String imageUrl(String path) { if (path.startsWith('http://') || path.startsWith('https://')) return path; if (path.startsWith('/')) return baseUrl.replaceFirst('/api', '') + path; return baseUrl.replaceFirst('/api', '') + '/$path'; }
 }
