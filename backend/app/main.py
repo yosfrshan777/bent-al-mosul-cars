@@ -6,6 +6,7 @@ from .db import Base, engine, get_db
 from .models import User, Car
 from .schemas import RegisterIn, LoginIn, UserOut, CarCreate
 from .security import hash_password, verify_password, create_token, decode_token
+from .market import router as market_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="ZYOCAR API", version="1.0.0")
@@ -69,3 +70,5 @@ def delete_car(car_id: int, user: User = Depends(current_user), db: Session = De
     car = db.get(Car, car_id)
     if not car or car.owner_id != user.id: raise HTTPException(404, "السيارة غير موجودة")
     db.delete(car); db.commit(); return {"ok": True}
+
+app.include_router(market_router, prefix="/api")
