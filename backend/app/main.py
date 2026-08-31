@@ -9,6 +9,7 @@ from .security import hash_password, verify_password, create_token, decode_token
 from .market import router as market_router
 from .brands import router as brands_router
 from .pricing import router as pricing_router
+from .payments import router as payments_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="ZYOCAR API", version="1.0.0")
@@ -65,3 +66,4 @@ def delete_car(car_id: int, user: User = Depends(current_user), db: Session = De
 app.include_router(market_router, prefix="/api")
 app.include_router(brands_router, prefix="/api")
 app.include_router(pricing_router, prefix="/api")
+app.include_router(payments_router, prefix="/api")
