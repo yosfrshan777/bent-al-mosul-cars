@@ -10,6 +10,7 @@ from .market import router as market_router
 from .brands import router as brands_router
 from .pricing import router as pricing_router
 from .payments import router as payments_router
+from .payment_config import router as payment_config_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="ZYOCAR API", version="1.0.0")
@@ -27,43 +28,35 @@ def car_dict(c: Car):
 
 @app.get("/api/health")
 def health(): return {"ok": True, "service": "zyocar-api"}
-
 @app.post("/api/auth/register")
 def register(data: RegisterIn, db: Session = Depends(get_db)):
     if db.scalar(select(User).where(User.phone == data.phone)): raise HTTPException(409, "رقم الهاتف مستخدم مسبقاً")
-    user = User(name=data.name, phone=data.phone, password_hash=hash_password(data.password), role="user")
-    db.add(user); db.commit(); db.refresh(user)
+    user = User(name=data.name, phone=data.phone, password_hash=hash_password(data.password), role="user"); db.add(user); db.commit(); db.refresh(user)
     return {"token": create_token(user.id, user.role), "user": UserOut.model_validate(user, from_attributes=True).model_dump()}
-
 @app.post("/api/auth/login")
 def login(data: LoginIn, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.phone == data.phone))
     if not user or not verify_password(data.password, user.password_hash): raise HTTPException(401, "رقم الهاتف أو كلمة المرور غير صحيحة")
     return {"token": create_token(user.id, user.role), "user": UserOut.model_validate(user, from_attributes=True).model_dump()}
-
 @app.get("/api/auth/me")
 def me(user: User = Depends(current_user)): return UserOut.model_validate(user, from_attributes=True)
 @app.post("/api/auth/logout")
 def logout(): return {"ok": True}
-
 @app.get("/api/cars")
 def cars(db: Session = Depends(get_db)): return [car_dict(c) for c in db.scalars(select(Car).where(Car.status == "approved").order_by(Car.created_at.desc())).all()]
-
 @app.post("/api/cars")
 def create_car(data: CarCreate, user: User = Depends(current_user), db: Session = Depends(get_db)):
     car = Car(owner_id=user.id, brand=data.brand, model=data.model, year=data.year, price=data.price, km=data.km, city=data.city, fuel=data.fuel, transmission=data.transmission, description=data.description, plan=data.plan, images_json=json.dumps(data.images, ensure_ascii=False), phone=data.phone or user.phone, body_type=data.body_type, status="pending")
     db.add(car); db.commit(); db.refresh(car); return car_dict(car)
-
 @app.get("/api/cars/mine/list")
 def my_cars(user: User = Depends(current_user), db: Session = Depends(get_db)): return [car_dict(c) for c in db.scalars(select(Car).where(Car.owner_id == user.id).order_by(Car.created_at.desc())).all()]
-
 @app.delete("/api/cars/{car_id}")
 def delete_car(car_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     car = db.get(Car, car_id)
     if not car or car.owner_id != user.id: raise HTTPException(404, "السيارة غير موجودة")
     db.delete(car); db.commit(); return {"ok": True}
-
 app.include_router(market_router, prefix="/api")
 app.include_router(brands_router, prefix="/api")
 app.include_router(pricing_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
+app.include_router(payment_config_router, prefix="/api")
